@@ -13,7 +13,14 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;overflow:hidden;background:linear-gradient(180deg,#080c12,#0b1119 30%,#0b0f14);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  body{
+    margin:0;
+    overflow-y:auto;
+    background:linear-gradient(180deg,#080c12,#0b1119 30%,#0b0f14);
+    color:var(--ink);
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  }
+
   header{position:sticky;top:0;z-index:3;background:rgba(11,15,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;padding:10px 14px;flex-wrap:wrap}
   header h1{font-size:16px;margin:0 10px 0 0;letter-spacing:.2px;color:#fff;white-space:nowrap}
   .spacer{flex:1}
@@ -22,11 +29,18 @@
   select,input,button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;outline:none}
   input[list]{min-width:180px}
   button{cursor:pointer}
-  .wrap{height:calc(100vh - 56px);padding:12px;display:grid;grid-template-rows: 1fr auto;gap:12px}
-  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);position:relative;overflow:hidden}
+
+  .wrap{padding:12px;display:grid;gap:12px}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
+    position:relative;overflow:hidden;
+    height:clamp(460px,72vh,920px);
+  }
   .grid{display:grid;gap:12px;grid-template-rows:minmax(260px,1fr) minmax(140px,.55fr);height:100%}
   .slot{position:relative}
   .chart{position:absolute;inset:0}
+
   .pill{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
   .toolbar{display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid var(--line);background:rgba(15,22,33,.35)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -37,6 +51,17 @@
   .badge button{padding:2px 6px;border-radius:999px;border:1px solid var(--line);background:#101a28;color:#fff;cursor:pointer}
   .section-title{font-size:12px;color:var(--muted);margin-right:6px}
   .toggle{display:inline-flex;gap:6px;align-items:center}
+
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:20}
+  .sheet{width:100%;max-width:720px;margin:0 auto;background:linear-gradient(180deg,#0f1621,#0b1320);border-radius:16px;border:1px solid var(--line);padding:14px 14px 18px}
+  .sheet h3{margin:0 0 8px 0;font-size:14px}
+  .sheet .row{margin-top:8px}
+  .sheet .kv{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .sheet .kv input[type="number"]{width:120px}
+  .sheet .bar{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .muted{color:var(--muted);font-size:12px}
+  .ghost{background:#0c141f}
+  input[type="color"]{padding:0;width:42px;height:36px;border-radius:8px;border:1px solid var(--line);background:#0e1520}
 </style>
 </head>
 <body>
@@ -65,6 +90,10 @@
       <option value="1h">1h</option><option value="2h">2h</option><option value="4h">4h</option><option value="1d">1d</option>
     </select>
     <button id="reload">Load</button>
+
+    <!-- Range -->
+    <label class="hint">Range</label>
+    <button id="range36">36M</button>
   </div>
 
   <div class="ctrl" style="flex:1 1 100%;gap:12px">
@@ -89,13 +118,19 @@
       <optgroup label="Volume / Flow">
         <option>Volume</option><option>OBV</option><option>MFI</option><option>CMF</option><option>ADL</option>
       </optgroup>
-      <!-- NEW: Custom -->
       <optgroup label="Custom">
         <option>bildo x</option>
       </optgroup>
     </select>
 
     <div id="paramRow" class="row kvs"></div>
+
+    <label class="hint">Preset</label>
+    <select id="presetSel"><option value="">— none —</option></select>
+    <button id="applyPreset" class="ghost">Apply</button>
+    <button id="savePreset" title="Save current params as preset">Save</button>
+    <button id="delPreset" class="ghost">Delete</button>
+
     <button id="addInd">Add</button>
     <div class="badges" id="activeBadges"></div>
 
@@ -109,22 +144,59 @@
       <div class="slot"><div id="c-main" class="chart"></div></div>
       <div class="slot" id="oscSlot" style="display:none"><div id="c-osc" class="chart"></div></div>
     </div>
-    <div class="toolbar"><span class="hint">Tip: add multi-MAs, combine channels, stack oscillators. Live data auto-recalculates.</span></div>
+    <div class="toolbar"><span class="hint">Tip: click any badge to edit its settings. Save presets once, reuse forever. Layout auto-saves.</span></div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div id="sheetWrap" class="sheet-backdrop">
+  <div class="sheet">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 id="sheetTitle">Indicator Settings</h3>
+      <button id="sheetClose">Close</button>
+    </div>
+    <div class="muted" id="sheetSub"></div>
+    <div id="sheetParams" class="row" style="gap:16px;flex-wrap:wrap;margin-top:10px"></div>
+    <div class="bar">
+      <button id="sheetToggleVis" class="ghost">Toggle visibility</button>
+      <button id="sheetDuplicate" class="ghost">Duplicate</button>
+      <button id="sheetRemove">Remove</button>
+      <button id="sheetApply">Apply</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* ====== Basics ====== */
+/* ===== Helpers & state ===== */
 const $=id=>document.getElementById(id);
 const els={status:$('status'),quote:$('quote'),symbol:$('symbol'),pairs:$('pairs'),tf:$('tf'),
            indSel:$('indSel'),paramRow:$('paramRow'),addInd:$('addInd'),badges:$('activeBadges'),
-           haToggle:$('haToggle'),oscSlot:$('oscSlot')};
+           haToggle:$('haToggle'),oscSlot:$('oscSlot'),
+           presetSel:$('presetSel'),savePreset:$('savePreset'),applyPreset:$('applyPreset'),delPreset:$('delPreset'),
+           range36:$('range36')};
 const setStatus=t=>els.status.textContent=t;
 
+const defaultColor='#fcd535';
+function hexToRGBA(hex,a=1){const h=hex.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return `rgba(${r},${g},${b},${a})`;}
+function setSeriesColor(series,color){ try{ series.applyOptions({color}); }catch{} }
+function setPackColor(pack,color){
+  const list = Array.isArray(pack.series)? pack.series : [pack.series];
+  if(!color) return;
+  if(list.length===1){ setSeriesColor(list[0],color); }
+  else{
+    const shades=[1,0.7,0.4];
+    list.forEach((s,i)=> setSeriesColor(s, hexToRGBA(color,shades[i%shades.length])));
+  }
+}
+
+const KEYS={PRESETS:'aiSS_presets_v2', LAYOUT:'aiSS_layout_v2'};
 let EXINFO=null,BY_QUOTE={},VALID_SET=new Set();
+
+/* ===== Exchange / Pairs ===== */
 async function loadExchangeInfo(){
   setStatus('Loading markets…');
-  const r=await fetch('https://api.binance.com/api/v3/exchangeInfo'); if(!r.ok) throw 0;
+  const r=await fetch('https://api.binance.com/api/v3/exchangeInfo');
+  if(!r.ok) throw new Error('exchangeInfo failed');
   EXINFO=await r.json(); BY_QUOTE={}; VALID_SET=new Set();
   (EXINFO.symbols||[]).filter(s=>s.status==='TRADING').forEach(s=>{
     VALID_SET.add(s.symbol); (BY_QUOTE[s.quoteAsset] ||= []).push(s.symbol);
@@ -138,239 +210,320 @@ function populatePairs(){
   list.forEach(s=>{const o=document.createElement('option'); o.value=s; frag.appendChild(o);});
   els.pairs.appendChild(frag);
   if(list.length){
-    const cur=els.symbol.value.toUpperCase(); if(!VALID_SET.has(cur)||!cur.endsWith(q)) els.symbol.value=list.find(s=>/^BTC|ETH|BNB/.test(s))||list[0];
+    const cur=els.symbol.value.toUpperCase();
+    if(!VALID_SET.has(cur)||!cur.endsWith(q)) els.symbol.value=list.find(s=>/^BTC|ETH|BNB/.test(s))||list[0];
   }
 }
 
-/* ====== Charts ====== */
+/* ===== Charts ===== */
 const mkChart=(el,opts={})=>{
-  const c=LightweightCharts.createChart(el,{layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
-  grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
-  rightPriceScale:{borderColor:'#223246'},timeScale:{borderColor:'#223246'},crosshair:{mode:0},...opts});
-  const resize=()=>c.applyOptions({width:el.clientWidth,height:el.clientHeight}); new ResizeObserver(resize).observe(el); resize(); return c;
+  const c=LightweightCharts.createChart(el,{
+    layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
+    grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
+    rightPriceScale:{borderColor:'#223246'},timeScale:{borderColor:'#223246'},crosshair:{mode:0},...opts
+  });
+  const resize=()=>c.applyOptions({width:el.clientWidth,height:el.clientHeight});
+  new ResizeObserver(resize).observe(el); resize(); return c;
 };
-const cMain=mkChart($('c-main')); const cOsc=mkChart($('c-osc'),{rightPriceScale:{visible:true}});
-let candleSeries=null, haSeries=null; // created on load
+const cMain=mkChart($('c-main'));
+const cOsc = mkChart($('c-osc'),{rightPriceScale:{visible:true}});
+let candleSeries=null, haSeries=null;
 
-/* ====== Data ====== */
+/* ===== Data & live ===== */
 let DATA=[], WS=null;
 const closeWS=()=>{try{WS&&WS.close()}catch{} WS=null};
 
-async function fetchK(symbol,interval,limit=1500){
+async function fetchK(symbol,interval,limit=1000){
   const u=`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const r=await fetch(u); if(!r.ok) throw 0; const a=await r.json();
+  const r=await fetch(u); if(!r.ok) throw new Error('klines failed');
+  const a=await r.json();
   return a.map(k=>({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
 }
 
-/* ====== Math helpers ====== */
-const val=o=>o.close, v=(o)=>o.volume;
+/* ==== Range fetcher (months) ==== */
+function tfToMs(tf){
+  const m=60*1000, h=60*m, d=24*h;
+  const map={ '1m':m,'3m':3*m,'5m':5*m,'15m':15*m,'30m':30*m,'1h':h,'2h':2*h,'4h':4*h,'1d':d };
+  return map[tf]||d;
+}
+async function fetchKRange(symbol, interval, months=36){
+  const nowMs=Date.now();
+  const approxMonth=30*24*60*60*1000;
+  let start=nowMs - months*approxMonth;
+  const out=[];
+  let loops=0;
+  setStatus(`Fetching ${months}M • ${symbol} • ${interval}`);
+  while(start < nowMs && loops < 500){
+    const url=`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${start}&limit=1000`;
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('range fetch failed');
+    const a=await r.json();
+    if(!a.length) break;
+    for(const k of a){
+      out.push({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]});
+    }
+    const lastClose=a[a.length-1][6]; // closeTime
+    start = lastClose + 1;
+    loops++;
+    if(loops%3===0){
+      const pct=Math.min(99, ((start-(nowMs-months*approxMonth))/(months*approxMonth))*100 );
+      setStatus(`Fetching ${months}M • ${symbol} • ${interval} • ${pct.toFixed(0)}%`);
+    }
+    if(out.length>200000) break; // safety for tiny TFs
+  }
+  const map=new Map();
+  out.forEach(b=>map.set(b.time,b));
+  const merged=Array.from(map.values()).sort((a,b)=>a.time-b.time);
+  setStatus(`Fetched ${merged.length} bars • ${symbol} • ${interval}`);
+  return merged;
+}
+
+/* ===== Math (indicators) ===== */
+const val=o=>o.close;
 function SMA(arr,p,acc=val){const out=Array(arr.length).fill(null); let s=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); s+=x; if(i>=p) s-=acc(arr[i-p]); if(i>=p-1) out[i]=s/p;} return out;}
-function EMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const k=2/(p+1); let prev=null; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); if(prev==null){ if(i>=p-1){ prev=SMA(arr.slice(0,i+1),p,acc)[i]; out[i]=prev; } } else { prev=x*k+prev*(1-k); out[i]=prev; } } return out;}
-function WMA(arr,p,acc=val){const out=Array(arr.length).fill(null), w=p*(p+1)/2; for(let i=p-1;i<arr.length;i++){ let s=0; for(let j=0;j<p;j++){ s+=acc(arr[i-j])*(p-j); } out[i]=s/w; } return out;}
-function HMA(arr,p,acc=val){const w1=WMA(arr,Math.round(p/2),acc), w2=WMA(arr,p,acc); const tmp=arr.map((d,i)=>({close: (w1[i]==null||w2[i]==null)? NaN : 2*w1[i]-w2[i]})); return WMA(tmp,Math.round(Math.sqrt(p)),x=>x.close);}
-function DEMAarr(arr,p,acc=val){const e=EMA(arr,p,acc); const tmp=arr.map((d,i)=>({close: e[i]==null?NaN:e[i]})); const e2=EMA(tmp,p,x=>x.close); return e.map((x,i)=> (x==null||e2[i]==null)?null: 2*x - e2[i]);}
-function TEMAarr(arr,p,acc=val){const e1=EMA(arr,p,acc); const tmp1=arr.map((d,i)=>({close:e1[i]??NaN})); const e2=EMA(tmp1,p,x=>x.close); const tmp2=arr.map((d,i)=>({close:e2[i]??NaN})); const e3=EMA(tmp2,p,x=>x.close); return e1.map((e,i)=> (e==null||e2[i]==null||e3[i]==null)?null: 3*e - 3*e2[i] + e3[i]);}
-function STD(arr,p,acc=val){const out=Array(arr.length).fill(null); let q=[],s=0,s2=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); q.push(x); s+=x; s2+=x*x; if(q.length>p){const r=q.shift(); s-=r; s2-=r*r;} if(q.length===p){ const m=s/p; const v=s2/p - m*m; out[i]=Math.sqrt(Math.max(v,0)); } } return out;}
-function BBcalc(arr,p=20,m=2){const mid=SMA(arr,p), sd=STD(arr,p); return {mid, upper:mid.map((m_,i)=> (m_==null||sd[i]==null)?null:m_+m*sd[i]), lower:mid.map((m_,i)=> (m_==null||sd[i]==null)?null:m_-m*sd[i])};}
-function ATR(arr,p=14){const out=Array(arr.length).fill(null); let prevC=null, trEMA=null; const k=2/(p+1); for(let i=0;i<arr.length;i++){const h=arr[i].high,l=arr[i].low,c=arr[i].close; const tr = prevC==null ? (h-l) : Math.max(h-l,Math.abs(h-prevC),Math.abs(l-prevC)); trEMA = trEMA==null ? tr : (trEMA*(1-k) + tr*k); out[i]=trEMA; prevC=c;} return out;}
-function VWAPsession(arr){const out=Array(arr.length).fill(null); let pv=0,vol=0,day=null; for(let i=0;i<arr.length;i++){const d=new Date(arr[i].time*1000); const key=`${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`; if(key!==day){day=key; pv=0; vol=0;} const tp=(arr[i].high+arr[i].low+arr[i].close)/3; pv+=tp*(arr[i].volume||0); vol+=(arr[i].volume||0); out[i]=vol>0? pv/vol : null;} return out;}
-function RSI(arr,p=14){const out=Array(arr.length).fill(null); let g=0,l=0; for(let i=1;i<arr.length;i++){const ch=arr[i].close-arr[i-1].close; const up=Math.max(ch,0), dn=Math.max(-ch,0); if(i<=p){ g+=up; l+=dn; if(i===p){ const rs=(g/p)/((l/p)||1e-12); out[i]=100-100/(1+rs);} } else { g=(g*(p-1)+up)/p; l=(l*(p-1)+dn)/p; const rs=g/(l||1e-12); out[i]=100-100/(1+rs);} } return out;}
-function Stochastic(arr,kP=14,dP=3){const K=Array(arr.length).fill(null), D=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=kP-1){ let hh=-1e9,ll=1e9; for(let j=i-kP+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} const c=arr[i].close; const k= hh===ll?50: ( (c-ll)/(hh-ll))*100; K[i]=k; if(i>=kP-1+(dP-1)){ let s=0; for(let j=i-dP+1;j<=i;j++) s+=K[j]; D[i]=s/dP; } } } return {K,D};}
-function MACDcore(arr,fast=12,slow=26,signal=9){const eF=EMA(arr,fast), eS=EMA(arr,slow); const mac=eF.map((v,i)=> (v!=null&&eS[i]!=null)? v-eS[i] : null); const tmp=arr.map((d,i)=>({close: mac[i]??NaN})); const sig=EMA(tmp,signal,x=>x.close).map((v,i)=> mac[i]==null?null:v); const hist=mac.map((v,i)=> (v==null||sig[i]==null)?null: v-sig[i]); return {mac,sig,hist};}
+function EMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const k=2/(p+1); let prev=null; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); if(prev==null){ if(i>=p-1){ prev=SMA(arr.slice(0,i+1),p,acc)[i]; out[i]=prev;} } else { prev=x*k+prev*(1-k); out[i]=prev; } } return out;}
+function WMA(arr,p,acc=val){const out=Array(arr.length).fill(null),w=p*(p+1)/2; for(let i=p-1;i<arr.length;i++){ let s=0; for(let j=0;j<p;j++){ s+=acc(arr[i-j])*(p-j);} out[i]=s/w;} return out;}
+function HMA(arr,p,acc=val){const w1=WMA(arr,Math.round(p/2),acc), w2=WMA(arr,p,acc); const tmp=arr.map((d,i)=>({close:(w1[i]==null||w2[i]==null)?NaN:2*w1[i]-w2[i]})); return WMA(tmp,Math.round(Math.sqrt(p)),x=>x.close);}
+function DEMAarr(arr,p,acc=val){const e=EMA(arr,p,acc); const tmp=arr.map((d,i)=>({close:e[i]==null?NaN:e[i]})); const e2=EMA(tmp,p,x=>x.close); return e.map((x,i)=> (x==null||e2[i]==null)?null:2*x-e2[i]);}
+function TEMAarr(arr,p,acc=val){const e1=EMA(arr,p,acc); const tmp1=arr.map((d,i)=>({close:e1[i]??NaN})); const e2=EMA(tmp1,p,x=>x.close); const tmp2=arr.map((d,i)=>({close:e2[i]??NaN})); const e3=EMA(tmp2,p,x=>x.close); return e1.map((e,i)=> (e==null||e2[i]==null||e3[i]==null)?null:3*e-3*e2[i]+e3[i]);}
+function STD(arr,p,acc=val){const out=Array(arr.length).fill(null); let q=[],s=0,s2=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); q.push(x); s+=x; s2+=x*x; if(q.length>p){const r=q.shift(); s-=r; s2-=r*r;} if(q.length===p){ const m=s/p; const v=s2/p-m*m; out[i]=Math.sqrt(Math.max(v,0)); } } return out;}
+function BBcalc(arr,p=20,m=2){const mid=SMA(arr,p),sd=STD(arr,p); return {mid,upper:mid.map((m_,i)=> (m_==null||sd[i]==null)?null:m_+m*sd[i]),lower:mid.map((m_,i)=> (m_==null||sd[i]==null)?null:m_-m*sd[i])};}
+function ATR(arr,p=14){const out=Array(arr.length).fill(null); let prevC=null,trEMA=null; const k=2/(p+1); for(let i=0;i<arr.length;i++){const h=arr[i].high,l=arr[i].low,c=arr[i].close; const tr=prevC==null?(h-l):Math.max(h-l,Math.abs(h-prevC),Math.abs(l-prevC)); trEMA = trEMA==null? tr : (trEMA*(1-k)+tr*k); out[i]=trEMA; prevC=c;} return out;}
+function VWAPsession(arr){const out=Array(arr.length).fill(null); let pv=0,vol=0,day=null; for(let i=0;i<arr.length;i++){const d=new Date(arr[i].time*1000); const key=`${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`; if(key!==day){day=key; pv=0; vol=0;} const tp=(arr[i].high+arr[i].low+arr[i].close)/3; pv+=tp*(arr[i].volume||0); vol+=(arr[i].volume||0); out[i]=vol? pv/vol : null;} return out;}
+function RSI(arr,p=14){const out=Array(arr.length).fill(null); let g=0,l=0; for(let i=1;i<arr.length;i++){const ch=arr[i].close-arr[i-1].close; const up=Math.max(ch,0),dn=Math.max(-ch,0); if(i<=p){ g+=up; l+=dn; if(i===p){ const rs=(g/p)/((l/p)||1e-12); out[i]=100-100/(1+rs);} } else { g=(g*(p-1)+up)/p; l=(l*(p-1)+dn)/p; const rs=g/(l||1e-12); out[i]=100-100/(1+rs);} } return out;}
+function Stochastic(arr,kP=14,dP=3){const K=Array(arr.length).fill(null),D=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=kP-1){ let hh=-1e9,ll=1e9; for(let j=i-kP+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} const c=arr[i].close; const k= hh===ll?50:((c-ll)/(hh-ll))*100; K[i]=k; if(i>=kP-1+(dP-1)){ let s=0; for(let j=i-dP+1;j<=i;j++) s+=K[j]; D[i]=s/dP; } } } return {K,D};}
+function MACDcore(arr,f=12,s=26,signal=9){const eF=EMA(arr,f),eS=EMA(arr,s); const mac=eF.map((v,i)=> (v!=null&&eS[i]!=null)? v-eS[i]:null); const tmp=arr.map((d,i)=>({close:mac[i]??NaN})); const sig=EMA(tmp,signal,x=>x.close).map((v,i)=> mac[i]==null?null:v); const hist=mac.map((v,i)=> (v==null||sig[i]==null)?null:v-sig[i]); return {mac,sig,hist};}
 function Median(o){return (o.high+o.low)/2}
-function PPOcore(arr,fast=12,slow=26,signal=9){const eF=EMA(arr,fast), eS=EMA(arr,slow); const ppo=eF.map((v,i)=> (v&&eS[i])? ( (v-eS[i]) / eS[i] * 100 ) : null); const tmp=arr.map((d,i)=>({close: ppo[i]??NaN})); const sig=EMA(tmp,signal,x=>x.close).map((v,i)=> ppo[i]==null?null:v); const hist=ppo.map((v,i)=> (v==null||sig[i]==null)?null: v-sig[i]); return {ppo,sig,hist};}
-function TRIXcore(arr,p=15){const e1=EMA(arr,p), tmp1=arr.map((d,i)=>({close:e1[i]??NaN})); const e2=EMA(tmp1,p,x=>x.close), tmp2=arr.map((d,i)=>({close:e2[i]??NaN})); const e3=EMA(tmp2,p,x=>x.close); const out=Array(arr.length).fill(null); for(let i=1;i<arr.length;i++){ if(e3[i-1]&&e3[i]) out[i]=( (e3[i]-e3[i-1]) / e3[i-1] )*100; } return out;}
-function TSIcore(arr,fast=25,slow=13){const mom=arr.map((d,i)=> i? d.close-arr[i-1].close:0); const absmom=mom.map(x=>Math.abs(x)); const ema1=EMA(mom.map((x,i)=>({close:x})),fast,x=>x.close); const ema2=EMA(ema1.map((x,i)=>({close:x??0})),slow,x=>x.close); const ema1a=EMA(absmom.map((x)=>({close:x})),fast,x=>x.close); const ema2a=EMA(ema1a.map((x)=>({close:x??0})),slow,x=>x.close); return ema2.map((n,i)=> (n==null||!ema2a[i])?null: (n/ema2a[i])*100 );}
-function CCIcore(arr,p=20){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const tmp=tp.map((x)=>({close:x})); const ma=SMA(tmp,p,x=>x.close); const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ const slice=tp.slice(i-p+1,i+1); const m=ma[i]; const md=slice.reduce((a,b)=>a+Math.abs(b-m),0)/p; out[i] = md? (tp[i]-m)/(0.015*md) : null; } } return out;}
+function PPOcore(arr,f=12,s=26,signal=9){const eF=EMA(arr,f),eS=EMA(arr,s); const ppo=eF.map((v,i)=> (v&&eS[i])? ((v-eS[i])/eS[i]*100):null); const tmp=arr.map((d,i)=>({close:ppo[i]??NaN})); const sig=EMA(tmp,signal,x=>x.close).map((v,i)=> ppo[i]==null?null:v); const hist=ppo.map((v,i)=> (v==null||sig[i]==null)?null:v-sig[i]); return {ppo,sig,hist};}
+function TRIXcore(arr,p=15){const e1=EMA(arr,p),tmp1=arr.map((d,i)=>({close:e1[i]??NaN})); const e2=EMA(tmp1,p,x=>x.close),tmp2=arr.map((d,i)=>({close:e2[i]??NaN})); const e3=EMA(tmp2,p,x=>x.close); const out=Array(arr.length).fill(null); for(let i=1;i<arr.length;i++){ if(e3[i-1]&&e3[i]) out[i]=((e3[i]-e3[i-1])/e3[i-1])*100; } return out;}
+function TSIcore(arr,fast=25,slow=13){const mom=arr.map((d,i)=> i? d.close-arr[i-1].close:0); const absmom=mom.map(x=>Math.abs(x)); const ema1=EMA(mom.map((x,i)=>({close:x})),fast,x=>x.close); const ema2=EMA(ema1.map((x,i)=>({close:x??0})),slow,x=>x.close); const ema1a=EMA(absmom.map((x)=>({close:x})),fast,x=>x.close); const ema2a=EMA(ema1a.map((x)=>({close:x??0})),slow,x=>x.close); return ema2.map((n,i)=> (n==null||!ema2a[i])?null:(n/ema2a[i])*100 );}
+function CCIcore(arr,p=20){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const ma=SMA(tp.map(x=>({close:x})),p,x=>x.close); const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ const slice=tp.slice(i-p+1,i+1); const m=ma[i]; const md=slice.reduce((a,b)=>a+Math.abs(b-m),0)/p; out[i]= md? (tp[i]-m)/(0.015*md) : null; } } return out;}
 function WilliamsR(arr,p=14){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} out[i]= hh===ll?0 : ((hh-arr[i].close)/(hh-ll))*-100; } } return out;}
 function ROCcore(arr,p=12){const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ const prev=arr[i-p].close; out[i]= prev? ((arr[i].close-prev)/prev)*100 : null; } return out;}
-function AroonCore(arr,p=25){const up=Array(arr.length).fill(null), dn=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ let idxH=i, idxL=i; for(let j=i-p+1;j<=i;j++){ if(arr[j].high>arr[idxH].high) idxH=j; if(arr[j].low<arr[idxL].low) idxL=j; } up[i]= ( (p-1-(i-idxH))/(p-1) )*100; dn[i]= ( (p-1-(i-idxL))/(p-1) )*100; } } return {up,down:dn};}
-function DMIdir(arr){ const plus=[],minus=[],tr=[]; for(let i=0;i<arr.length;i++){ if(i===0){ plus.push(0); minus.push(0); tr.push(arr[i].high-arr[i].low); } else { const up=arr[i].high-arr[i-1].high; const dn=arr[i-1].low-arr[i].low; plus.push( (up>dn && up>0)? up:0 ); minus.push( (dn>up && dn>0)? dn:0 ); const trv=Math.max(arr[i].high-arr[i].low, Math.abs(arr[i].high-arr[i-1].close), Math.abs(arr[i].low-arr[i-1].close)); tr.push(trv); } } return {plus,minus,tr};}
+function AroonCore(arr,p=25){const up=Array(arr.length).fill(null),dn=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ let idxH=i,idxL=i; for(let j=i-p+1;j<=i;j++){ if(arr[j].high>arr[idxH].high) idxH=j; if(arr[j].low<arr[idxL].low) idxL=j; } up[i]=((p-1-(i-idxH))/(p-1))*100; dn[i]=((p-1-(i-idxL))/(p-1))*100; } } return {up,down:dn};}
+function DMIdir(arr){ const plus=[],minus=[],tr=[]; for(let i=0;i<arr.length;i++){ if(i===0){ plus.push(0); minus.push(0); tr.push(arr[i].high-arr[i].low); } else { const up=arr[i].high-arr[i-1].high; const dn=arr[i-1].low-arr[i].low; plus.push((up>dn&&up>0)?up:0); minus.push((dn>up&&dn>0)?dn:0); const trv=Math.max(arr[i].high-arr[i].low,Math.abs(arr[i].high-arr[i-1].close),Math.abs(arr[i].low-arr[i-1].close)); tr.push(trv); } } return {plus,minus,tr};}
 function ADXcore(arr,p=14){const d=DMIdir(arr); const trEMA=EMA(d.tr.map(x=>({close:x})),p,x=>x.close); const pdi=EMA(d.plus.map(x=>({close:x})),p,x=>x.close).map((x,i)=> trEMA[i]? (x/trEMA[i])*100:null); const mdi=EMA(d.minus.map(x=>({close:x})),p,x=>x.close).map((x,i)=> trEMA[i]? (x/trEMA[i])*100:null); const dx=pdi.map((x,i)=> (x!=null&&mdi[i]!=null)? (Math.abs(x-mdi[i])/(x+mdi[i]))*100 : null); const adx=EMA(dx.map(x=>({close:x??0})),p,x=>x.close); return {pdi,mdi,adx};}
-function AwesomeCore(arr){const sma5=SMA(arr,5,Median), sma34=SMA(arr,34,Median); return sma5.map((x,i)=> (x==null||sma34[i]==null)?null: x-sma34[i]);}
-function ElderRayCore(arr,p=13){const e=EMA(arr,p); const bull=arr.map((d,i)=> (e[i]==null)?null: d.high-e[i]); const bear=arr.map((d,i)=> (e[i]==null)?null: d.low -e[i]); return {bull,bear};}
+function AwesomeCore(arr){const sma5=SMA(arr,5,Median),sma34=SMA(arr,34,Median); return sma5.map((x,i)=> (x==null||sma34[i]==null)?null:x-sma34[i]);}
+function ElderRayCore(arr,p=13){const e=EMA(arr,p); const bull=arr.map((d,i)=> (e[i]==null)?null:d.high-e[i]); const bear=arr.map((d,i)=> (e[i]==null)?null:d.low-e[i]); return {bull,bear};}
 function OBVcore(arr){let out=Array(arr.length).fill(null); let obv=0; out[0]=0; for(let i=1;i<arr.length;i++){ obv += arr[i].close>arr[i-1].close? arr[i].volume : arr[i].close<arr[i-1].close? -arr[i].volume : 0; out[i]=obv; } return out;}
-function MFICore(arr,p=14){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const pmf=[], nmf=[]; for(let i=1;i<arr.length;i++){ const mf=tp[i]*(arr[i].volume||0); if(tp[i]>tp[i-1]){pmf.push(mf); nmf.push(0);} else if(tp[i]<tp[i-1]){pmf.push(0); nmf.push(mf);} else {pmf.push(0); nmf.push(0);} } const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ const ps=pmf.slice(i-p,i).reduce((a,b)=>a+b,0), ns=nmf.slice(i-p,i).reduce((a,b)=>a+b,0); const mr=ns? ps/ns : 0; out[i]=100-(100/(1+mr)); } return out;}
-function CMFcore(arr,p=20){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let sumCLV=0, sumVol=0; for(let j=i-p+1;j<=i;j++){ const d=arr[j]; const clv = ((d.close - d.low) - (d.high - d.close)) / ((d.high - d.low) || 1e-12); sumCLV += clv*(d.volume||0); sumVol += (d.volume||0); } out[i]= sumVol? sumCLV/sumVol : null; } return out;}
-function ADLcore(arr){let out=Array(arr.length).fill(null); let ad=0; for(let i=0;i<arr.length;i++){ const d=arr[i]; const clv = ((d.close - d.low) - (d.high - d.close)) / ((d.high - d.low) || 1e-12); ad += clv*(d.volume||0); out[i]=ad; } return out;}
-function KeltnerCore(arr,period=20,mult=2){const ema=EMA(arr,period), atrA=ATR(arr,period); const up=ema.map((e,i)=> (e==null||atrA[i]==null)?null: e+mult*atrA[i]); const lo=ema.map((e,i)=> (e==null||atrA[i]==null)?null: e-mult*atrA[i]); return {mid:ema, upper:up, lower:lo};}
-function DonchianCore(arr,p=20){const up=Array(arr.length).fill(null), lo=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){ hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} up[i]=hh; lo[i]=ll; } return {upper:up, lower:lo};}
-function SupertrendCore(arr,atrPeriod=10,mult=3){const atrA=ATR(arr,atrPeriod); const upper=Array(arr.length).fill(null), lower=Array(arr.length).fill(null), st=Array(arr.length).fill(null), dir=Array(arr.length).fill(1); for(let i=0;i<arr.length;i++){ const m=(arr[i].high+arr[i].low)/2; upper[i]=m + mult*(atrA[i]||0); lower[i]=m - mult*(atrA[i]||0); if(i===0){ st[i]=upper[i]; dir[i]=1; } else { const prev=st[i-1], prevDir=dir[i-1]; let up = Math.min(upper[i], (prevDir===1? prev : Infinity)); let lo = Math.max(lower[i], (prevDir===-1? prev : -Infinity)); if(arr[i].close > (prevDir===-1? lo: up)){ dir[i]=1; st[i]=lo; } else if(arr[i].close < (prevDir===1? up: lo)){ dir[i]=-1; st[i]=up; } else { dir[i]=prevDir; st[i]= prevDir===1? Math.max(lo,prev) : Math.min(up,prev); } } } return {st,dir,upper,lower};}
-function PSARcore(arr,step=0.02,max=0.2){const out=Array(arr.length).fill(null); let af=step, uptrend=true, ep=arr[0].high, sar=arr[0].low; for(let i=1;i<arr.length;i++){ sar = sar + af * (uptrend? ep - sar : ep - sar); if(uptrend){ sar = Math.min(sar, arr[i-1].low, arr[i-2]?.low ?? arr[i-1].low); if(arr[i].high>ep){ ep=arr[i].high; af=Math.min(af+step,max);} if(arr[i].low < sar){ uptrend=false; sar=ep; ep=arr[i].low; af=step; } } else { sar = Math.max(sar, arr[i-1].high, arr[i-2]?.high ?? arr[i-1].high); if(arr[i].low<ep){ ep=arr[i].low; af=Math.min(af+step,max);} if(arr[i].high > sar){ uptrend=true; sar=ep; ep=arr[i].high; af=step; } } out[i]=sar; } return out;}
-function HeikinAshi(arr){const out=[]; let prevO=(arr[0].open+arr[0].close)/2, prevC=(arr[0].open+arr[0].high+arr[0].low+arr[0].close)/4; for(let i=0;i<arr.length;i++){ const c=(arr[i].open+arr[i].high+arr[i].low+arr[i].close)/4; const o=(prevO+prevC)/2; const h=Math.max(arr[i].high,o,c), l=Math.min(arr[i].low,o,c); out.push({time:arr[i].time,open:o,high:h,low:l,close:c,volume:arr[i].volume}); prevO=o; prevC=c; } return out;}
-function VWMAcore(arr,p=20){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let pv=0, vol=0; for(let j=i-p+1;j<=i;j++){ pv += arr[j].close*(arr[j].volume||0); vol+=(arr[j].volume||0);} out[i]= vol? pv/vol : null; } return out;}
-function PivotsClassic(arr){ if(arr.length<2) return []; const res=[]; let byDay={}; arr.forEach(b=>{const d=new Date(b.time*1000); const key=`${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`; (byDay[key] ||= []).push(b);});
+function MFICore(arr,p=14){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const pmf=[],nmf=[]; for(let i=1;i<arr.length;i++){ const mf=tp[i]*(arr[i].volume||0); if(tp[i]>tp[i-1]){pmf.push(mf); nmf.push(0);} else if(tp[i]<tp[i-1]){pmf.push(0); nmf.push(mf);} else {pmf.push(0); nmf.push(0);} } const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ const ps=pmf.slice(i-p,i).reduce((a,b)=>a+b,0), ns=nmf.slice(i-p,i).reduce((a,b)=>a+b,0); const mr=ns? ps/ns : 0; out[i]=100-(100/(1+mr)); } return out;}
+function CMFcore(arr,p=20){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let sumCLV=0,sumVol=0; for(let j=i-p+1;j<=i;j++){ const d=arr[j]; const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d.low)||1e-12); sumCLV+=clv*(d.volume||0); sumVol+=(d.volume||0);} out[i]= sumVol? sumCLV/sumVol : null;} return out;}
+function ADLcore(arr){let out=Array(arr.length).fill(null); let ad=0; for(let i=0;i<arr.length;i++){
+  const d=arr[i];
+  const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d.low)||1e-12); /* <-- FIXED */
+  ad+=clv*(d.volume||0);
+  out[i]=ad;
+} return out;}
+function KeltnerCore(arr,period=20,mult=2){const ema=EMA(arr,period),atrA=ATR(arr,period); const up=ema.map((e,i)=> (e==null||atrA[i]==null)?null:e+mult*atrA[i]); const lo=ema.map((e,i)=> (e==null||atrA[i]==null)?null:e-mult*atrA[i]); return {mid:ema,upper:up,lower:lo};}
+function DonchianCore(arr,p=20){const up=Array(arr.length).fill(null),lo=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){ hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} up[i]=hh; lo[i]=ll;} return {upper:up,lower:lo};}
+function SupertrendCore(arr,atrPeriod=10,mult=3){const atrA=ATR(arr,atrPeriod); const upper=Array(arr.length).fill(null),lower=Array(arr.length).fill(null),st=Array(arr.length).fill(null),dir=Array(arr.length).fill(1);
+  for(let i=0;i<arr.length;i++){
+    const m=(arr[i].high+arr[i].low)/2; upper[i]=m+mult*(atrA[i]||0); lower[i]=m-mult*(atrA[i]||0);
+    if(i===0){ st[i]=upper[i]; dir[i]=1; }
+    else{
+      const prev=st[i-1], prevDir=dir[i-1];
+      let up = Math.min(upper[i], (prevDir===1? prev : Infinity));
+      let lo = Math.max(lower[i], (prevDir===-1? prev : -Infinity));
+      if(arr[i].close > (prevDir===-1? lo: up)){ dir[i]=1; st[i]=lo; }
+      else if(arr[i].close < (prevDir===1? up: lo)){ dir[i]=-1; st[i]=up; }
+      else { dir[i]=prevDir; st[i]= prevDir===1? Math.max(lo,prev) : Math.min(up,prev); }
+    }
+  }
+  return {st,dir,upper,lower};
+}
+function PSARcore(arr,step=0.02,max=0.2){const out=Array(arr.length).fill(null); let af=step, uptrend=true, ep=arr[0].high, sar=arr[0].low;
+  for(let i=1;i<arr.length;i++){
+    sar = sar + af * (uptrend? ep - sar : ep - sar);
+    if(uptrend){
+      sar = Math.min(sar, arr[i-1].low, arr[i-2]?.low ?? arr[i-1].low);
+      if(arr[i].high>ep){ ep=arr[i].high; af=Math.min(af+step,max); }
+      if(arr[i].low < sar){ uptrend=false; sar=ep; ep=arr[i].low; af=step; }
+    }else{
+      sar = Math.max(sar, arr[i-1].high, arr[i-2]?.high ?? arr[i-1].high);
+      if(arr[i].low<ep){ ep=arr[i].low; af=Math.min(af+step,max); }
+      if(arr[i].high > sar){ uptrend=true; sar=ep; ep=arr[i].high; af=step; }
+    }
+    out[i]=sar;
+  } return out;
+}
+function HeikinAshi(arr){const out=[]; let prevO=(arr[0].open+arr[0].close)/2, prevC=(arr[0].open+arr[0].high+arr[0].low+arr[0].close)/4;
+  for(let i=0;i<arr.length;i++){
+    const c=(arr[i].open+arr[i].high+arr[i].low+arr[i].close)/4;
+    const o=(prevO+prevC)/2; const h=Math.max(arr[i].high,o,c), l=Math.min(arr[i].low,o,c);
+    out.push({time:arr[i].time,open:o,high:h,low:l,close:c,volume:arr[i].volume}); prevO=o; prevC=c;
+  } return out;
+}
+function VWMAcore(arr,p=20){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let pv=0,vol=0; for(let j=i-p+1;j<=i;j++){ pv+=arr[j].close*(arr[j].volume||0); vol+=(arr[j].volume||0);} out[i]=vol? pv/vol : null; } return out;}
+function PivotsClassic(arr){
+  if(arr.length<2) return [];
+  let byDay={}; arr.forEach(b=>{const d=new Date(b.time*1000); const key=`${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`; (byDay[key] ||= []).push(b);});
   const keys=Object.keys(byDay).sort(); if(keys.length<2) return [];
   const prev=byDay[keys[keys.length-2]]; const ph=Math.max(...prev.map(x=>x.high)); const pl=Math.min(...prev.map(x=>x.low)); const pc=prev[prev.length-1].close;
   const P=(ph+pl+pc)/3, R1=2*P-pl, S1=2*P-ph, R2=P+(ph-pl), S2=P-(ph-pl), R3=ph+2*(P-pl), S3=pl-2*(ph-P);
   return [{name:'P',v:P},{name:'R1',v:R1},{name:'S1',v:S1},{name:'R2',v:R2},{name:'S2',v:S2},{name:'R3',v:R3},{name:'S3',v:S3}];
 }
 
-/* ====== Indicator framework ====== */
+/* ===== Indicator framework ===== */
 const Active=[]; let idSeq=1;
-let markerOwners = new Map(); // id -> markers array
-function updateAllMarkers(){
-  const all=[]; markerOwners.forEach(arr=>{arr&&all.push(...arr);});
-  try{ candleSeries && candleSeries.setMarkers(all); }catch{}
+let markerOwners=new Map();
+function updateAllMarkers(){ const all=[]; markerOwners.forEach(a=>{a&&all.push(...a)}); try{ candleSeries && candleSeries.setMarkers(all); }catch{} }
+function ensureCandleSeries(){ if(candleSeries) cMain.removeSeries(candleSeries);
+  candleSeries=cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'});
 }
-function ensureCandleSeries(){
-  if(candleSeries) cMain.removeSeries(candleSeries);
-  candleSeries = cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'});
-}
-function ensureHeikinSeries(){
-  if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} }
-  haSeries = cMain.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e',wickDownColor:'#ef4444',priceScaleId:'ha'});
+function ensureHeikinSeries(){ if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} }
+  haSeries=cMain.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e',wickDownColor:'#ef4444',priceScaleId:'ha'});
   cMain.priceScale('ha').applyOptions({scaleMargins:{top:0.12,bottom:0.12}});
 }
-function badgeLabel(it){const p=Object.entries(it.params).map(([k,v])=>`${k}:${v}`).join(','); return `${it.key}${p?`(${p})`:''}`;}
-function renderBadges(){ els.badges.innerHTML=''; Active.forEach(it=>{const s=document.createElement('span'); s.className='badge'; s.textContent=badgeLabel(it)+' '; const b=document.createElement('button'); b.textContent='×'; b.onclick=()=>removeIndicator(it.id); s.appendChild(b); els.badges.appendChild(s);}); els.oscSlot.style.display = Active.some(x=>x.kind==='osc') ? 'block':'none'; }
-function removeIndicator(id){ const idx=Active.findIndex(x=>x.id===id); if(idx>=0){ Active[idx].series.forEach(s=>{try{(Active[idx].kind==='osc'?cOsc:cMain).removeSeries(s);}catch{}}); if(Active[idx].extraCleanup) Active[idx].extraCleanup(); Active.splice(idx,1); markerOwners.delete(id); updateAllMarkers(); renderBadges(); }}
+function badgeLabel(it){const p=Object.entries(it.params).filter(([k])=>k!=='_color').map(([k,v])=>`${k}:${v}`).join(','); return `${it.key}${p?`(${p})`:''}`;}
+function renderBadges(){
+  els.badges.innerHTML='';
+  Active.forEach(it=>{
+    const s=document.createElement('span'); s.className='badge'; s.textContent=badgeLabel(it)+' ';
+    s.title='Click to edit settings'; s.onclick=()=>openSheet(it.id);
+    const b=document.createElement('button'); b.textContent='×'; b.onclick=(e)=>{e.stopPropagation(); removeIndicator(it.id); saveLayout();};
+    s.appendChild(b); els.badges.appendChild(s);
+  });
+  els.oscSlot.style.display = Active.some(x=>x.kind==='osc') ? 'block':'none';
+}
+function removeIndicator(id){
+  const idx=Active.findIndex(x=>x.id===id);
+  if(idx>=0){
+    Active[idx].series.forEach(s=>{try{(Active[idx].kind==='osc'?cOsc:cMain).removeSeries(s);}catch{}});
+    if(Active[idx].extraCleanup) Active[idx].extraCleanup();
+    Active.splice(idx,1); markerOwners.delete(id); updateAllMarkers(); renderBadges();
+  }
+}
 
-/* ====== Series helpers ====== */
+/* Series helpers */
 function lineOn(chart){ return chart.addLineSeries({lineWidth:2}); }
-function histOn(chart, extra){ return chart.addHistogramSeries({...extra}); }
-function pack(series, updater){ const list = Array.isArray(series)? series:[series]; return {series:list, update:updater}; }
-function packOsc(series, updater){ const p=pack(series,updater); return {...p, kind:'osc'}; }
-function setLine(series, y){ series.setData(DATA.map((d,i)=>({time:d.time, value: y[i]==null? NaN : y[i]}))); }
-function setHist(series, y){ series.setData(DATA.map((d,i)=>({time:d.time, value: y[i]==null? 0 : y[i], color: (y[i]??0)>=0 ? '#16a34a':'#ef4444'}))); }
+function histOn(chart,extra){ return chart.addHistogramSeries({...extra}); }
+function pack(series,updater){ const list=Array.isArray(series)?series:[series]; return {series:list,update:updater}; }
+function packOsc(series,updater){ const p=pack(series,updater); return {...p,kind:'osc'}; }
+function setLine(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?NaN:y[i]}))); }
+function setHist(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?0:y[i],color:(y[i]??0)>=0?'#16a34a':'#ef4444'}))); }
 function scatterOn(chart){ return chart.addHistogramSeries({base:0}); }
-function setPoints(series, y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?0:y[i]}))); }
+function setPoints(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?0:y[i]}))); }
 
-/* ====== Registry ====== */
+/* Registry (with color param where relevant) */
 const Registry={
-  /* MAs */
-  SMA: {kind:'overlay', params:[{k:'period',v:20,min:1}], add(p){const s=lineOn(cMain); return pack(s, (A)=>setLine(s,SMA(A,p.period)));}},
-  EMA: {kind:'overlay', params:[{k:'period',v:50,min:1}], add(p){const s=lineOn(cMain); return pack(s, (A)=>setLine(s,EMA(A,p.period)));}},
-  WMA: {kind:'overlay', params:[{k:'period',v:30,min:1}], add(p){const s=lineOn(cMain); return pack(s, A=>setLine(s,WMA(A,p.period)));}},
-  HMA: {kind:'overlay', params:[{k:'period',v:55,min:2}], add(p){const s=lineOn(cMain); return pack(s, A=>setLine(s,HMA(A,p.period)));}},
-  DEMA:{kind:'overlay', params:[{k:'period',v:20,min:2}], add(p){const s=lineOn(cMain); return pack(s, A=>setLine(s,DEMAarr(A,p.period)));}},
-  TEMA:{kind:'overlay', params:[{k:'period',v:20,min:2}], add(p){const s=lineOn(cMain); return pack(s, A=>setLine(s,TEMAarr(A,p.period)));}},
-  VWMA:{kind:'overlay', params:[{k:'period',v:20,min:2}], add(p){const s=lineOn(cMain); return pack(s, A=>setLine(s,VWMAcore(A,p.period)));}},
+  SMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)));}},
+  EMA:{kind:'overlay',params:[{k:'period',v:50,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,EMA(A,p.period)));}},
+  WMA:{kind:'overlay',params:[{k:'period',v:30,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WMA(A,p.period)));}},
+  HMA:{kind:'overlay',params:[{k:'period',v:55,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,HMA(A,p.period)));}},
+  DEMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,DEMAarr(A,p.period)));}},
+  TEMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TEMAarr(A,p.period)));}},
+  VWMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWMAcore(A,p.period)));}},
 
-  /* Bands/Volatility */
-  BB:{kind:'overlay', params:[{k:'period',v:20,min:2},{k:'mult',v:2,step:0.5}], add(p){const u=lineOn(cMain), m=lineOn(cMain), l=lineOn(cMain); return pack([u,m,l], A=>{const b=BBcalc(A,p.period,p.mult); setLine(u,b.upper); setLine(m,b.mid); setLine(l,b.lower);});}},
-  Keltner:{kind:'overlay', params:[{k:'period',v:20},{k:'mult',v:2}], add(p){const u=lineOn(cMain), m=lineOn(cMain), l=lineOn(cMain); return pack([u,m,l], A=>{const k=KeltnerCore(A,p.period,p.mult); setLine(u,k.upper); setLine(m,k.mid); setLine(l,k.lower);});}},
-  Donchian:{kind:'overlay', params:[{k:'period',v:20}], add(p){const u=lineOn(cMain), l=lineOn(cMain); return pack([u,l], A=>{const d=DonchianCore(A,p.period); setLine(u,d.upper); setLine(l,d.lower);});}},
-  ATR:{kind:'osc', params:[{k:'period',v:14}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,ATR(A,p.period)));}},
-  Supertrend:{kind:'overlay', params:[{k:'atr',v:10},{k:'mult',v:3}], add(p){const st=lineOn(cMain); return pack(st, A=>{const S=SupertrendCore(A,p.atr,p.mult); setLine(st,S.st);});}},
-  PSAR:{kind:'overlay', params:[{k:'step',v:0.02,step:0.01},{k:'max',v:0.2,step:0.01}], add(p){const s=scatterOn(cMain); return pack(s, A=>setPoints(s,PSARcore(A,p.step,p.max)));}},
+  BB:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'mult',v:2,step:0.5},{k:'_color',v:'#60a5fa'}],add(p){const u=lineOn(cMain),m=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,m,l]},p._color); return pack([u,m,l],A=>{const b=BBcalc(A,p.period,p.mult); setLine(u,b.upper); setLine(m,b.mid); setLine(l,b.lower);});}},
+  Keltner:{kind:'overlay',params:[{k:'period',v:20},{k:'mult',v:2},{k:'_color',v:'#34d399'}],add(p){const u=lineOn(cMain),m=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,m,l]},p._color); return pack([u,m,l],A=>{const k=KeltnerCore(A,p.period,p.mult); setLine(u,k.upper); setLine(m,k.mid); setLine(l,k.lower);});}},
+  Donchian:{kind:'overlay',params:[{k:'period',v:20},{k:'_color',v:'#f472b6'}],add(p){const u=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,l]},p._color); return pack([u,l],A=>{const d=DonchianCore(A,p.period); setLine(u,d.upper); setLine(l,d.lower);});}},
+  ATR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fcd535'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,ATR(A,p.period)));}},
+  Supertrend:{kind:'overlay',params:[{k:'atr',v:10},{k:'mult',v:3},{k:'_color',v:'#22c55e'}],add(p){const st=lineOn(cMain); setSeriesColor(st,p._color); return pack(st,A=>{const S=SupertrendCore(A,p.atr,p.mult); setLine(st,S.st);});}},
+  PSAR:{kind:'overlay',params:[{k:'step',v:0.02,step:0.01},{k:'max',v:0.2,step:0.01},{k:'_color',v:'#a78bfa'}],add(p){const s=scatterOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setPoints(s,PSARcore(A,p.step,p.max)));}},
 
-  /* Price/Overlay */
-  VWAP:{kind:'overlay', params:[], add(){const s=lineOn(cMain); return pack(s, A=>setLine(s,VWAPsession(A)));}},
-  Ichimoku:{kind:'overlay', params:[{k:'conv',v:9},{k:'base',v:26},{k:'lag',v:52}], add(p){const c=lineOn(cMain), b=lineOn(cMain), sa=lineOn(cMain), sb=lineOn(cMain); return pack([c,b,sa,sb], A=>{const out=IchimokuCore(A,p); setLine(c,out.conv); setLine(b,out.base); setLine(sa,out.spanA); setLine(sb,out.spanB);});}},
-  HeikinAshi:{kind:'overlay', params:[], add(){ensureHeikinSeries(); return {series:[haSeries], update:(A)=> haSeries.setData(HeikinAshi(A)), extraCleanup:()=>{try{cMain.removeSeries(haSeries)}catch{}}};}},
-  PivotClassic:{kind:'overlay', params:[], add(){const lines=[]; return {series:lines, update:(A)=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}}); lines.length=0; const piv=PivotsClassic(A); piv.forEach(pp=>{const s=cMain.addLineSeries({priceScaleId:'right',lineWidth:1}); s.setData(A.map(b=>({time:b.time,value:pp.v}))); lines.push(s);}); }, extraCleanup:()=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}});} };}},
+  VWAP:{kind:'overlay',params:[{k:'_color',v:'#93c5fd'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWAPsession(A)));}},
+  Ichimoku:{kind:'overlay',params:[{k:'conv',v:9},{k:'base',v:26},{k:'lag',v:52},{k:'_color',v:'#38bdf8'}],add(p){const c=lineOn(cMain),b=lineOn(cMain),sa=lineOn(cMain),sb=lineOn(cMain); setPackColor({series:[c,b,sa,sb]},p._color); return pack([c,b,sa,sb],A=>{const out=IchimokuCore(A,p); setLine(c,out.conv); setLine(b,out.base); setLine(sa,out.spanA); setLine(sb,out.spanB);});}},
+  HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return {series:[haSeries],update:(A)=>haSeries.setData(HeikinAshi(A)),extraCleanup:()=>{try{cMain.removeSeries(haSeries)}catch{}}};}},
+  PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],add(p){const lines=[]; return {series:lines,update:(A)=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}}); lines.length=0; const piv=PivotsClassic(A); piv.forEach(pp=>{const s=cMain.addLineSeries({priceScaleId:'right',lineWidth:1,color:p._color}); s.setData(A.map(b=>({time:b.time,value:pp.v}))); lines.push(s);});},extraCleanup:()=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}});} };}},
 
-  /* Oscillators */
-  RSI:{kind:'osc', params:[{k:'period',v:14}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,RSI(A,p.period)));}},
-  Stochastic:{kind:'osc', params:[{k:'k',v:14},{k:'d',v:3}], add(p){const k=lineOn(cOsc), d=lineOn(cOsc); return packOsc([k,d], A=>{const S=Stochastic(A,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
-  StochRSI:{kind:'osc', params:[{k:'period',v:14},{k:'k',v:3},{k:'d',v:3}], add(p){const k=lineOn(cOsc), d=lineOn(cOsc); return packOsc([k,d], A=>{const r=RSI(A,p.period); const rArr=r.map(x=>({high:x,low:x,close:x})); const S=Stochastic(rArr,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
-  MACD:{kind:'osc', params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9}], add(p){const l=lineOn(cOsc), s=lineOn(cOsc), h=histOn(cOsc,{}); return packOsc([l,s,h], A=>{const m=MACDcore(A,p.fast,p.slow,p.signal); setLine(l,m.mac); setLine(s,m.sig); setHist(h,m.hist);});}},
-  PPO:{kind:'osc', params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9}], add(p){const l=lineOn(cOsc), s=lineOn(cOsc), h=histOn(cOsc,{}); return packOsc([l,s,h], A=>{const m=PPOcore(A,p.fast,p.slow,p.signal); setLine(l,m.ppo); setLine(s,m.sig); setHist(h,m.hist);});}},
-  TRIX:{kind:'osc', params:[{k:'period',v:15}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,TRIXcore(A,p.period)));}},
-  TSI:{kind:'osc', params:[{k:'fast',v:25},{k:'slow',v:13}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,TSIcore(A,p.fast,p.slow)));}},
-  WilliamsR:{kind:'osc', params:[{k:'period',v:14}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,WilliamsR(A,p.period)));}},
-  CCI:{kind:'osc', params:[{k:'period',v:20}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,CCIcore(A,p.period)));}},
-  ROC:{kind:'osc', params:[{k:'period',v:12}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,ROCcore(A,p.period)));}},
-  Aroon:{kind:'osc', params:[{k:'period',v:25}], add(p){const u=lineOn(cOsc), d=lineOn(cOsc); return packOsc([u,d], A=>{const R=AroonCore(A,p.period); setLine(u,R.up); setLine(d,R.down);});}},
-  ADX:{kind:'osc', params:[{k:'period',v:14}], add(p){const pd=lineOn(cOsc), md=lineOn(cOsc), ax=lineOn(cOsc); return packOsc([pd,md,ax], A=>{const D=ADXcore(A,p.period); setLine(pd,D.pdi); setLine(md,D.mdi); setLine(ax,D.adx);});}},
-  Awesome:{kind:'osc', params:[], add(){const h=histOn(cOsc,{}); return packOsc(h, A=>setHist(h,AwesomeCore(A)));}},
-  ElderRay:{kind:'osc', params:[{k:'period',v:13}], add(p){const b=lineOn(cOsc), br=lineOn(cOsc); return packOsc([b,br], A=>{const E=ElderRayCore(A,p.period); setLine(b,E.bull); setLine(br,E.bear);});}},
+  RSI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#22d3ee'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,RSI(A,p.period)));}},
+  Stochastic:{kind:'osc',params:[{k:'k',v:14},{k:'d',v:3},{k:'_color',v:'#a3e635'}],add(p){const k=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[k,d]},p._color); return packOsc([k,d],A=>{const S=Stochastic(A,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
+  StochRSI:{kind:'osc',params:[{k:'period',v:14},{k:'k',v:3},{k:'d',v:3},{k:'_color',v:'#f472b6'}],add(p){const k=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[k,d]},p._color); return packOsc([k,d],A=>{const r=RSI(A,p.period); const rArr=r.map(x=>({high:x,low:x,close:x})); const S=Stochastic(rArr,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
+  MACD:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#60a5fa'}],add(p){const l=lineOn(cOsc),s=lineOn(cOsc),h=histOn(cOsc,{}); setPackColor({series:[l,s]},p._color); return packOsc([l,s,h],A=>{const m=MACDcore(A,p.fast,p.slow,p.signal); setLine(l,m.mac); setLine(s,m.sig); setHist(h,m.hist);});}},
+  PPO:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#34d399'}],add(p){const l=lineOn(cOsc),s=lineOn(cOsc),h=histOn(cOsc,{}); setPackColor({series:[l,s]},p._color); return packOsc([l,s,h],A=>{const m=PPOcore(A,p.fast,p.slow,p.signal); setLine(l,m.ppo); setLine(s,m.sig); setHist(h,m.hist);});}},
+  TRIX:{kind:'osc',params:[{k:'period',v:15},{k:'_color',v:'#fbbf24'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,TRIXcore(A,p.period)));}},
+  TSI:{kind:'osc',params:[{k:'fast',v:25},{k:'slow',v:13},{k:'_color',v:'#f472b6'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,TSIcore(A,p.fast,p.slow)));}},
+  WilliamsR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#f59e0b'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,WilliamsR(A,p.period)));}},
+  CCI:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#c084fc'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,CCIcore(A,p.period)));}},
+  ROC:{kind:'osc',params:[{k:'period',v:12},{k:'_color',v:'#eab308'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,ROCcore(A,p.period)));}},
+  Aroon:{kind:'osc',params:[{k:'period',v:25},{k:'_color',v:'#22d3ee'}],add(p){const u=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[u,d]},p._color); return packOsc([u,d],A=>{const R=AroonCore(A,p.period); setLine(u,R.up); setLine(d,R.down);});}},
+  ADX:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#a3e635'}],add(p){const pd=lineOn(cOsc),md=lineOn(cOsc),ax=lineOn(cOsc); setPackColor({series:[pd,md,ax]},p._color); return packOsc([pd,md,ax],A=>{const D=ADXcore(A,p.period); setLine(pd,D.pdi); setLine(md,D.mdi); setLine(ax,D.adx);});}},
+  Awesome:{kind:'osc',params:[{k:'_color',v:'#60a5fa'}],add(p){const h=histOn(cOsc,{}); return packOsc(h,A=>setHist(h,AwesomeCore(A)));}},
 
-  /* Volume/Flow */
-  Volume:{kind:'overlay', params:[], add(){const h=cMain.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'}); cMain.priceScale('vol').applyOptions({scaleMargins:{top:0.8,bottom:0}}); return pack(h, A=>h.setData(A.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?'#16a34a':'#ef4444'}))));}},
-  OBV:{kind:'osc', params:[], add(){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,OBVcore(A)));}},
-  MFI:{kind:'osc', params:[{k:'period',v:14}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,MFICore(A,p.period)));}},
-  CMF:{kind:'osc', params:[{k:'period',v:20}], add(p){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,CMFcore(A,p.period)));}},
-  ADL:{kind:'osc', params:[], add(){const s=lineOn(cOsc); return packOsc(s, A=>setLine(s,ADLcore(A)));}},
-
-  /* ===== CUSTOM: bildo x (long entries) ===== */
-  "bildo x": {
+  "bildo x":{
     kind:'overlay',
-    params:[
-      {k:'emaTrend',v:50,min:2},
-      {k:'emaPull',v:20,min:2},
-      {k:'touch',v:0.003,step:0.001},   // how close to EMA pullback (0.003=0.3%)
-      {k:'swingLook',v:2,min:1}
-    ],
+    params:[{k:'emaTrend',v:50,min:2},{k:'emaPull',v:20,min:2},{k:'touch',v:0.003,step:0.001},{k:'swingLook',v:2,min:1},{k:'_color',v:'#22c55e'}],
     add(p){
-      // invisible host series (needed to own markers without touching candle series data)
-      const host=lineOn(cMain); host.applyOptions({color:'transparent',lineWidth:1});
+      const host=lineOn(cMain); setSeriesColor(host,p._color); host.applyOptions({lineWidth:1});
       function compute(A){
         const emaT=EMA(A,p.emaTrend), emaP=EMA(A,p.emaPull);
         const markers=[];
         for(let i=Math.max(p.emaTrend,p.emaPull)+1;i<A.length;i++){
-          const upTrend = emaT[i]!=null && emaT[i-1]!=null && emaT[i]>emaT[i-1];
-          const touch   = emaP[i]!=null && A[i].low <= emaP[i]*(1+p.touch) && A[i].close >= emaP[i];
-          const bull    = A[i].close > A[i].open;
+          const upTrend=emaT[i]!=null && emaT[i-1]!=null && emaT[i]>emaT[i-1];
+          const touch=emaP[i]!=null && A[i].low <= emaP[i]*(1+p.touch) && A[i].close >= emaP[i];
+          const bull=A[i].close>A[i].open;
           let swingLow=true;
-          for(let j=1;j<=p.swingLook;j++){
-            if(!(A[i].low<=A[i-j].low && A[i].low<=A[i+j]?.low)) { swingLow=false; break; }
-          }
-          if(upTrend && touch && bull && swingLow){
-            markers.push({
-              time:A[i].time,
-              position:'belowBar',
-              color:'#16a34a',
-              shape:'arrowUp',
-              text:'BUY'
-            });
-          }
+          for(let j=1;j<=p.swingLook;j++){ if(!(A[i].low<=A[i-j].low && A[i].low<=A[i+j]?.low)){swingLow=false;break;} }
+          if(upTrend && touch && bull && swingLow){ markers.push({time:A[i].time,position:'belowBar',color:p._color||'#16a34a',shape:'arrowUp',text:'BUY'}); }
         }
         return {markers};
       }
-      const updater=(A)=>{
-        // host follows close so it stays aligned; color invisible
-        host.setData(A.map(b=>({time:b.time,value:b.close})));
-        const {markers}=compute(A);
-        // attach to global marker mixer by owner id
-        const ownerId = itemRef.id;
-        markerOwners.set(ownerId, markers);
-        updateAllMarkers();
-      };
-      // we need itemRef after creation; will be filled by wrapper:
-      const itemRef = {id: null};
-      const pkg = pack(host, updater);
-      pkg.extraCleanup = ()=>{ markerOwners.delete(itemRef.id); updateAllMarkers(); };
-      pkg._bindId = (id)=>{ itemRef.id=id; };
+      const itemRef={id:null};
+      const updater=(A)=>{ host.setData(A.map(b=>({time:b.time,value:b.close}))); const {markers}=compute(A); markerOwners.set(itemRef.id,markers); updateAllMarkers(); };
+      const pkg=pack(host,updater);
+      pkg.extraCleanup=()=>{ markerOwners.delete(itemRef.id); updateAllMarkers(); };
+      pkg._bindId=(id)=>{ itemRef.id=id; };
       return pkg;
     }
   }
 };
 
-/* Ichimoku core used above */
-function IchimokuCore(arr,{conv=9,base=26,lag=52}={}){
+/* Ichimoku helper */
+function IchimokuCore(arr,{conv=9,base=26,lag=52}={})
+{
   const convA=Array(arr.length).fill(null), baseA=Array(arr.length).fill(null), spanA=Array(arr.length).fill(null), spanB=Array(arr.length).fill(null);
   for(let i=0;i<arr.length;i++){
     if(i>=conv-1){ let hh=-1e9,ll=1e9; for(let j=i-conv+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} convA[i]=(hh+ll)/2; }
     if(i>=base-1){ let hh=-1e9,ll=1e9; for(let j=i-base+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} baseA[i]=(hh+ll)/2; }
-    if(i>=base-1){ const a = ( (convA[i]??null) + (baseA[i]??null) )/2; spanA[i+base]=a; }
+    if(i>=base-1){ const a=((convA[i]??null)+(baseA[i]??null))/2; spanA[i+base]=a; }
     if(i>=lag-1){ let hh=-1e9,ll=1e9; for(let j=i-lag+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} spanB[i+base]=(hh+ll)/2; }
   }
-  return {conv:convA, base:baseA, spanA, spanB};
+  return {conv:convA,base:baseA,spanA,spanB};
 }
 
-/* UI params */
+/* Presets */
+function loadPresets(){ try{ return JSON.parse(localStorage.getItem(KEYS.PRESETS)||'{}'); }catch{ return {}; } }
+function savePresets(obj){ localStorage.setItem(KEYS.PRESETS, JSON.stringify(obj)); }
+function renderPresetDropdown(){ const type=els.indSel.value, all=loadPresets(), list=Object.keys(all[type]||{}); els.presetSel.innerHTML='<option value="">— none —</option>'+list.map(n=>`<option>${n}</option>`).join(''); }
+
+/* Params UI */
+els.indSel.addEventListener('change', ()=>{ renderParams(); renderPresetDropdown(); });
 function renderParams(){
   const key=els.indSel.value, def=Registry[key];
   els.paramRow.innerHTML='';
   (def.params||[]).forEach(p=>{
     const w=document.createElement('div'); w.className='kvs';
-    const lab=document.createElement('label'); lab.className='hint'; lab.textContent=p.k.toUpperCase();
-    const inp=document.createElement('input'); inp.type='number'; inp.value=p.v; if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; inp.dataset.key=p.k;
+    const lab=document.createElement('label'); lab.className='hint'; lab.textContent=p.k==='_color'?'COLOR':p.k.toUpperCase();
+    const inp=document.createElement('input');
+    inp.type = (p.k==='_color') ? 'color' : 'number';
+    inp.value=p.v;
+    if(p.k!=='_color'){ if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; }
+    inp.dataset.key=p.k;
     w.appendChild(lab); w.appendChild(inp); els.paramRow.appendChild(w);
   });
 }
-renderParams();
-els.indSel.addEventListener('change', renderParams);
-function collectParams(){ const ps={}; [...els.paramRow.querySelectorAll('input')].forEach(i=>{ const num = i.step && i.step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10); ps[i.dataset.key]=isNaN(num)?parseFloat(i.value):num; }); return ps; }
+renderParams(); renderPresetDropdown();
+
+function collectParams(){
+  const ps={};
+  [...els.paramRow.querySelectorAll('input')].forEach(i=>{
+    const k=i.dataset.key;
+    if(i.type==='color') ps[k]=i.value;
+    else{
+      const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10);
+      ps[k]=isNaN(num)?parseFloat(i.value):num;
+    }
+  });
+  return ps;
+}
 function addIndicator(){
   const key=els.indSel.value, def=Registry[key], params=collectParams();
+  if(params._color==null) params._color=defaultColor;
   const pack=def.add(params);
-  const item={id:idSeq++,key,kind:def.kind||'overlay',params,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup};
-  // bind id to custom package if requested (used in bildo x for marker registry)
+  setPackColor(pack, params._color);
+  const item={id:idSeq++,key,kind:def.kind||'overlay',params,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
   if(typeof pack._bindId==='function') pack._bindId(item.id);
-  Active.push(item); renderBadges(); if(DATA.length) item.update(DATA);
+  Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout();
 }
 els.addInd.addEventListener('click', addIndicator);
 
@@ -381,30 +534,106 @@ els.haToggle.addEventListener('change', ()=>{
     ensureCandleSeries(); ensureHeikinSeries();
     haSeries.setData(HeikinAshi(DATA));
     candleSeries.setData([]);
-    updateAllMarkers();
   }else{
     ensureCandleSeries();
     candleSeries.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
     if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; }
-    updateAllMarkers();
   }
+  updateAllMarkers(); saveLayout();
 });
 
-/* ====== Load & Live ====== */
+/* Settings modal */
+const sheetWrap=$('sheetWrap'), sheetParams=$('sheetParams'), sheetTitle=$('sheetTitle'), sheetSub=$('sheetSub');
+$('sheetClose').onclick=()=>sheetWrap.style.display='none';
+function openSheet(id){
+  const it=Active.find(x=>x.id===id); if(!it) return;
+  sheetTitle.textContent=`${it.key} — Settings`;
+  sheetSub.textContent=`ID ${id} • ${it.kind==='osc'?'Oscillator':'Overlay'}`;
+  sheetParams.innerHTML='';
+  const def=Registry[it.key];
+  (def.params||[]).forEach(p=>{
+    const val= it.params[p.k] ?? p.v;
+    const row=document.createElement('div'); row.className='kv';
+    const type = p.k==='_color' ? 'color' : 'number';
+    const extra = p.k==='_color' ? '' : `${p.min!=null?`min="${p.min}"`:''} ${p.step!=null?`step="${p.step}"`:''}`;
+    row.innerHTML = `<label class="hint" style="width:120px">${p.k==='_color'?'COLOR':p.k.toUpperCase()}</label>
+      <input type="${type}" data-k="${p.k}" value="${val}" ${extra} />`;
+    sheetParams.appendChild(row);
+  });
+
+  $('sheetApply').onclick=()=>{
+    const upd={}; [...sheetParams.querySelectorAll('input')].forEach(i=>{
+      const k=i.dataset.k;
+      if(i.type==='color') upd[k]=i.value;
+      else{
+        const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10);
+        upd[k]=isNaN(num)?parseFloat(i.value):num;
+      }
+    });
+    const idx=Active.findIndex(x=>x.id===id); const keepKind=Active[idx].kind; const key=Active[idx].key;
+    removeIndicator(id);
+    const pack=Registry[key].add(upd); setPackColor(pack,upd._color);
+    const newItem={id:idSeq++,key,kind:keepKind,params:upd,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
+    if(typeof pack._bindId==='function') pack._bindId(newItem.id);
+    Active.splice(idx,0,newItem); renderBadges(); if(DATA.length) newItem.update(DATA); sheetWrap.style.display='none'; saveLayout();
+  };
+  $('sheetRemove').onclick=()=>{ removeIndicator(id); sheetWrap.style.display='none'; saveLayout(); };
+  $('sheetDuplicate').onclick=()=>{ const p=JSON.parse(JSON.stringify(Active.find(x=>x.id===id).params)); const pack=Registry[it.key].add(p); setPackColor(pack,p._color); const item={id:idSeq++,key:it.key,kind:it.kind,params:p,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true}; if(typeof pack._bindId==='function') pack._bindId(item.id); Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout(); };
+  $('sheetToggleVis').onclick=()=>{ const it=Active.find(x=>x.id===id); it.visible=!it.visible; (it.series||[]).forEach(s=>{try{s.applyOptions({visible:it.visible})}catch{}}); };
+  sheetWrap.style.display='flex';
+}
+
+/* Layout save/restore */
+function saveLayout(){
+  const layout={quote:els.quote.value,symbol:els.symbol.value,tf:els.tf.value,ha:els.haToggle.checked,indicators:Active.map(x=>({key:x.key,kind:x.kind,params:x.params}))};
+  localStorage.setItem(KEYS.LAYOUT, JSON.stringify(layout));
+}
+function restoreLayout(){
+  try{
+    const raw=localStorage.getItem(KEYS.LAYOUT); if(!raw) return;
+    const L=JSON.parse(raw);
+    if(L.quote){ els.quote.value=L.quote; populatePairs(); }
+    if(L.symbol){ els.symbol.value=L.symbol; }
+    if(L.tf){ els.tf.value=L.tf; }
+    if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
+    (L.indicators||[]).forEach(it=>{
+      const pack=Registry[it.key]?.add(it.params||{}); if(!pack) return; setPackColor(pack,(it.params||{})._color);
+      const item={id:idSeq++,key:it.key,kind:(Registry[it.key].kind||'overlay'),params:(it.params||{}),series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
+      if(typeof pack._bindId==='function') pack._bindId(item.id);
+      Active.push(item);
+    });
+    renderBadges(); if(DATA.length){ Active.forEach(i=>i.update(DATA)); }
+  }catch{}
+}
+
+/* Apply data to chart */
+function applyDataToChart(arr){
+  DATA = arr;
+  ensureCandleSeries();
+  candleSeries.setData(arr.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
+  if(els.haToggle.checked){
+    ensureHeikinSeries();
+    haSeries.setData(HeikinAshi(arr));
+    candleSeries.setData([]);
+  } else if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; }
+  Active.forEach(it=>it.update(DATA));
+}
+
+/* Quick load (1000 bars) */
 async function loadAll(){
   try{
     let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
     if(sym && !sym.endsWith(q)) sym = sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'') + q;
-    if(!VALID_SET.has(sym)){ const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,''); const guess=(EXINFO.symbols||[]).find(s=>s.status==='TRADING'&&s.baseAsset===base); if(guess){ sym=guess.symbol; els.quote.value=guess.quoteAsset; populatePairs(); } else { alert('Symbol not found'); return; } }
+    if(!VALID_SET.has(sym)){
+      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
+      const guess=(EXINFO.symbols||[]).find(s=>s.status==='TRADING'&&s.baseAsset===base);
+      if(guess){ sym=guess.symbol; els.quote.value=guess.quoteAsset; populatePairs(); } else { alert('Symbol not found'); return; }
+    }
     els.symbol.value=sym; setStatus(`Loading ${sym} • ${tf} …`);
     closeWS();
 
-    DATA = await fetchK(sym,tf,1500);
-    ensureCandleSeries();
-    candleSeries.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-    if(els.haToggle.checked){ ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); }
-
-    Active.forEach(it=>it.update(DATA));
+    const baseData = await fetchK(sym,tf,1000);
+    applyDataToChart(baseData);
 
     const stream=`${sym.toLowerCase()}@kline_${tf}`; WS=new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
     WS.onopen = ()=> setStatus(`Live: ${sym} • ${tf}`);
@@ -413,25 +642,74 @@ async function loadAll(){
     WS.onmessage=(e)=>{ try{
       const msg=JSON.parse(e.data); if(!msg.k) return; const k=msg.k; const t=Math.floor(k.t/1000);
       const bar={time:t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
-      const last=DATA[DATA.length-1]?.time; if(last===t){ DATA[DATA.length-1]=bar; } else { DATA.push(bar); if(DATA.length>3000) DATA.shift(); }
+      const last=DATA[DATA.length-1]?.time; if(last===t){ DATA[DATA.length-1]=bar; } else { DATA.push(bar); if(DATA.length>300000) DATA.shift(); }
       candleSeries.update(bar); if(haSeries) haSeries.update(HeikinAshi([bar])[0]);
       Active.forEach(it=>it.update(DATA));
     }catch(err){} };
+    saveLayout();
   }catch(err){ console.error(err); setStatus('Error loading'); alert('Load failed'); }
 }
 
-/* ====== Events ====== */
-$('reload').addEventListener('click', ()=>{ Active.splice(0).forEach(it=>removeIndicator(it.id)); loadAll(); });
+/* Load N-months history then resume live */
+async function loadMonths(months){
+  try{
+    let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
+    if(sym && !sym.endsWith(q)) sym = sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'') + q;
+    if(!VALID_SET.has(sym)){
+      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
+      const guess=(EXINFO.symbols||[]).find(s=>s.status==='TRADING'&&s.baseAsset===base);
+      if(guess){ sym=guess.symbol; els.quote.value=guess.quoteAsset; populatePairs(); } else { alert('Symbol not found'); return; }
+    }
+    els.symbol.value=sym;
+    setStatus(`Preparing ${months}M • ${sym} • ${tf}`);
+    closeWS();
+
+    const data = await fetchKRange(sym, tf, months);
+    applyDataToChart(data);
+
+    const stream=`${sym.toLowerCase()}@kline_${tf}`; WS=new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
+    WS.onopen = ()=> setStatus(`Live: ${sym} • ${tf} • ${months}M`);
+    WS.onclose= ()=> setStatus(`Disconnected • ${sym} • ${tf}`);
+    WS.onerror= ()=> setStatus(`Socket error • ${sym} • ${tf}`);
+    WS.onmessage=(e)=>{ try{
+      const msg=JSON.parse(e.data); if(!msg.k) return; const k=msg.k; const t=Math.floor(k.t/1000);
+      const bar={time:t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
+      const last=DATA[DATA.length-1]?.time; if(last===t){ DATA[DATA.length-1]=bar; } else { DATA.push(bar); if(DATA.length>300000) DATA.shift(); }
+      candleSeries.update(bar); if(haSeries) haSeries.update(HeikinAshi([bar])[0]);
+      Active.forEach(it=>it.update(DATA));
+    }catch(err){} };
+    saveLayout();
+  }catch(err){ console.error(err); setStatus('Error loading 36M'); alert('36M load failed'); }
+}
+
+/* Events */
+$('reload').addEventListener('click', ()=>{ Active.slice().forEach(it=>removeIndicator(it.id)); loadAll(); });
 els.tf.addEventListener('change', loadAll);
 els.symbol.addEventListener('keydown', e=>{ if(e.key==='Enter') loadAll(); });
 els.symbol.addEventListener('change', ()=>{ const v=els.symbol.value.toUpperCase(); if(VALID_SET.has(v)) loadAll(); });
 els.quote.addEventListener('change', ()=>{ populatePairs(); loadAll(); });
+els.range36.addEventListener('click', ()=> loadMonths(36));
 
-/* ====== Boot ====== */
+/* Boot */
 (async function(){
   await loadExchangeInfo(); populatePairs();
-  const q=els.quote.value; const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT';
-  els.symbol.value=def; await loadAll();
+  const raw=localStorage.getItem(KEYS.LAYOUT);
+  if(raw){
+    try{
+      const L=JSON.parse(raw);
+      if(L.quote){ els.quote.value=L.quote; }
+      populatePairs();
+      if(L.symbol){ els.symbol.value=L.symbol; }
+      if(L.tf){ els.tf.value=L.tf; }
+      if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
+    }catch{}
+  }
+  if(!els.symbol.value){
+    const q=els.quote.value; const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT';
+    els.symbol.value=def;
+  }
+  await loadAll();   // quick load (1000 bars)
+  restoreLayout();
 })();
 </script>
 </body>
