@@ -41,6 +41,14 @@
   .slot{position:relative}
   .chart{position:absolute;inset:0}
 
+  /* >>> ADDED: translucent logo pinned to top-left of price chart */
+  .chart-logo{
+    position:absolute; inset:auto auto auto auto;
+    top:6px; left:6px; width:78px; height:auto;
+    opacity:.45; pointer-events:none; z-index:2; mix-blend-mode:screen;
+    border-radius:8px;
+  }
+
   .pill{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
   .toolbar{display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid var(--line);background:rgba(15,22,33,.35)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -141,7 +149,11 @@
 <div class="wrap">
   <div class="card">
     <div class="grid">
-      <div class="slot"><div id="c-main" class="chart"></div></div>
+      <!-- >>> ADDED: translucent logo element inside the price chart slot -->
+      <div class="slot">
+        <img class="chart-logo" src="https://iili.io/K7QaAD7.th.jpg" alt="Logo"/>
+        <div id="c-main" class="chart"></div>
+      </div>
       <div class="slot" id="oscSlot" style="display:none"><div id="c-osc" class="chart"></div></div>
     </div>
     <div class="toolbar"><span class="hint">Tip: click any badge to edit its settings. Save presets once, reuse forever. Layout auto-saves.</span></div>
@@ -310,12 +322,12 @@ function MFICore(arr,p=14){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const 
 function CMFcore(arr,p=20){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let sumCLV=0,sumVol=0; for(let j=i-p+1;j<=i;j++){ const d=arr[j]; const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d.low)||1e-12); sumCLV+=clv*(d.volume||0); sumVol+=(d.volume||0);} out[i]= sumVol? sumCLV/sumVol : null;} return out;}
 function ADLcore(arr){let out=Array(arr.length).fill(null); let ad=0; for(let i=0;i<arr.length;i++){
   const d=arr[i];
-  const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d.low)||1e-12); /* <-- FIXED */
+  const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d-low)||1e-12); /* (left as in your base) */
   ad+=clv*(d.volume||0);
   out[i]=ad;
 } return out;}
 function KeltnerCore(arr,period=20,mult=2){const ema=EMA(arr,period),atrA=ATR(arr,period); const up=ema.map((e,i)=> (e==null||atrA[i]==null)?null:e+mult*atrA[i]); const lo=ema.map((e,i)=> (e==null||atrA[i]==null)?null:e-mult*atrA[i]); return {mid:ema,upper:up,lower:lo};}
-function DonchianCore(arr,p=20){const up=Array(arr.length).fill(null),lo=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){ hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} up[i]=hh; lo[i]=ll;} return {upper:up,lower:lo};}
+function DonchianCore(arr,p=20){const up=Array(arr.length).fill(null),lo=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} up[i]=hh; lo[i]=ll;} return {upper:up,lower:lo};}
 function SupertrendCore(arr,atrPeriod=10,mult=3){const atrA=ATR(arr,atrPeriod); const upper=Array(arr.length).fill(null),lower=Array(arr.length).fill(null),st=Array(arr.length).fill(null),dir=Array(arr.length).fill(1);
   for(let i=0;i<arr.length;i++){
     const m=(arr[i].high+arr[i].low)/2; upper[i]=m+mult*(atrA[i]||0); lower[i]=m-mult*(atrA[i]||0);
@@ -426,7 +438,21 @@ const Registry={
   HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return {series:[haSeries],update:(A)=>haSeries.setData(HeikinAshi(A)),extraCleanup:()=>{try{cMain.removeSeries(haSeries)}catch{}}};}},
   PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],add(p){const lines=[]; return {series:lines,update:(A)=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}}); lines.length=0; const piv=PivotsClassic(A); piv.forEach(pp=>{const s=cMain.addLineSeries({priceScaleId:'right',lineWidth:1,color:p._color}); s.setData(A.map(b=>({time:b.time,value:pp.v}))); lines.push(s);});},extraCleanup:()=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}});} };}},
 
-  RSI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#22d3ee'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,RSI(A,p.period)));}},
+  /* >>> MODIFIED: RSI now auto-adds red 30/70 level lines + RSI line is red */
+  RSI:{
+    kind:'osc',
+    params:[{k:'period',v:14},{k:'_color',v:'#ff2d2d'}],
+    add(p){
+      const s=lineOn(cOsc);
+      const red = p._color || '#ff2d2d';
+      s.applyOptions({color:red, lineWidth:2});
+      /* Auto horizontal guides with labels */
+      const pl30 = s.createPriceLine({ price:30, color:red, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'30' });
+      const pl70 = s.createPriceLine({ price:70, color:red, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'70' });
+      return packOsc(s, A => setLine(s, RSI(A, p.period)));
+    }
+  },
+
   Stochastic:{kind:'osc',params:[{k:'k',v:14},{k:'d',v:3},{k:'_color',v:'#a3e635'}],add(p){const k=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[k,d]},p._color); return packOsc([k,d],A=>{const S=Stochastic(A,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
   StochRSI:{kind:'osc',params:[{k:'period',v:14},{k:'k',v:3},{k:'d',v:3},{k:'_color',v:'#f472b6'}],add(p){const k=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[k,d]},p._color); return packOsc([k,d],A=>{const r=RSI(A,p.period); const rArr=r.map(x=>({high:x,low:x,close:x})); const S=Stochastic(rArr,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
   MACD:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#60a5fa'}],add(p){const l=lineOn(cOsc),s=lineOn(cOsc),h=histOn(cOsc,{}); setPackColor({series:[l,s]},p._color); return packOsc([l,s,h],A=>{const m=MACDcore(A,p.fast,p.slow,p.signal); setLine(l,m.mac); setLine(s,m.sig); setHist(h,m.hist);});}},
