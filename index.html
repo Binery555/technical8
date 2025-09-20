@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Signal Studio — Mega Indicators Pack (v2)</title>
+<title>AI Signal Studio — Mega Indicators Pack (v2) + Main Chart Engine</title>
 <link rel="preconnect" href="https://unpkg.com"/>
 <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 <style>
@@ -20,7 +20,6 @@
     color:var(--ink);
     font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
   }
-
   header{position:sticky;top:0;z-index:3;background:rgba(11,15,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;padding:10px 14px;flex-wrap:wrap}
   header h1{font-size:16px;margin:0 10px 0 0;letter-spacing:.2px;color:#fff;white-space:nowrap}
   .spacer{flex:1}
@@ -29,7 +28,6 @@
   select,input,button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;outline:none}
   input[list]{min-width:180px}
   button{cursor:pointer}
-
   .wrap{padding:12px;display:grid;gap:12px}
   .card{
     background:linear-gradient(180deg,var(--panel),var(--panel2));
@@ -40,15 +38,7 @@
   .grid{display:grid;gap:12px;grid-template-rows:minmax(260px,1fr) minmax(140px,.55fr);height:100%}
   .slot{position:relative}
   .chart{position:absolute;inset:0}
-
-  /* >>> ADDED: translucent logo pinned to top-left of price chart */
-  .chart-logo{
-    position:absolute; inset:auto auto auto auto;
-    top:6px; left:6px; width:78px; height:auto;
-    opacity:.45; pointer-events:none; z-index:2; mix-blend-mode:screen;
-    border-radius:8px;
-  }
-
+  .corner-logo{position:absolute; z-index:2; top:8px; left:8px; width:54px; height:auto;opacity:.45; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
   .pill{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
   .toolbar{display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid var(--line);background:rgba(15,22,33,.35)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -59,7 +49,6 @@
   .badge button{padding:2px 6px;border-radius:999px;border:1px solid var(--line);background:#101a28;color:#fff;cursor:pointer}
   .section-title{font-size:12px;color:var(--muted);margin-right:6px}
   .toggle{display:inline-flex;gap:6px;align-items:center}
-
   .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:20}
   .sheet{width:100%;max-width:720px;margin:0 auto;background:linear-gradient(180deg,#0f1621,#0b1320);border-radius:16px;border:1px solid var(--line);padding:14px 14px 18px}
   .sheet h3{margin:0 0 8px 0;font-size:14px}
@@ -70,27 +59,31 @@
   .muted{color:var(--muted);font-size:12px}
   .ghost{background:#0c141f}
   input[type="color"]{padding:0;width:42px;height:36px;border-radius:8px;border:1px solid var(--line);background:#0e1520}
+  .sheet .kv input[type="checkbox"]{width:auto;height:auto}
 </style>
 </head>
 <body>
 <header>
   <h1>AI Signal Studio — Mega Indicators</h1>
-  <div class="spacer"></div>
-
-  <div class="ctrl"><span class="pill" id="status">Loading markets…</span></div>
-
   <div class="ctrl">
     <label class="hint">Market</label>
+    <select id="market">
+      <option value="spot" selected>Spot</option>
+      <option value="um">Futures (USDT-M)</option>
+    </select>
+  </div>
+  <div class="spacer"></div>
+  <div class="ctrl"><span class="pill" id="status">Loading markets…</span></div>
+  <div class="ctrl">
+    <label class="hint">Quote</label>
     <select id="quote">
       <option value="USDT" selected>USDT</option><option value="FDUSD">FDUSD</option>
       <option value="USDC">USDC</option><option value="BTC">BTC</option>
       <option value="ETH">ETH</option><option value="BNB">BNB</option>
       <option value="TRY">TRY</option>
     </select>
-
     <label class="hint">Symbol</label>
     <input id="symbol" list="pairs" placeholder="Select pair…"/><datalist id="pairs"></datalist>
-
     <label class="hint">TF</label>
     <select id="tf">
       <option value="1m">1m</option><option value="3m">3m</option>
@@ -98,9 +91,8 @@
       <option value="1h">1h</option><option value="2h">2h</option><option value="4h">4h</option><option value="1d">1d</option>
     </select>
     <button id="reload">Load</button>
-
-    <!-- Range -->
     <label class="hint">Range</label>
+    <button id="range12">12M</button>
     <button id="range36">36M</button>
   </div>
 
@@ -130,18 +122,14 @@
         <option>bildo x</option>
       </optgroup>
     </select>
-
     <div id="paramRow" class="row kvs"></div>
-
     <label class="hint">Preset</label>
     <select id="presetSel"><option value="">— none —</option></select>
     <button id="applyPreset" class="ghost">Apply</button>
     <button id="savePreset" title="Save current params as preset">Save</button>
     <button id="delPreset" class="ghost">Delete</button>
-
     <button id="addInd">Add</button>
     <div class="badges" id="activeBadges"></div>
-
     <label class="toggle"><input type="checkbox" id="haToggle"/> <span class="hint">Use Heikin-Ashi candles</span></label>
   </div>
 </header>
@@ -149,9 +137,8 @@
 <div class="wrap">
   <div class="card">
     <div class="grid">
-      <!-- >>> ADDED: translucent logo element inside the price chart slot -->
       <div class="slot">
-        <img class="chart-logo" src="https://iili.io/K7QaAD7.th.jpg" alt="Logo"/>
+        <img class="corner-logo" src="https://iili.io/K7QaAD7.th.jpg" alt="logo"/>
         <div id="c-main" class="chart"></div>
       </div>
       <div class="slot" id="oscSlot" style="display:none"><div id="c-osc" class="chart"></div></div>
@@ -160,7 +147,6 @@
   </div>
 </div>
 
-<!-- Settings modal -->
 <div id="sheetWrap" class="sheet-backdrop">
   <div class="sheet">
     <div class="row" style="justify-content:space-between;align-items:center">
@@ -179,13 +165,13 @@
 </div>
 
 <script>
-/* ===== Helpers & state ===== */
+/* ========= Shared helpers & UI refs ========= */
 const $=id=>document.getElementById(id);
-const els={status:$('status'),quote:$('quote'),symbol:$('symbol'),pairs:$('pairs'),tf:$('tf'),
+const els={status:$('status'),market:$('market'),quote:$('quote'),symbol:$('symbol'),pairs:$('pairs'),tf:$('tf'),
            indSel:$('indSel'),paramRow:$('paramRow'),addInd:$('addInd'),badges:$('activeBadges'),
            haToggle:$('haToggle'),oscSlot:$('oscSlot'),
            presetSel:$('presetSel'),savePreset:$('savePreset'),applyPreset:$('applyPreset'),delPreset:$('delPreset'),
-           range36:$('range36')};
+           range12:$('range12'),range36:$('range36')};
 const setStatus=t=>els.status.textContent=t;
 
 const defaultColor='#fcd535';
@@ -204,16 +190,33 @@ function setPackColor(pack,color){
 const KEYS={PRESETS:'aiSS_presets_v2', LAYOUT:'aiSS_layout_v2'};
 let EXINFO=null,BY_QUOTE={},VALID_SET=new Set();
 
-/* ===== Exchange / Pairs ===== */
+/* ========= Market endpoints ========= */
+let API_BASE=null, WS_URL_BASE=null;
+function applyMarketEndpoints(){
+  const m=els.market.value;
+  if(m==='spot'){ API_BASE='https://api.binance.com'; WS_URL_BASE='wss://stream.binance.com:9443/ws'; }
+  else{ API_BASE='https://fapi.binance.com'; WS_URL_BASE='wss://fstream.binance.com/ws'; }
+}
+
+/* ========= Exchange / Pairs ========= */
 async function loadExchangeInfo(){
   setStatus('Loading markets…');
-  const r=await fetch('https://api.binance.com/api/v3/exchangeInfo');
+  applyMarketEndpoints();
+  const path = (els.market.value==='spot') ? '/api/v3/exchangeInfo' : '/fapi/v1/exchangeInfo';
+  const r=await fetch(`${API_BASE}${path}`);
   if(!r.ok) throw new Error('exchangeInfo failed');
   EXINFO=await r.json(); BY_QUOTE={}; VALID_SET=new Set();
   (EXINFO.symbols||[]).filter(s=>s.status==='TRADING').forEach(s=>{
     VALID_SET.add(s.symbol); (BY_QUOTE[s.quoteAsset] ||= []).push(s.symbol);
   });
-  Object.keys(BY_QUOTE).forEach(q=>BY_QUOTE[q].sort());
+  Object.keys(BY_QUOTE).forEach(q=>{
+    BY_QUOTE[q].sort((a,b)=>{
+      const majors=['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TON','AVAX','TRX','LINK','MATIC','NEAR','OP','ARB','DOT','ATOM','LTC','ETC','FIL','SEI','SUI'];
+      const ba=a.replace(q,''), bb=b.replace(q,'');
+      const pa=majors.includes(ba)?0:1, pb=majors.includes(bb)?0:1;
+      return (pa-pb)||a.localeCompare(b);
+    });
+  });
   setStatus('Markets ready');
 }
 function populatePairs(){
@@ -222,81 +225,274 @@ function populatePairs(){
   list.forEach(s=>{const o=document.createElement('option'); o.value=s; frag.appendChild(o);});
   els.pairs.appendChild(frag);
   if(list.length){
-    const cur=els.symbol.value.toUpperCase();
-    if(!VALID_SET.has(cur)||!cur.endsWith(q)) els.symbol.value=list.find(s=>/^BTC|ETH|BNB/.test(s))||list[0];
-  }
+    const cur=(els.symbol.value||'').toUpperCase();
+    if(!VALID_SET.has(cur)||!cur.endsWith(q)){
+      const pref=list.find(s=>/^(BTC|ETH|BNB|SOL|XRP)/.test(s))||list[0];
+      els.symbol.value=pref;
+    }
+  }else{ els.symbol.value=''; }
 }
 
-/* ===== Charts ===== */
+/* ========= Charts ========= */
 const mkChart=(el,opts={})=>{
   const c=LightweightCharts.createChart(el,{
     layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
     grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
-    rightPriceScale:{borderColor:'#223246'},timeScale:{borderColor:'#223246'},crosshair:{mode:0},...opts
+    rightPriceScale:{borderColor:'#223246'},
+    timeScale:{borderColor:'#223246',rightOffset:20,barSpacing:8},
+    crosshair:{mode:0},
+    ...opts
   });
   const resize=()=>c.applyOptions({width:el.clientWidth,height:el.clientHeight});
   new ResizeObserver(resize).observe(el); resize(); return c;
 };
 const cMain=mkChart($('c-main'));
 const cOsc = mkChart($('c-osc'),{rightPriceScale:{visible:true}});
-let candleSeries=null, haSeries=null;
 
-/* ===== Data & live ===== */
-let DATA=[], WS=null;
-const closeWS=()=>{try{WS&&WS.close()}catch{} WS=null};
+/* Candle/HA series */
+let sCandle = cMain.addCandlestickSeries({
+  upColor:'#16a34a',downColor:'#ef4444',
+  borderUpColor:'#16a34a',borderDownColor:'#ef4444',
+  wickUpColor:'#16a34a',wickDownColor:'#ef4444'
+});
+let haSeries=null;
 
-async function fetchK(symbol,interval,limit=1000){
-  const u=`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const r=await fetch(u); if(!r.ok) throw new Error('klines failed');
-  const a=await r.json();
-  return a.map(k=>({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
+/* ==== TimeScale Sync ==== */
+let _syncing=false;
+function syncRanges(src, dst){
+  src.timeScale().subscribeVisibleTimeRangeChange(range=>{
+    if(!range || _syncing) return;
+    _syncing=true;
+    try{ dst.timeScale().setVisibleRange(range); }finally{ _syncing=false; }
+  });
 }
+syncRanges(cMain, cOsc);
+syncRanges(cOsc, cMain);
 
-/* ==== Range fetcher (months) ==== */
-function tfToMs(tf){
-  const m=60*1000, h=60*m, d=24*h;
-  const map={ '1m':m,'3m':3*m,'5m':5*m,'15m':15*m,'30m':30*m,'1h':h,'2h':2*h,'4h':4*h,'1d':d };
-  return map[tf]||d;
+/* ====== Range Guards & Right-Offset Anchor ====== */
+let _guarding=false;
+const ANCHOR_RATIO = 0.45;
+function anchorLatestSlightRight(ts){
+  const lr = ts.getVisibleLogicalRange?.(); if(!lr || lr.from==null || lr.to==null) return;
+  const width = lr.to - lr.from;
+  const targetRight = Math.max(2, Math.round(width * ANCHOR_RATIO));
+  try{ ts.setRightOffset(targetRight); }catch{}
 }
-async function fetchKRange(symbol, interval, months=36){
-  const nowMs=Date.now();
-  const approxMonth=30*24*60*60*1000;
-  let start=nowMs - months*approxMonth;
-  const out=[];
-  let loops=0;
-  setStatus(`Fetching ${months}M • ${symbol} • ${interval}`);
-  while(start < nowMs && loops < 500){
-    const url=`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${start}&limit=1000`;
-    const r=await fetch(url);
-    if(!r.ok) throw new Error('range fetch failed');
-    const a=await r.json();
-    if(!a.length) break;
-    for(const k of a){
-      out.push({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]});
-    }
-    const lastClose=a[a.length-1][6]; // closeTime
-    start = lastClose + 1;
-    loops++;
-    if(loops%3===0){
-      const pct=Math.min(99, ((start-(nowMs-months*approxMonth))/(months*approxMonth))*100 );
-      setStatus(`Fetching ${months}M • ${symbol} • ${interval} • ${pct.toFixed(0)}%`);
-    }
-    if(out.length>200000) break; // safety for tiny TFs
+function clampLeftEdge(ts, firstIndex){
+  const lr = ts.getVisibleLogicalRange?.(); if(!lr || lr.from==null || lr.to==null) return;
+  if(lr.from < firstIndex){
+    const w = lr.to - lr.from;
+    try{ ts.setVisibleLogicalRange({from:firstIndex, to:firstIndex + w}); }catch{}
   }
-  const map=new Map();
-  out.forEach(b=>map.set(b.time,b));
-  const merged=Array.from(map.values()).sort((a,b)=>a.time-b.time);
-  setStatus(`Fetched ${merged.length} bars • ${symbol} • ${interval}`);
-  return merged;
+}
+function installGuards(chart){
+  const ts = chart.timeScale();
+  ts.subscribeVisibleLogicalRangeChange(()=>{
+    if(_guarding) return;
+    _guarding = true;
+    try{
+      clampLeftEdge(ts, 0);
+      anchorLatestSlightRight(ts);
+    }finally{ _guarding = false; }
+  });
+}
+installGuards(cMain);
+
+/* ========= Data & Live ========= */
+let DATA=[], WS=null, OLDEST_MS=null, LOADING_OLD=false, RECONNECT_TRIES=0;
+const MAX_RECONNECT_TRIES=6;
+const closeWS=()=>{try{if(WS){WS.onmessage=null;WS.onclose=null;WS.onerror=null;WS.close();}}catch{} WS=null;};
+
+function normalizeSymbolInput(sym, quote){
+  if(sym && !sym.endsWith(quote)){
+    sym = sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'') + quote;
+  }
+  return sym;
+}
+function findAnyMarketSymbolLike(base){
+  return (EXINFO?.symbols||[]).find(s => (s.status==='TRADING') && s.baseAsset===base)?.symbol;
 }
 
-/* ===== Math (indicators) ===== */
+async function fetchKlines(symbol, interval, limit=1000, endTimeMs=null){
+  const path = (els.market.value==='spot') ? '/api/v3/klines' : '/fapi/v1/klines';
+  const params = new URLSearchParams({ symbol, interval, limit: String(limit) });
+  if(endTimeMs) params.set('endTime', String(endTimeMs));
+  const url = `${API_BASE}${path}?${params}`;
+  const res = await fetch(url);
+  if(!res.ok) {
+    const txt = await res.text().catch(()=>res.statusText);
+    throw new Error(`klines fetch failed (${res.status}) ${txt}`);
+  }
+  const raw = await res.json();
+  return raw.map(k=>({ tms:k[0], time:Math.floor(k[0]/1000), open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5] }));
+}
+
+function openWS(symbol, interval){
+  closeWS();
+  const stream = `${symbol.toLowerCase()}@kline_${interval}`;
+  const url = `${WS_URL_BASE}/${stream}`;
+  WS = new WebSocket(url);
+
+  WS.onopen=()=>{ RECONNECT_TRIES=0; setStatus(`Live: ${symbol} • ${interval}`); };
+  WS.onerror=()=> setStatus(`Socket error • ${symbol} • ${interval}`);
+  WS.onclose = ()=> {
+    setStatus(`Disconnected • ${symbol} • ${interval}`);
+    if(RECONNECT_TRIES < MAX_RECONNECT_TRIES){
+      const wait = Math.min(15000, 500 * Math.pow(2, RECONNECT_TRIES));
+      RECONNECT_TRIES++;
+      setTimeout(()=>openWS(symbol, interval), wait);
+    }
+  };
+  WS.onmessage=(e)=>{ try{
+    const msg=JSON.parse(e.data);
+    const k = msg.k || msg.data?.k; if(!k) return;
+    const t = Math.floor(k.t/1000);
+    const bar = { time:t, open:+k.o, high:+k.h, low:+k.l, close:+k.c, volume:+k.v, tms:k.t };
+    const last=DATA[DATA.length-1]?.time;
+    if(last===t){
+      DATA[DATA.length-1] = { ...DATA[DATA.length-1], ...bar };
+      sCandle.update(bar);
+      if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); }
+    }else if(last==null || t>last){
+      DATA.push(bar);
+      if(DATA.length>5000) DATA.shift();
+      sCandle.update(bar);
+      if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); }
+    }
+    Active.forEach(it=>it.update(DATA));
+    anchorLatestSlightRight(cMain.timeScale());
+  }catch{} };
+}
+
+async function loadInitial(symbol, interval){
+  setStatus(`Loading ${symbol} • ${interval} …`);
+  DATA = [];
+  const batch = await fetchKlines(symbol, interval, 1000, null);
+  if(!batch.length) throw new Error('No data');
+  DATA = batch;
+  OLDEST_MS = batch[0].tms;
+
+  sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
+  if(els.haToggle.checked){
+    ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA));
+    sCandle.setData([]); // hide native if HA on
+  }
+  queueMicrotask(()=> cMain.timeScale().scrollToPosition(-2, false));
+  setStatus(`History loaded • ${symbol} • ${interval}`);
+  Active.forEach(it=>it.update(DATA));
+  setTimeout(()=>{ clampLeftEdge(cMain.timeScale(),0); anchorLatestSlightRight(cMain.timeScale()); }, 0);
+}
+
+/* Backfill on left-edge (scroll) */
+function debounce(fn, ms=250){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);} }
+const watchBackfill = debounce(async ()=>{
+  const rng = cMain.timeScale().getVisibleLogicalRange?.(); if(!rng) return;
+  if(rng.from!==undefined && rng.from<20){
+    if(LOADING_OLD) return;
+    LOADING_OLD=true;
+    try{
+      const endTime = OLDEST_MS - 1;
+      const sym=els.symbol.value.toUpperCase(); const tf=els.tf.value;
+      const more = await fetchKlines(sym, tf, 1000, endTime);
+      if(more.length){
+        OLDEST_MS = more[0].tms;
+        DATA = more.concat(DATA);
+        sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
+        if(haSeries){ haSeries.setData(HeikinAshi(DATA)); }
+        Active.forEach(it=>it.update(DATA));
+      }
+    }catch(e){ console.error(e); }
+    LOADING_OLD=false;
+  }
+},150);
+cMain.timeScale().subscribeVisibleLogicalRangeChange?.(watchBackfill);
+
+/* === Optional month loader === */
+async function loadMonths(months){
+  try{
+    let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
+    sym = normalizeSymbolInput(sym,q);
+    if(!VALID_SET.has(sym)){
+      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
+      const guess=findAnyMarketSymbolLike(base);
+      if(guess){
+        const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess);
+        if(info){ els.quote.value=info.quoteAsset; populatePairs(); }
+        sym=guess;
+      }else{ throw new Error(`Symbol not found: ${sym}`); }
+    }
+    els.symbol.value=sym;
+    setStatus(`Preparing ${months}M • ${sym} • ${tf}`);
+    closeWS();
+
+    const nowMs=Date.now(); const approxMonth=30*24*60*60*1000;
+    let end=nowMs; const earliest = nowMs - months*approxMonth;
+    let out=[];
+    while(end>earliest && out.length<200000){
+      const batch = await fetchKlines(sym, tf, 1000, end);
+      if(!batch.length) break;
+      out = batch.concat(out);
+      end = batch[0].tms - 1;
+      if(out[0].tms<=earliest) break;
+      if(out.length%3000===0){
+        const pct = Math.min(99, (nowMs-end)/(months*approxMonth)*100);
+        setStatus(`Fetching ${months}M • ${sym} • ${tf} • ${pct.toFixed(0)}%`);
+      }
+    }
+    DATA = out;
+    OLDEST_MS = out[0]?.tms ?? null;
+    sCandle.setData(out.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
+    if(els.haToggle.checked){ ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
+    Active.forEach(it=>it.update(DATA));
+    anchorLatestSlightRight(cMain.timeScale());
+
+    openWS(sym, tf);
+    setStatus(`Live: ${sym} • ${tf} • ${months}M`);
+    saveLayout();
+  }catch(err){ console.error(err); setStatus(`Range load error: ${err.message}`); alert(months+'M load failed: '+err.message); }
+}
+
+/* ========= Indicator framework (trimmed helpers kept same) ========= */
+const Active=[]; let idSeq=1;
+let markerOwners=new Map();
+function updateAllMarkers(){ const all=[]; markerOwners.forEach(a=>{a&&all.push(...a)}); try{ sCandle && sCandle.setMarkers(all); }catch{} }
+
+function ensureCandleSeries(){
+  if(!sCandle){
+    sCandle = cMain.addCandlestickSeries({
+      upColor:'#16a34a',downColor:'#ef4444',
+      borderUpColor:'#16a34a',borderDownColor:'#ef4444',
+      wickUpColor:'#16a34a',wickDownColor:'#ef4444'
+    });
+  }
+}
+function ensureHeikinSeries(){
+  if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} }
+  haSeries=cMain.addCandlestickSeries({
+    upColor:'#22c55e',downColor:'#ef4444',
+    borderUpColor:'#22c55e',borderDownColor:'#ef4444',
+    wickUpColor:'#22c55e',wickDownColor:'#ef4444',
+    priceScaleId:'ha'
+  });
+  cMain.priceScale('ha').applyOptions({scaleMargins:{top:0.12,bottom:0.12}});
+}
+
+/* Series helpers (unchanged) */
+function lineOn(chart,opts={}){ return chart.addLineSeries({lineWidth:2, ...opts}); }
+function histOn(chart,extra){ return chart.addHistogramSeries({...extra}); }
+function pack(series,updater){ const list=Array.isArray(series)?series:[series]; return {series:list,update:updater}; }
+function packOsc(series,updater){ const p=pack(series,updater); return {...p,kind:'osc'}; }
+function setLine(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?NaN:y[i]}))); }
+function setConstLine(series,val){ series.setData(DATA.map(d=>({time:d.time,value:val}))); }
+function setHist(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?0:y[i],color:(y[i]??0)>=0?'#16a34a':'#ef4444'}))); }
+
+/* ===== Indicators math (same as before) ===== */
 const val=o=>o.close;
 function SMA(arr,p,acc=val){const out=Array(arr.length).fill(null); let s=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); s+=x; if(i>=p) s-=acc(arr[i-p]); if(i>=p-1) out[i]=s/p;} return out;}
 function EMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const k=2/(p+1); let prev=null; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); if(prev==null){ if(i>=p-1){ prev=SMA(arr.slice(0,i+1),p,acc)[i]; out[i]=prev;} } else { prev=x*k+prev*(1-k); out[i]=prev; } } return out;}
 function WMA(arr,p,acc=val){const out=Array(arr.length).fill(null),w=p*(p+1)/2; for(let i=p-1;i<arr.length;i++){ let s=0; for(let j=0;j<p;j++){ s+=acc(arr[i-j])*(p-j);} out[i]=s/w;} return out;}
 function HMA(arr,p,acc=val){const w1=WMA(arr,Math.round(p/2),acc), w2=WMA(arr,p,acc); const tmp=arr.map((d,i)=>({close:(w1[i]==null||w2[i]==null)?NaN:2*w1[i]-w2[i]})); return WMA(tmp,Math.round(Math.sqrt(p)),x=>x.close);}
-function DEMAarr(arr,p,acc=val){const e=EMA(arr,p,acc); const tmp=arr.map((d,i)=>({close:e[i]==null?NaN:e[i]})); const e2=EMA(tmp,p,x=>x.close); return e.map((x,i)=> (x==null||e2[i]==null)?null:2*x-e2[i]);}
+function DEMAarr(arr,p,acc=val){const e=EMA(arr,p,acc); const tmp=arr.map((d,i)=>({close:e[i]??NaN})); const e2=EMA(tmp,p,x=>x.close); return e.map((x,i)=> (x==null||e2[i]==null)?null:2*x-e2[i]);}
 function TEMAarr(arr,p,acc=val){const e1=EMA(arr,p,acc); const tmp1=arr.map((d,i)=>({close:e1[i]??NaN})); const e2=EMA(tmp1,p,x=>x.close); const tmp2=arr.map((d,i)=>({close:e2[i]??NaN})); const e3=EMA(tmp2,p,x=>x.close); return e1.map((e,i)=> (e==null||e2[i]==null||e3[i]==null)?null:3*e-3*e2[i]+e3[i]);}
 function STD(arr,p,acc=val){const out=Array(arr.length).fill(null); let q=[],s=0,s2=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); q.push(x); s+=x; s2+=x*x; if(q.length>p){const r=q.shift(); s-=r; s2-=r*r;} if(q.length===p){ const m=s/p; const v=s2/p-m*m; out[i]=Math.sqrt(Math.max(v,0)); } } return out;}
 function BBcalc(arr,p=20,m=2){const mid=SMA(arr,p),sd=STD(arr,p); return {mid,upper:mid.map((m_,i)=> (m_==null||sd[i]==null)?null:m_+m*sd[i]),lower:mid.map((m_,i)=> (m_==null||sd[i]==null)?null:m_-m*sd[i])};}
@@ -310,7 +506,7 @@ function PPOcore(arr,f=12,s=26,signal=9){const eF=EMA(arr,f),eS=EMA(arr,s); cons
 function TRIXcore(arr,p=15){const e1=EMA(arr,p),tmp1=arr.map((d,i)=>({close:e1[i]??NaN})); const e2=EMA(tmp1,p,x=>x.close),tmp2=arr.map((d,i)=>({close:e2[i]??NaN})); const e3=EMA(tmp2,p,x=>x.close); const out=Array(arr.length).fill(null); for(let i=1;i<arr.length;i++){ if(e3[i-1]&&e3[i]) out[i]=((e3[i]-e3[i-1])/e3[i-1])*100; } return out;}
 function TSIcore(arr,fast=25,slow=13){const mom=arr.map((d,i)=> i? d.close-arr[i-1].close:0); const absmom=mom.map(x=>Math.abs(x)); const ema1=EMA(mom.map((x,i)=>({close:x})),fast,x=>x.close); const ema2=EMA(ema1.map((x,i)=>({close:x??0})),slow,x=>x.close); const ema1a=EMA(absmom.map((x)=>({close:x})),fast,x=>x.close); const ema2a=EMA(ema1a.map((x)=>({close:x??0})),slow,x=>x.close); return ema2.map((n,i)=> (n==null||!ema2a[i])?null:(n/ema2a[i])*100 );}
 function CCIcore(arr,p=20){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const ma=SMA(tp.map(x=>({close:x})),p,x=>x.close); const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ const slice=tp.slice(i-p+1,i+1); const m=ma[i]; const md=slice.reduce((a,b)=>a+Math.abs(b-m),0)/p; out[i]= md? (tp[i]-m)/(0.015*md) : null; } } return out;}
-function WilliamsR(arr,p=14){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} out[i]= hh===ll?0 : ((hh-arr[i].close)/(hh-ll))*-100; } } return out;}
+function WilliamsR(arr,p=14){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} out[i]= hh===ll?0 : ((hh-arr[i].close)/(hh-ll))*-100; } return out;}
 function ROCcore(arr,p=12){const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ const prev=arr[i-p].close; out[i]= prev? ((arr[i].close-prev)/prev)*100 : null; } return out;}
 function AroonCore(arr,p=25){const up=Array(arr.length).fill(null),dn=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i>=p-1){ let idxH=i,idxL=i; for(let j=i-p+1;j<=i;j++){ if(arr[j].high>arr[idxH].high) idxH=j; if(arr[j].low<arr[idxL].low) idxL=j; } up[i]=((p-1-(i-idxH))/(p-1))*100; dn[i]=((p-1-(i-idxL))/(p-1))*100; } } return {up,down:dn};}
 function DMIdir(arr){ const plus=[],minus=[],tr=[]; for(let i=0;i<arr.length;i++){ if(i===0){ plus.push(0); minus.push(0); tr.push(arr[i].high-arr[i].low); } else { const up=arr[i].high-arr[i-1].high; const dn=arr[i-1].low-arr[i].low; plus.push((up>dn&&up>0)?up:0); minus.push((dn>up&&dn>0)?dn:0); const trv=Math.max(arr[i].high-arr[i].low,Math.abs(arr[i].high-arr[i-1].close),Math.abs(arr[i].low-arr[i-1].close)); tr.push(trv); } } return {plus,minus,tr};}
@@ -320,12 +516,7 @@ function ElderRayCore(arr,p=13){const e=EMA(arr,p); const bull=arr.map((d,i)=> (
 function OBVcore(arr){let out=Array(arr.length).fill(null); let obv=0; out[0]=0; for(let i=1;i<arr.length;i++){ obv += arr[i].close>arr[i-1].close? arr[i].volume : arr[i].close<arr[i-1].close? -arr[i].volume : 0; out[i]=obv; } return out;}
 function MFICore(arr,p=14){const tp=arr.map(d=>(d.high+d.low+d.close)/3); const pmf=[],nmf=[]; for(let i=1;i<arr.length;i++){ const mf=tp[i]*(arr[i].volume||0); if(tp[i]>tp[i-1]){pmf.push(mf); nmf.push(0);} else if(tp[i]<tp[i-1]){pmf.push(0); nmf.push(mf);} else {pmf.push(0); nmf.push(0);} } const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ const ps=pmf.slice(i-p,i).reduce((a,b)=>a+b,0), ns=nmf.slice(i-p,i).reduce((a,b)=>a+b,0); const mr=ns? ps/ns : 0; out[i]=100-(100/(1+mr)); } return out;}
 function CMFcore(arr,p=20){const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let sumCLV=0,sumVol=0; for(let j=i-p+1;j<=i;j++){ const d=arr[j]; const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d.low)||1e-12); sumCLV+=clv*(d.volume||0); sumVol+=(d.volume||0);} out[i]= sumVol? sumCLV/sumVol : null;} return out;}
-function ADLcore(arr){let out=Array(arr.length).fill(null); let ad=0; for(let i=0;i<arr.length;i++){
-  const d=arr[i];
-  const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d-low)||1e-12); /* (left as in your base) */
-  ad+=clv*(d.volume||0);
-  out[i]=ad;
-} return out;}
+function ADLcore(arr){let out=Array(arr.length).fill(null); let ad=0; for(let i=0;i<arr.length;i++){ const d=arr[i]; const clv=((d.close-d.low)-(d.high-d.close))/((d.high-d-low)||1e-12); ad+=clv*(d.volume||0); out[i]=ad;} return out;}
 function KeltnerCore(arr,period=20,mult=2){const ema=EMA(arr,period),atrA=ATR(arr,period); const up=ema.map((e,i)=> (e==null||atrA[i]==null)?null:e+mult*atrA[i]); const lo=ema.map((e,i)=> (e==null||atrA[i]==null)?null:e-mult*atrA[i]); return {mid:ema,upper:up,lower:lo};}
 function DonchianCore(arr,p=20){const up=Array(arr.length).fill(null),lo=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let hh=-1e9,ll=1e9; for(let j=i-p+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} up[i]=hh; lo[i]=ll;} return {upper:up,lower:lo};}
 function SupertrendCore(arr,atrPeriod=10,mult=3){const atrA=ATR(arr,atrPeriod); const upper=Array(arr.length).fill(null),lower=Array(arr.length).fill(null),st=Array(arr.length).fill(null),dir=Array(arr.length).fill(1);
@@ -374,18 +565,65 @@ function PivotsClassic(arr){
   const P=(ph+pl+pc)/3, R1=2*P-pl, S1=2*P-ph, R2=P+(ph-pl), S2=P-(ph-pl), R3=ph+2*(P-pl), S3=pl-2*(ph-P);
   return [{name:'P',v:P},{name:'R1',v:R1},{name:'S1',v:S1},{name:'R2',v:R2},{name:'S2',v:S2},{name:'R3',v:R3},{name:'S3',v:S3}];
 }
+function IchimokuCore(arr,{conv=9,base=26,lag=52}={})
+{
+  const convA=Array(arr.length).fill(null), baseA=Array(arr.length).fill(null), spanA=Array(arr.length).fill(null), spanB=Array(arr.length).fill(null);
+  for(let i=0;i<arr.length;i++){
+    if(i>=conv-1){ let hh=-1e9,ll=1e9; for(let j=i-conv+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} convA[i]=(hh+ll)/2; }
+    if(i>=base-1){ let hh=-1e9,ll=1e9; for(let j=i-base+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} baseA[i]=(hh+ll)/2; }
+    if(i>=base-1){ const a=((convA[i]??null)+(baseA[i]??null))/2; spanA[i+base]=a; }
+    if(i>=lag-1){ let hh=-1e9,ll=1e9; for(let j=i-lag+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} spanB[i+base]=(hh+ll)/2; }
+  }
+  return {conv:convA,base:baseA,spanA,spanB};
+}
 
-/* ===== Indicator framework ===== */
-const Active=[]; let idSeq=1;
-let markerOwners=new Map();
-function updateAllMarkers(){ const all=[]; markerOwners.forEach(a=>{a&&all.push(...a)}); try{ candleSeries && candleSeries.setMarkers(all); }catch{} }
-function ensureCandleSeries(){ if(candleSeries) cMain.removeSeries(candleSeries);
-  candleSeries=cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'});
-}
-function ensureHeikinSeries(){ if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} }
-  haSeries=cMain.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e',wickDownColor:'#ef4444',priceScaleId:'ha'});
-  cMain.priceScale('ha').applyOptions({scaleMargins:{top:0.12,bottom:0.12}});
-}
+/* Registry (RSI has its guides/zones) */
+const Registry={
+  SMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)));}},
+  EMA:{kind:'overlay',params:[{k:'period',v:50,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,EMA(A,p.period)));}},
+  WMA:{kind:'overlay',params:[{k:'period',v:30,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WMA(A,p.period)));}},
+  HMA:{kind:'overlay',params:[{k:'period',v:55,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,HMA(A,p.period)));}},
+  DEMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,DEMAarr(A,p.period)));}},
+  TEMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TEMAarr(A,p.period)));}},
+  VWMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWMAcore(A,p.period)));}},
+  BB:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'mult',v:2,step:0.5},{k:'_color',v:'#60a5fa'}],add(p){const u=lineOn(cMain),m=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,m,l]},p._color); return pack([u,m,l],A=>{const b=BBcalc(A,p.period,p.mult); setLine(u,b.upper); setLine(m,b.mid); setLine(l,b.lower);});}},
+  Keltner:{kind:'overlay',params:[{k:'period',v:20},{k:'mult',v:2},{k:'_color',v:'#34d399'}],add(p){const u=lineOn(cMain),m=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,m,l]},p._color); return pack([u,m,l],A=>{const k=KeltnerCore(A,p.period,p.mult); setLine(u,k.upper); setLine(m,k.mid); setLine(l,k.lower);});}},
+  Donchian:{kind:'overlay',params:[{k:'period',v:20},{k:'_color',v:'#f472b6'}],add(p){const u=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,l]},p._color); return pack([u,l],A=>{const d=DonchianCore(A,p.period); setLine(u,d.upper); setLine(l,d.lower);});}},
+  ATR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fcd535'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,ATR(A,p.period)));}},
+  Supertrend:{kind:'overlay',params:[{k:'atr',v:10},{k:'mult',v:3},{k:'_color',v:'#22c55e'}],add(p){const st=lineOn(cMain); setSeriesColor(st,p._color); return pack(st,A=>{const S=SupertrendCore(A,p.atr,p.mult); setLine(st,S.st);});}},
+  PSAR:{kind:'overlay',params:[{k:'step',v:0.02,step:0.01},{k:'max',v:0.2,step:0.01},{k:'_color',v:'#a78bfa'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,PSARcore(A,p.step,p.max)));}},
+  VWAP:{kind:'overlay',params:[{k:'_color',v:'#93c5fd'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWAPsession(A)));}},
+  Ichimoku:{kind:'overlay',params:[{k:'conv',v:9},{k:'base',v:26},{k:'lag',v:52},{k:'_color',v:'#38bdf8'}],add(p){const c=lineOn(cMain),b=lineOn(cMain),sa=lineOn(cMain),sb=lineOn(cMain); setPackColor({series:[c,b,sa,sb]},p._color); return pack([c,b,sa,sb],A=>{const out=IchimokuCore(A,p); setLine(c,out.conv); setLine(b,out.base); setLine(sa,out.spanA); setLine(sb,out.spanB);});}},
+  HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return {series:[haSeries],update:(A)=>haSeries.setData(HeikinAshi(A)),extraCleanup:()=>{try{cMain.removeSeries(haSeries)}catch{}}};}},
+  PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],add(p){const lines=[]; return {series:lines,update:(A)=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}}); lines.length=0; const piv=PivotsClassic(A); piv.forEach(pp=>{const s=cMain.addLineSeries({priceScaleId:'right',lineWidth:1,color:p._color}); s.setData(A.map(b=>({time:b.time,value:pp.v}))); lines.push(s);});},extraCleanup:()=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}});} };}},
+  RSI:{
+    kind:'osc',
+    params:[
+      {k:'period',v:14},
+      {k:'_color',v:'#ef4444'},
+      {k:'overBought',v:70},
+      {k:'obSize',v:1},
+      {k:'overSold',v:30},
+      {k:'osSize',v:1},
+      {k:'showZone',v:true,type:'bool'}
+    ],
+    add(p){
+      const rsiLine = lineOn(cOsc,{lineWidth:2}); setSeriesColor(rsiLine, p._color || '#ef4444');
+      const guideOB = lineOn(cOsc,{lineWidth:p.obSize||1}); const guideOS = lineOn(cOsc,{lineWidth:p.osSize||1});
+      guideOB.applyOptions({color:'#ef4444'}); guideOS.applyOptions({color:'#ef4444'});
+      const updater = A=>{
+        setLine(rsiLine, RSI(A, p.period));
+        guideOB.applyOptions({lineWidth:p.obSize||1}); guideOS.applyOptions({lineWidth:p.osSize||1});
+        setConstLine(guideOB, p.overBought ?? 70); setConstLine(guideOS, p.overSold ?? 30);
+      };
+      const pkg = packOsc([rsiLine, guideOB, guideOS], updater);
+      pkg.extraCleanup = ()=>{ try{cOsc.removeSeries(guideOB)}catch{}; try{cOsc.removeSeries(guideOS)}catch{}; };
+      return pkg;
+    }
+  }
+};
+
+/* Badges / indicators UI */
 function badgeLabel(it){const p=Object.entries(it.params).filter(([k])=>k!=='_color').map(([k,v])=>`${k}:${v}`).join(','); return `${it.key}${p?`(${p})`:''}`;}
 function renderBadges(){
   els.badges.innerHTML='';
@@ -406,135 +644,40 @@ function removeIndicator(id){
   }
 }
 
-/* Series helpers */
-function lineOn(chart){ return chart.addLineSeries({lineWidth:2}); }
-function histOn(chart,extra){ return chart.addHistogramSeries({...extra}); }
-function pack(series,updater){ const list=Array.isArray(series)?series:[series]; return {series:list,update:updater}; }
-function packOsc(series,updater){ const p=pack(series,updater); return {...p,kind:'osc'}; }
-function setLine(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?NaN:y[i]}))); }
-function setHist(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?0:y[i],color:(y[i]??0)>=0?'#16a34a':'#ef4444'}))); }
-function scatterOn(chart){ return chart.addHistogramSeries({base:0}); }
-function setPoints(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?0:y[i]}))); }
-
-/* Registry (with color param where relevant) */
-const Registry={
-  SMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)));}},
-  EMA:{kind:'overlay',params:[{k:'period',v:50,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,EMA(A,p.period)));}},
-  WMA:{kind:'overlay',params:[{k:'period',v:30,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WMA(A,p.period)));}},
-  HMA:{kind:'overlay',params:[{k:'period',v:55,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,HMA(A,p.period)));}},
-  DEMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,DEMAarr(A,p.period)));}},
-  TEMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TEMAarr(A,p.period)));}},
-  VWMA:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWMAcore(A,p.period)));}},
-
-  BB:{kind:'overlay',params:[{k:'period',v:20,min:2},{k:'mult',v:2,step:0.5},{k:'_color',v:'#60a5fa'}],add(p){const u=lineOn(cMain),m=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,m,l]},p._color); return pack([u,m,l],A=>{const b=BBcalc(A,p.period,p.mult); setLine(u,b.upper); setLine(m,b.mid); setLine(l,b.lower);});}},
-  Keltner:{kind:'overlay',params:[{k:'period',v:20},{k:'mult',v:2},{k:'_color',v:'#34d399'}],add(p){const u=lineOn(cMain),m=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,m,l]},p._color); return pack([u,m,l],A=>{const k=KeltnerCore(A,p.period,p.mult); setLine(u,k.upper); setLine(m,k.mid); setLine(l,k.lower);});}},
-  Donchian:{kind:'overlay',params:[{k:'period',v:20},{k:'_color',v:'#f472b6'}],add(p){const u=lineOn(cMain),l=lineOn(cMain); setPackColor({series:[u,l]},p._color); return pack([u,l],A=>{const d=DonchianCore(A,p.period); setLine(u,d.upper); setLine(l,d.lower);});}},
-  ATR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fcd535'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,ATR(A,p.period)));}},
-  Supertrend:{kind:'overlay',params:[{k:'atr',v:10},{k:'mult',v:3},{k:'_color',v:'#22c55e'}],add(p){const st=lineOn(cMain); setSeriesColor(st,p._color); return pack(st,A=>{const S=SupertrendCore(A,p.atr,p.mult); setLine(st,S.st);});}},
-  PSAR:{kind:'overlay',params:[{k:'step',v:0.02,step:0.01},{k:'max',v:0.2,step:0.01},{k:'_color',v:'#a78bfa'}],add(p){const s=scatterOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setPoints(s,PSARcore(A,p.step,p.max)));}},
-
-  VWAP:{kind:'overlay',params:[{k:'_color',v:'#93c5fd'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWAPsession(A)));}},
-  Ichimoku:{kind:'overlay',params:[{k:'conv',v:9},{k:'base',v:26},{k:'lag',v:52},{k:'_color',v:'#38bdf8'}],add(p){const c=lineOn(cMain),b=lineOn(cMain),sa=lineOn(cMain),sb=lineOn(cMain); setPackColor({series:[c,b,sa,sb]},p._color); return pack([c,b,sa,sb],A=>{const out=IchimokuCore(A,p); setLine(c,out.conv); setLine(b,out.base); setLine(sa,out.spanA); setLine(sb,out.spanB);});}},
-  HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return {series:[haSeries],update:(A)=>haSeries.setData(HeikinAshi(A)),extraCleanup:()=>{try{cMain.removeSeries(haSeries)}catch{}}};}},
-  PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],add(p){const lines=[]; return {series:lines,update:(A)=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}}); lines.length=0; const piv=PivotsClassic(A); piv.forEach(pp=>{const s=cMain.addLineSeries({priceScaleId:'right',lineWidth:1,color:p._color}); s.setData(A.map(b=>({time:b.time,value:pp.v}))); lines.push(s);});},extraCleanup:()=>{lines.forEach(s=>{try{cMain.removeSeries(s)}catch{}});} };}},
-
-  /* >>> MODIFIED: RSI now auto-adds red 30/70 level lines + RSI line is red */
-  RSI:{
-    kind:'osc',
-    params:[{k:'period',v:14},{k:'_color',v:'#ff2d2d'}],
-    add(p){
-      const s=lineOn(cOsc);
-      const red = p._color || '#ff2d2d';
-      s.applyOptions({color:red, lineWidth:2});
-      /* Auto horizontal guides with labels */
-      const pl30 = s.createPriceLine({ price:30, color:red, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'30' });
-      const pl70 = s.createPriceLine({ price:70, color:red, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'70' });
-      return packOsc(s, A => setLine(s, RSI(A, p.period)));
-    }
-  },
-
-  Stochastic:{kind:'osc',params:[{k:'k',v:14},{k:'d',v:3},{k:'_color',v:'#a3e635'}],add(p){const k=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[k,d]},p._color); return packOsc([k,d],A=>{const S=Stochastic(A,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
-  StochRSI:{kind:'osc',params:[{k:'period',v:14},{k:'k',v:3},{k:'d',v:3},{k:'_color',v:'#f472b6'}],add(p){const k=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[k,d]},p._color); return packOsc([k,d],A=>{const r=RSI(A,p.period); const rArr=r.map(x=>({high:x,low:x,close:x})); const S=Stochastic(rArr,p.k,p.d); setLine(k,S.K); setLine(d,S.D);});}},
-  MACD:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#60a5fa'}],add(p){const l=lineOn(cOsc),s=lineOn(cOsc),h=histOn(cOsc,{}); setPackColor({series:[l,s]},p._color); return packOsc([l,s,h],A=>{const m=MACDcore(A,p.fast,p.slow,p.signal); setLine(l,m.mac); setLine(s,m.sig); setHist(h,m.hist);});}},
-  PPO:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#34d399'}],add(p){const l=lineOn(cOsc),s=lineOn(cOsc),h=histOn(cOsc,{}); setPackColor({series:[l,s]},p._color); return packOsc([l,s,h],A=>{const m=PPOcore(A,p.fast,p.slow,p.signal); setLine(l,m.ppo); setLine(s,m.sig); setHist(h,m.hist);});}},
-  TRIX:{kind:'osc',params:[{k:'period',v:15},{k:'_color',v:'#fbbf24'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,TRIXcore(A,p.period)));}},
-  TSI:{kind:'osc',params:[{k:'fast',v:25},{k:'slow',v:13},{k:'_color',v:'#f472b6'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,TSIcore(A,p.fast,p.slow)));}},
-  WilliamsR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#f59e0b'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,WilliamsR(A,p.period)));}},
-  CCI:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#c084fc'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,CCIcore(A,p.period)));}},
-  ROC:{kind:'osc',params:[{k:'period',v:12},{k:'_color',v:'#eab308'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,ROCcore(A,p.period)));}},
-  Aroon:{kind:'osc',params:[{k:'period',v:25},{k:'_color',v:'#22d3ee'}],add(p){const u=lineOn(cOsc),d=lineOn(cOsc); setPackColor({series:[u,d]},p._color); return packOsc([u,d],A=>{const R=AroonCore(A,p.period); setLine(u,R.up); setLine(d,R.down);});}},
-  ADX:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#a3e635'}],add(p){const pd=lineOn(cOsc),md=lineOn(cOsc),ax=lineOn(cOsc); setPackColor({series:[pd,md,ax]},p._color); return packOsc([pd,md,ax],A=>{const D=ADXcore(A,p.period); setLine(pd,D.pdi); setLine(md,D.mdi); setLine(ax,D.adx);});}},
-  Awesome:{kind:'osc',params:[{k:'_color',v:'#60a5fa'}],add(p){const h=histOn(cOsc,{}); return packOsc(h,A=>setHist(h,AwesomeCore(A)));}},
-
-  "bildo x":{
-    kind:'overlay',
-    params:[{k:'emaTrend',v:50,min:2},{k:'emaPull',v:20,min:2},{k:'touch',v:0.003,step:0.001},{k:'swingLook',v:2,min:1},{k:'_color',v:'#22c55e'}],
-    add(p){
-      const host=lineOn(cMain); setSeriesColor(host,p._color); host.applyOptions({lineWidth:1});
-      function compute(A){
-        const emaT=EMA(A,p.emaTrend), emaP=EMA(A,p.emaPull);
-        const markers=[];
-        for(let i=Math.max(p.emaTrend,p.emaPull)+1;i<A.length;i++){
-          const upTrend=emaT[i]!=null && emaT[i-1]!=null && emaT[i]>emaT[i-1];
-          const touch=emaP[i]!=null && A[i].low <= emaP[i]*(1+p.touch) && A[i].close >= emaP[i];
-          const bull=A[i].close>A[i].open;
-          let swingLow=true;
-          for(let j=1;j<=p.swingLook;j++){ if(!(A[i].low<=A[i-j].low && A[i].low<=A[i+j]?.low)){swingLow=false;break;} }
-          if(upTrend && touch && bull && swingLow){ markers.push({time:A[i].time,position:'belowBar',color:p._color||'#16a34a',shape:'arrowUp',text:'BUY'}); }
-        }
-        return {markers};
-      }
-      const itemRef={id:null};
-      const updater=(A)=>{ host.setData(A.map(b=>({time:b.time,value:b.close}))); const {markers}=compute(A); markerOwners.set(itemRef.id,markers); updateAllMarkers(); };
-      const pkg=pack(host,updater);
-      pkg.extraCleanup=()=>{ markerOwners.delete(itemRef.id); updateAllMarkers(); };
-      pkg._bindId=(id)=>{ itemRef.id=id; };
-      return pkg;
-    }
-  }
-};
-
-/* Ichimoku helper */
-function IchimokuCore(arr,{conv=9,base=26,lag=52}={})
-{
-  const convA=Array(arr.length).fill(null), baseA=Array(arr.length).fill(null), spanA=Array(arr.length).fill(null), spanB=Array(arr.length).fill(null);
-  for(let i=0;i<arr.length;i++){
-    if(i>=conv-1){ let hh=-1e9,ll=1e9; for(let j=i-conv+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} convA[i]=(hh+ll)/2; }
-    if(i>=base-1){ let hh=-1e9,ll=1e9; for(let j=i-base+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} baseA[i]=(hh+ll)/2; }
-    if(i>=base-1){ const a=((convA[i]??null)+(baseA[i]??null))/2; spanA[i+base]=a; }
-    if(i>=lag-1){ let hh=-1e9,ll=1e9; for(let j=i-lag+1;j<=i;j++){hh=Math.max(hh,arr[j].high); ll=Math.min(ll,arr[j].low);} spanB[i+base]=(hh+ll)/2; }
-  }
-  return {conv:convA,base:baseA,spanA,spanB};
-}
-
-/* Presets */
+/* Presets UI (minimal) */
 function loadPresets(){ try{ return JSON.parse(localStorage.getItem(KEYS.PRESETS)||'{}'); }catch{ return {}; } }
 function savePresets(obj){ localStorage.setItem(KEYS.PRESETS, JSON.stringify(obj)); }
-function renderPresetDropdown(){ const type=els.indSel.value, all=loadPresets(), list=Object.keys(all[type]||{}); els.presetSel.innerHTML='<option value="">— none —</option>'+list.map(n=>`<option>${n}</option>`).join(''); }
+function renderPresetDropdown(){ const type=els.indSel.value, all=loadPresets(), list=Object.keys(all[type]||{}); els.presetSel.innerHTML='<option value=\"\">— none —</option>'+list.map(n=>`<option>${n}</option>`).join(''); }
+els.indSel.addEventListener('change', ()=>{ renderParams(); renderPresetDropdown(); });
 
 /* Params UI */
-els.indSel.addEventListener('change', ()=>{ renderParams(); renderPresetDropdown(); });
 function renderParams(){
   const key=els.indSel.value, def=Registry[key];
   els.paramRow.innerHTML='';
   (def.params||[]).forEach(p=>{
     const w=document.createElement('div'); w.className='kvs';
     const lab=document.createElement('label'); lab.className='hint'; lab.textContent=p.k==='_color'?'COLOR':p.k.toUpperCase();
-    const inp=document.createElement('input');
-    inp.type = (p.k==='_color') ? 'color' : 'number';
-    inp.value=p.v;
-    if(p.k!=='_color'){ if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; }
+    let inp;
+    if(p.type==='bool'){
+      inp=document.createElement('input'); inp.type='checkbox'; inp.checked=!!p.v;
+    }else{
+      inp=document.createElement('input');
+      inp.type = (p.k==='_color') ? 'color' : 'number';
+      inp.value=p.v;
+      if(p.k!=='_color'){ if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; }
+    }
     inp.dataset.key=p.k;
-    w.appendChild(lab); w.appendChild(inp); els.paramRow.appendChild(w);
+    w.appendChild(lab); w.appendChild(inp);
+    els.paramRow.appendChild(w);
   });
 }
 renderParams(); renderPresetDropdown();
-
 function collectParams(){
   const ps={};
   [...els.paramRow.querySelectorAll('input')].forEach(i=>{
     const k=i.dataset.key;
     if(i.type==='color') ps[k]=i.value;
+    else if(i.type==='checkbox') ps[k]=i.checked;
     else{
       const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10);
       ps[k]=isNaN(num)?parseFloat(i.value):num;
@@ -548,7 +691,6 @@ function addIndicator(){
   const pack=def.add(params);
   setPackColor(pack, params._color);
   const item={id:idSeq++,key,kind:def.kind||'overlay',params,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
-  if(typeof pack._bindId==='function') pack._bindId(item.id);
   Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout();
 }
 els.addInd.addEventListener('click', addIndicator);
@@ -559,13 +701,14 @@ els.haToggle.addEventListener('change', ()=>{
   if(els.haToggle.checked){
     ensureCandleSeries(); ensureHeikinSeries();
     haSeries.setData(HeikinAshi(DATA));
-    candleSeries.setData([]);
+    sCandle.setData([]); // hide native candles when HA on
   }else{
     ensureCandleSeries();
-    candleSeries.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
+    sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
     if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; }
   }
   updateAllMarkers(); saveLayout();
+  anchorLatestSlightRight(cMain.timeScale());
 });
 
 /* Settings modal */
@@ -580,10 +723,15 @@ function openSheet(id){
   (def.params||[]).forEach(p=>{
     const val= it.params[p.k] ?? p.v;
     const row=document.createElement('div'); row.className='kv';
-    const type = p.k==='_color' ? 'color' : 'number';
-    const extra = p.k==='_color' ? '' : `${p.min!=null?`min="${p.min}"`:''} ${p.step!=null?`step="${p.step}"`:''}`;
-    row.innerHTML = `<label class="hint" style="width:120px">${p.k==='_color'?'COLOR':p.k.toUpperCase()}</label>
-      <input type="${type}" data-k="${p.k}" value="${val}" ${extra} />`;
+    if(p.type==='bool'){
+      row.innerHTML = `<label class="hint" style="width:160px">${p.k.toUpperCase()}</label>
+        <input type="checkbox" data-k="${p.k}" ${val? 'checked':''} />`;
+    }else{
+      const type = p.k==='_color' ? 'color' : 'number';
+      const extra = p.k==='_color' ? '' : `${p.min!=null?`min="${p.min}"`:''} ${p.step!=null?`step="${p.step}"`:''}`;
+      row.innerHTML = `<label class="hint" style="width:160px">${p.k==='_color'?'COLOR':p.k.toUpperCase()}</label>
+        <input type="${type}" data-k="${p.k}" value="${val}" ${extra} />`;
+    }
     sheetParams.appendChild(row);
   });
 
@@ -591,6 +739,7 @@ function openSheet(id){
     const upd={}; [...sheetParams.querySelectorAll('input')].forEach(i=>{
       const k=i.dataset.k;
       if(i.type==='color') upd[k]=i.value;
+      else if(i.type==='checkbox') upd[k]=i.checked;
       else{
         const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10);
         upd[k]=isNaN(num)?parseFloat(i.value):num;
@@ -600,142 +749,132 @@ function openSheet(id){
     removeIndicator(id);
     const pack=Registry[key].add(upd); setPackColor(pack,upd._color);
     const newItem={id:idSeq++,key,kind:keepKind,params:upd,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
-    if(typeof pack._bindId==='function') pack._bindId(newItem.id);
     Active.splice(idx,0,newItem); renderBadges(); if(DATA.length) newItem.update(DATA); sheetWrap.style.display='none'; saveLayout();
   };
   $('sheetRemove').onclick=()=>{ removeIndicator(id); sheetWrap.style.display='none'; saveLayout(); };
-  $('sheetDuplicate').onclick=()=>{ const p=JSON.parse(JSON.stringify(Active.find(x=>x.id===id).params)); const pack=Registry[it.key].add(p); setPackColor(pack,p._color); const item={id:idSeq++,key:it.key,kind:it.kind,params:p,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true}; if(typeof pack._bindId==='function') pack._bindId(item.id); Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout(); };
+  $('sheetDuplicate').onclick=()=>{ const p=JSON.parse(JSON.stringify(Active.find(x=>x.id===id).params)); const pack=Registry[it.key].add(p); setPackColor(pack,p._color); const item={id:idSeq++,key:it.key,kind:it.kind,params:p,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true}; Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); };
   $('sheetToggleVis').onclick=()=>{ const it=Active.find(x=>x.id===id); it.visible=!it.visible; (it.series||[]).forEach(s=>{try{s.applyOptions({visible:it.visible})}catch{}}); };
   sheetWrap.style.display='flex';
 }
 
 /* Layout save/restore */
 function saveLayout(){
-  const layout={quote:els.quote.value,symbol:els.symbol.value,tf:els.tf.value,ha:els.haToggle.checked,indicators:Active.map(x=>({key:x.key,kind:x.kind,params:x.params}))};
+  const layout={market:els.market.value,quote:els.quote.value,symbol:els.symbol.value,tf:els.tf.value,ha:els.haToggle.checked,indicators:Active.map(x=>({key:x.key,kind:x.kind,params:x.params}))};
   localStorage.setItem(KEYS.LAYOUT, JSON.stringify(layout));
 }
 function restoreLayout(){
   try{
-    const raw=localStorage.getItem(KEYS.LAYOUT); if(!raw) return;
+    const raw=localStorage.getItem(KEYS.LAYOUT); if(!raw) return null;
     const L=JSON.parse(raw);
-    if(L.quote){ els.quote.value=L.quote; populatePairs(); }
+    if(L.market){ els.market.value=L.market; }
+    if(L.quote){ els.quote.value=L.quote; }
     if(L.symbol){ els.symbol.value=L.symbol; }
     if(L.tf){ els.tf.value=L.tf; }
     if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
     (L.indicators||[]).forEach(it=>{
       const pack=Registry[it.key]?.add(it.params||{}); if(!pack) return; setPackColor(pack,(it.params||{})._color);
       const item={id:idSeq++,key:it.key,kind:(Registry[it.key].kind||'overlay'),params:(it.params||{}),series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
-      if(typeof pack._bindId==='function') pack._bindId(item.id);
       Active.push(item);
     });
-    renderBadges(); if(DATA.length){ Active.forEach(i=>i.update(DATA)); }
-  }catch{}
+    return L;
+  }catch{ return null; }
 }
 
-/* Apply data to chart */
-function applyDataToChart(arr){
-  DATA = arr;
-  ensureCandleSeries();
-  candleSeries.setData(arr.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-  if(els.haToggle.checked){
-    ensureHeikinSeries();
-    haSeries.setData(HeikinAshi(arr));
-    candleSeries.setData([]);
-  } else if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; }
-  Active.forEach(it=>it.update(DATA));
+/* ========= Load flow ========= */
+async function ensureExchangeForCurrentMarket() {
+  // If EXINFO is null or belongs to a different market, reload it
+  const need = !EXINFO || !VALID_SET.size;
+  if(need){ await loadExchangeInfo(); populatePairs(); }
 }
 
-/* Quick load (1000 bars) */
 async function loadAll(){
   try{
-    let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
-    if(sym && !sym.endsWith(q)) sym = sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'') + q;
+    applyMarketEndpoints();
+    await ensureExchangeForCurrentMarket(); // <-- critical guard
+
+    let sym=(els.symbol.value||'').trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
+    if(!sym) {
+      const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT';
+      sym=def;
+      els.symbol.value=def;
+    }
+    sym = normalizeSymbolInput(sym, q);
+
     if(!VALID_SET.has(sym)){
       const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
-      const guess=(EXINFO.symbols||[]).find(s=>s.status==='TRADING'&&s.baseAsset===base);
-      if(guess){ sym=guess.symbol; els.quote.value=guess.quoteAsset; populatePairs(); } else { alert('Symbol not found'); return; }
+      const guess=findAnyMarketSymbolLike(base);
+      if(guess){
+        const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess);
+        if(info){ els.quote.value=info.quoteAsset; populatePairs(); }
+        sym=guess;
+      }else{
+        throw new Error(`Unknown symbol for ${els.market.value}: ${sym}`);
+      }
     }
-    els.symbol.value=sym; setStatus(`Loading ${sym} • ${tf} …`);
-    closeWS();
 
-    const baseData = await fetchK(sym,tf,1000);
-    applyDataToChart(baseData);
-
-    const stream=`${sym.toLowerCase()}@kline_${tf}`; WS=new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
-    WS.onopen = ()=> setStatus(`Live: ${sym} • ${tf}`);
-    WS.onclose= ()=> setStatus(`Disconnected • ${sym} • ${tf}`);
-    WS.onerror= ()=> setStatus(`Socket error • ${sym} • ${tf}`);
-    WS.onmessage=(e)=>{ try{
-      const msg=JSON.parse(e.data); if(!msg.k) return; const k=msg.k; const t=Math.floor(k.t/1000);
-      const bar={time:t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
-      const last=DATA[DATA.length-1]?.time; if(last===t){ DATA[DATA.length-1]=bar; } else { DATA.push(bar); if(DATA.length>300000) DATA.shift(); }
-      candleSeries.update(bar); if(haSeries) haSeries.update(HeikinAshi([bar])[0]);
-      Active.forEach(it=>it.update(DATA));
-    }catch(err){} };
-    saveLayout();
-  }catch(err){ console.error(err); setStatus('Error loading'); alert('Load failed'); }
-}
-
-/* Load N-months history then resume live */
-async function loadMonths(months){
-  try{
-    let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
-    if(sym && !sym.endsWith(q)) sym = sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'') + q;
-    if(!VALID_SET.has(sym)){
-      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
-      const guess=(EXINFO.symbols||[]).find(s=>s.status==='TRADING'&&s.baseAsset===base);
-      if(guess){ sym=guess.symbol; els.quote.value=guess.quoteAsset; populatePairs(); } else { alert('Symbol not found'); return; }
-    }
     els.symbol.value=sym;
-    setStatus(`Preparing ${months}M • ${sym} • ${tf}`);
+    setStatus(`Loading ${sym} • ${tf} …`);
     closeWS();
 
-    const data = await fetchKRange(sym, tf, months);
-    applyDataToChart(data);
-
-    const stream=`${sym.toLowerCase()}@kline_${tf}`; WS=new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
-    WS.onopen = ()=> setStatus(`Live: ${sym} • ${tf} • ${months}M`);
-    WS.onclose= ()=> setStatus(`Disconnected • ${sym} • ${tf}`);
-    WS.onerror= ()=> setStatus(`Socket error • ${sym} • ${tf}`);
-    WS.onmessage=(e)=>{ try{
-      const msg=JSON.parse(e.data); if(!msg.k) return; const k=msg.k; const t=Math.floor(k.t/1000);
-      const bar={time:t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
-      const last=DATA[DATA.length-1]?.time; if(last===t){ DATA[DATA.length-1]=bar; } else { DATA.push(bar); if(DATA.length>300000) DATA.shift(); }
-      candleSeries.update(bar); if(haSeries) haSeries.update(HeikinAshi([bar])[0]);
-      Active.forEach(it=>it.update(DATA));
-    }catch(err){} };
+    await loadInitial(sym, tf);
+    openWS(sym, tf);
     saveLayout();
-  }catch(err){ console.error(err); setStatus('Error loading 36M'); alert('36M load failed'); }
+  }catch(err){
+    console.error(err);
+    setStatus(`Error: ${err.message}`);
+    alert('Load failed: '+err.message);
+  }
 }
 
-/* Events */
+/* ========= Events ========= */
 $('reload').addEventListener('click', ()=>{ Active.slice().forEach(it=>removeIndicator(it.id)); loadAll(); });
 els.tf.addEventListener('change', loadAll);
 els.symbol.addEventListener('keydown', e=>{ if(e.key==='Enter') loadAll(); });
-els.symbol.addEventListener('change', ()=>{ const v=els.symbol.value.toUpperCase(); if(VALID_SET.has(v)) loadAll(); });
-els.quote.addEventListener('change', ()=>{ populatePairs(); loadAll(); });
+els.symbol.addEventListener('change', ()=>{ const v=(els.symbol.value||'').toUpperCase(); if(VALID_SET.has(v)) loadAll(); });
+els.quote.addEventListener('change', async ()=>{ populatePairs(); await loadAll(); });
+els.market.addEventListener('change', async ()=>{
+  try{
+    await loadExchangeInfo(); // <-- re-fetch when market flips
+    populatePairs();
+    await loadAll();
+  }catch(e){ console.error(e); alert('Failed to switch market: '+e.message); }
+});
+els.range12.addEventListener('click', ()=> loadMonths(12));
 els.range36.addEventListener('click', ()=> loadMonths(36));
 
-/* Boot */
+/* ========= Boot ========= */
 (async function(){
-  await loadExchangeInfo(); populatePairs();
-  const raw=localStorage.getItem(KEYS.LAYOUT);
-  if(raw){
-    try{
-      const L=JSON.parse(raw);
-      if(L.quote){ els.quote.value=L.quote; }
-      populatePairs();
-      if(L.symbol){ els.symbol.value=L.symbol; }
-      if(L.tf){ els.tf.value=L.tf; }
-      if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
-    }catch{}
+  try{
+    // First fetch default market's exchange
+    await loadExchangeInfo();
+    populatePairs();
+
+    // Restore layout (may change market). If market changed, re-fetch EXINFO for that market.
+    const L = restoreLayout();
+    if(L && L.market){ await loadExchangeInfo(); populatePairs(); }
+
+    // Ensure a sensible default symbol if empty (after possible market/quote changes)
+    if(!els.symbol.value){
+      const q=els.quote.value;
+      const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT';
+      els.symbol.value=def;
+    }
+
+    // Auto-add RSI once
+    els.indSel.value='RSI';
+    renderParams();
+    [...els.paramRow.querySelectorAll('input')].forEach(inp=>{ if(inp.dataset.key==='_color') inp.value='#ef4444'; });
+
+    await loadAll();
+    addIndicator();
+
+    // Final nudge to anchor after everything mounts
+    setTimeout(()=>{ clampLeftEdge(cMain.timeScale(), 0); anchorLatestSlightRight(cMain.timeScale()); }, 50);
+  }catch(e){
+    console.error(e);
+    setStatus('Fatal init error: '+e.message);
+    alert('Init failed: '+e.message);
   }
-  if(!els.symbol.value){
-    const q=els.quote.value; const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT';
-    els.symbol.value=def;
-  }
-  await loadAll();   // quick load (1000 bars)
-  restoreLayout();
 })();
 </script>
 </body>
