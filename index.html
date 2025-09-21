@@ -10,15 +10,14 @@
   :root{
     --bg:#0b0f14; --panel:#0f1621; --panel2:#0b1320; --ink:#e6eef7; --muted:#9eb1c7;
     --line:#1a2736; --accent:#fcd535; --up:#16a34a; --down:#ef4444;
+    --hdr-h:60px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0;
-    overflow-y:auto;
+    margin:0; overflow-y:auto;
     background:linear-gradient(180deg,#080c12,#0b1119 30%,#0b0f14);
-    color:var(--ink);
-    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
   }
 
   header{position:sticky;top:0;z-index:3;background:rgba(11,15,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;padding:10px 14px;flex-wrap:wrap}
@@ -35,40 +34,52 @@
     background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
     position:relative;overflow:hidden;
-    height:clamp(460px,72vh,920px);
+    height:clamp(520px,78vh,1100px);
+    display:flex;flex-direction:column;
   }
-  .grid{display:grid;gap:12px;grid-template-rows:1fr 0px;height:100%}
-  .slot{position:relative}
-  .chart{position:absolute;inset:0}
+  .chart-scroll{flex:1 1 auto; overflow:auto; scrollbar-gutter:stable both-edges; padding:12px 12px 8px}
+  .chart-scroll::-webkit-scrollbar{height:10px;width:10px}
+  .chart-scroll::-webkit-scrollbar-thumb{background:#1b2a3a;border-radius:8px}
+  .chart-scroll::-webkit-scrollbar-track{background:#0b121a}
 
-  /* LOGO BIGGER */
-  .corner-logo{
-    position:absolute; z-index:2; top:8px; left:8px; width:84px; height:auto;
-    opacity:.5; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
-  }
+  body.edge .wrap{padding:0}
+  body.edge .card{border:none;border-radius:0;box-shadow:none;height:calc(100vh - var(--hdr-h))}
+  body.edge .chart-scroll{padding:0}
+  body.edge .grid{gap:0}
+
+  .grid{display:grid;gap:12px;grid-template-rows:minmax(260px,1fr) 0px 0px 0px 0px 0px;align-content:start;height:100%}
+
+  .slot{position:relative; min-height:0}
+  .chart{position:absolute; inset:0}
+
+  .corner-logo{position:absolute; z-index:2; top:8px; left:8px; width:84px; opacity:.5; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
 
   .pill{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
-  .toolbar{display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid var(--line);background:rgba(15,22,33,.35)}
+  .toolbar{display:flex;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:rgba(15,22,33,.35)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .kvs{display:flex;gap:6px;align-items:center}
   .kvs input[type="number"]{width:90px}
   .badges{display:flex;gap:6px;flex-wrap:wrap}
   .badge{font-size:12px;background:#0e1520;border:1px solid var(--line);border-radius:999px;padding:4px 8px;display:inline-flex;gap:6px;align-items:center}
   .badge button{padding:2px 6px;border-radius:999px;border:1px solid var(--line);background:#101a28;color:#fff;cursor:pointer}
-  .section-title{font-size:12px;color:var(--muted);margin-right:6px}
-  .toggle{display:inline-flex;gap:6px;align-items:center}
 
   .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:20}
   .sheet{width:100%;max-width:720px;margin:0 auto;background:linear-gradient(180deg,#0f1621,#0b1320);border-radius:16px;border:1px solid var(--line);padding:14px 14px 18px}
   .sheet h3{margin:0 0 8px 0;font-size:14px}
   .sheet .row{margin-top:8px}
-  .sheet .kv{display:flex;gap:8px;align-items:center;margin:6px 0}
-  .sheet .kv input[type="number"]{width:120px}
-  .sheet .bar{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
   .muted{color:var(--muted);font-size:12px}
   .ghost{background:#0c141f}
   input[type="color"]{padding:0;width:42px;height:36px;border-radius:8px;border:1px solid var(--line);background:#0e1520}
-  .sheet .kv input[type="checkbox"]{width:auto;height:auto}
+
+  /* Drag handle line between Main and first Osc */
+  .h-sizer{
+    position:absolute; left:0; right:0; top:-6px; height:10px;
+    cursor:row-resize; z-index:5;
+    background:linear-gradient(180deg,transparent 0%, rgba(0,0,0,.35) 45%, rgba(255,255,255,.08) 50%, rgba(0,0,0,.35) 55%, transparent 100%);
+    border-top:1px dashed rgba(255,255,255,.1);
+    border-bottom:1px dashed rgba(0,0,0,.25);
+    display:none;
+  }
 </style>
 </head>
 <body>
@@ -113,7 +124,7 @@
   </div>
 
   <div class="ctrl" style="flex:1 1 100%;gap:12px">
-    <span class="section-title">Indicators</span>
+    <span class="hint">Indicators</span>
     <select id="indSel">
       <optgroup label="Trend / MAs">
         <option>EMA</option><option>SMA</option><option>WMA</option><option>HMA</option>
@@ -134,17 +145,13 @@
       <optgroup label="Volume / Flow">
         <option>Volume</option><option>OBV</option><option>MFI</option><option>CMF</option><option>ADL</option>
       </optgroup>
-      <optgroup label="Custom">
-        <option>bildo x</option>
-      </optgroup>
     </select>
 
     <div id="paramRow" class="row kvs"></div>
-
     <label class="hint">Preset</label>
     <select id="presetSel"><option value="">— none —</option></select>
     <button id="applyPreset" class="ghost">Apply</button>
-    <button id="savePreset" title="Save current params as preset">Save</button>
+    <button id="savePreset">Save</button>
     <button id="delPreset" class="ghost">Delete</button>
 
     <button id="addInd">Add</button>
@@ -156,12 +163,21 @@
 
 <div class="wrap">
   <div class="card">
-    <div class="grid" id="grid">
-      <div class="slot">
-        <img class="corner-logo" src="https://iili.io/K7QaAD7.th.jpg" alt="logo"/>
-        <div id="c-main" class="chart"></div>
+    <div class="chart-scroll">
+      <div class="grid" id="grid">
+        <div class="slot">
+          <img class="corner-logo" src="https://iili.io/K7QaAD7.th.jpg" alt="logo"/>
+          <div id="c-main" class="chart"></div>
+        </div>
+        <div class="slot osc" id="oscSlot1" style="display:none">
+          <div id="hSizer1" class="h-sizer"></div>
+          <div id="c-osc-1" class="chart"></div>
+        </div>
+        <div class="slot osc" id="oscSlot2" style="display:none"><div id="c-osc-2" class="chart"></div></div>
+        <div class="slot osc" id="oscSlot3" style="display:none"><div id="c-osc-3" class="chart"></div></div>
+        <div class="slot osc" id="oscSlot4" style="display:none"><div id="c-osc-4" class="chart"></div></div>
+        <div class="slot osc" id="oscSlot5" style="display:none"><div id="c-osc-5" class="chart"></div></div>
       </div>
-      <div class="slot" id="oscSlot"><div id="c-osc" class="chart"></div></div>
     </div>
     <div class="toolbar"><span class="hint">Tip: click any badge to edit its settings. Save presets once, reuse forever. Layout auto-saves.</span></div>
   </div>
@@ -175,9 +191,10 @@
     </div>
     <div class="muted" id="sheetSub"></div>
     <div id="sheetParams" class="row" style="gap:16px;flex-wrap:wrap;margin-top:10px"></div>
-    <div class="bar">
-      <button id="sheetToggleVis" class="ghost">Toggle visibility</button>
+    <div class="row" style="gap:8px;justify-content:flex-end;margin-top:12px">
       <button id="sheetDuplicate" class="ghost">Duplicate</button>
+      <button id="sheetMoveUp" class="ghost">Move pane ↑</button>
+      <button id="sheetMoveDown" class="ghost">Move pane ↓</button>
       <button id="sheetRemove">Remove</button>
       <button id="sheetApply">Apply</button>
     </div>
@@ -189,9 +206,9 @@
 const $=id=>document.getElementById(id);
 const els={status:$('status'),market:$('market'),quote:$('quote'),symbol:$('symbol'),pairs:$('pairs'),tf:$('tf'),
            indSel:$('indSel'),paramRow:$('paramRow'),addInd:$('addInd'),badges:$('activeBadges'),
-           haToggle:$('haToggle'),oscSlot:$('oscSlot'),grid:$('grid'),
+           haToggle:$('haToggle'),grid:$('grid'),
            presetSel:$('presetSel'),savePreset:$('savePreset'),applyPreset:$('applyPreset'),delPreset:$('delPreset'),
-           range12:$('range12'),range36:$('range36')};
+           range12:$('range12'),range36:$('range36'), hSizer1:$('hSizer1'), oscSlot1:$('oscSlot1')};
 const setStatus=t=>{ els.status.textContent=t; };
 
 const defaultColor='#fcd535';
@@ -207,8 +224,15 @@ function setPackColor(pack,color){
   }
 }
 
-const KEYS={PRESETS:'aiSS_presets_v2', LAYOUT:'aiSS_layout_v2'};
+const KEYS={PRESETS:'aiSS_presets_v2', LAYOUT:'aiSS_layout_v2', SPLIT:'aiSS_split_main_osc1'};
 let EXINFO=null,BY_QUOTE={},VALID_SET=new Set();
+
+/* ========= Header height var for edge mode ========= */
+function setHeaderHeightVar(){
+  const h=document.querySelector('header')?.getBoundingClientRect().height||60;
+  document.documentElement.style.setProperty('--hdr-h', h+'px');
+}
+new ResizeObserver(setHeaderHeightVar).observe(document.body);
 
 /* ========= Market endpoints ========= */
 let API_BASE=null, WS_URL_BASE=null;
@@ -232,7 +256,7 @@ async function loadExchangeInfo(){
     });
     Object.keys(BY_QUOTE).forEach(q=>{
       BY_QUOTE[q].sort((a,b)=>{
-        const majors=['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TON','AVAX','TRX','LINK','MATIC','NEAR','OP','ARB','DOT','ATOM','LTC','ETC','FIL','SEI','SUI'];
+        const majors=['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TON','AVAX','TRX','LINK','MATIC','NEAR','OP','ARB','DOT','ATOM','LTC','ETC','FIL','SUI','SEI'];
         const ba=a.replace(q,''), bb=b.replace(q,'');
         const pa=majors.includes(ba)?0:1, pb=majors.includes(bb)?0:1;
         return (pa-pb)||a.localeCompare(b);
@@ -241,7 +265,7 @@ async function loadExchangeInfo(){
     setStatus('Markets ready');
   }catch(err){
     console.warn(err);
-    setStatus('Markets unavailable (offline). Try reload');
+    setStatus('Markets unavailable • fallback mode');
     EXINFO={symbols:[]}; BY_QUOTE={}; VALID_SET=new Set();
   }
 }
@@ -256,7 +280,7 @@ function populatePairs(){
       const pref=list.find(s=>/^(BTC|ETH|BNB|SOL|XRP)/.test(s))||list[0];
       els.symbol.value=pref;
     }
-  }else{ els.symbol.value=''; }
+  }else if(!els.symbol.value){ els.symbol.value='BTCUSDT'; }
 }
 
 /* ========= Charts ========= */
@@ -264,184 +288,166 @@ const mkChart=(el,opts={})=>{
   const c=LightweightCharts.createChart(el,{
     layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
     grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
-    rightPriceScale:{borderColor:'#223246'},
+    rightPriceScale:{borderColor:'#223246',visible:true},
     timeScale:{borderColor:'#223246',rightOffset:20,barSpacing:8},
     crosshair:{mode:0},
     ...opts
   });
-  const resize=()=>c.applyOptions({width:el.clientWidth,height:el.clientHeight});
-  new ResizeObserver(resize).observe(el); resize(); return c;
+  const resize=()=>c.applyOptions({width:el.clientWidth||300,height:el.clientHeight||200});
+  new ResizeObserver(resize).observe(el);
+  setTimeout(resize,0);
+  return c;
 };
 const cMain=mkChart($('c-main'));
-const cOsc = mkChart($('c-osc'),{rightPriceScale:{visible:true}});
+const oscSlots=[1,2,3,4,5].map(i=>({slot:$('oscSlot'+i),host:$('c-osc-'+i),chart:null,syncH:null}));
+oscSlots.forEach(o=>{ o.chart=mkChart(o.host,{ rightPriceScale:{visible:true} }); o.slot.style.display='none'; });
 
 /* Candle/HA series */
-let sCandle = cMain.addCandlestickSeries({
-  upColor:'#16a34a',downColor:'#ef4444',
-  borderUpColor:'#16a34a',borderDownColor:'#ef4444',
-  wickUpColor:'#16a34a',wickDownColor:'#ef4444'
-});
+let sCandle=cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'});
 let haSeries=null;
 
-/* ========= Smarter syncing ========= */
-let syncMainToOsc = null;
-let syncOscToMain = null;
-let syncing = false;
+/* ========= FULL SYNC (pan/zoom) between Main and Oscillators ========= */
+const SYNC = { guards:new WeakMap() };
+function withGuard(ts, fn){
+  const flag = SYNC.guards.get(ts);
+  if(flag?.busy) return;
+  SYNC.guards.set(ts,{busy:true});
+  try{ fn(); } finally { SYNC.guards.set(ts,{busy:false}); }
+}
+function getRange(ts){ try{ return ts.getVisibleLogicalRange?.(); }catch{return null;} }
+function setRange(ts, range){ if(!range||range.from==null||range.to==null) return; try{ ts.setVisibleLogicalRange({from:range.from, to:range.to}); }catch{} }
+function syncFromTo(srcChart, dstCharts){
+  const srcTS = srcChart.timeScale();
+  srcTS.subscribeVisibleLogicalRangeChange((r)=>{
+    withGuard(srcTS, ()=>{
+      dstCharts.forEach(ch=>{
+        const ts=ch.timeScale();
+        // avoid feedback loops
+        const g=SYNC.guards.get(ts);
+        if(g && g.busy) return;
+        setRange(ts, r);
+      });
+    });
+  });
+}
+function allOscCharts(){ return oscSlots.filter(o=>o.slot.style.display!=='none').map(o=>o.chart); }
+function wireBidirectionalSync(){
+  // Clear previous guards map
+  SYNC.guards = new WeakMap();
+  const osc=allOscCharts();
+  // Main -> all osc
+  syncFromTo(cMain, osc);
+  // Each osc -> main (so dragging osc also moves main)
+  osc.forEach(ch=> syncFromTo(ch, [cMain, ...osc.filter(x=>x!==ch)]));
+}
+// call after any layout/add/remove/resize
+function rewireSync(){ wireBidirectionalSync(); setTimeout(()=>snapAlignAll(),0); }
 
-function attachSync(){
-  if(syncMainToOsc || syncOscToMain) return;
-  syncMainToOsc = (range)=>{ if(!range || syncing) return; syncing=true; try{ cOsc.timeScale().setVisibleRange(range); }finally{ syncing=false; } };
-  syncOscToMain = (range)=>{ if(!range || syncing) return; syncing=true; try{ cMain.timeScale().setVisibleRange(range); }finally{ syncing=false; } };
-  cMain.timeScale().subscribeVisibleTimeRangeChange(syncMainToOsc);
-  cOsc.timeScale().subscribeVisibleTimeRangeChange(syncOscToMain);
+/* ========= Keep aligned (one-shot) when sizes change ========= */
+function readMainView(){
+  const ts=cMain.timeScale();
+  return { range: ts.getVisibleLogicalRange?.() || null };
 }
-function detachSync(){
-  if(syncMainToOsc){ cMain.timeScale().unsubscribeVisibleTimeRangeChange(syncMainToOsc); syncMainToOsc=null; }
-  if(syncOscToMain){ cOsc.timeScale().unsubscribeVisibleTimeRangeChange(syncOscToMain); syncOscToMain=null; }
+function applyViewTo(chart, view){
+  if(!view) return;
+  const ts=chart.timeScale();
+  try{
+    if(view.range && view.range.from!=null && view.range.to!=null){
+      ts.setVisibleLogicalRange({from:view.range.from, to:view.range.to});
+    }
+  }catch(e){}
 }
-
-/* ====== Range Guards & Right-Offset Anchor ====== */
-let guarding=false;
-const ANCHOR_RATIO = 0.45;
-function anchorLatestSlightRight(ts){
-  const lr = ts.getVisibleLogicalRange?.(); if(!lr || lr.from==null || lr.to==null) return;
-  const width = lr.to - lr.from;
-  const targetRight = Math.max(2, Math.round(width * ANCHOR_RATIO));
-  try{ ts.setRightOffset(targetRight); }catch{}
-}
-function clampLeftEdge(ts, firstIndex){
-  const lr = ts.getVisibleLogicalRange?.(); if(!lr || lr.from==null || lr.to==null) return;
-  if(lr.from < firstIndex){
-    const w = lr.to - lr.from;
-    try{ ts.setVisibleLogicalRange({from:firstIndex, to:firstIndex + w}); }catch{}
-  }
+function snapAlignAll(){
+  const view = readMainView();
+  oscSlots.forEach(o=>{
+    if(o.slot.style.display!=='none') applyViewTo(o.chart, view);
+  });
 }
 
-/* Interaction anti-lag */
+/* Guards (independent per chart) */
+let guarding=false; const ANCHOR_RATIO=0.45;
+function anchorLatestSlightRight(ts){ const lr=ts.getVisibleLogicalRange?.(); if(!lr) return; const w=lr.to-lr.from; try{ ts.setRightOffset(Math.max(2,Math.round(w*ANCHOR_RATIO))); }catch{} }
+function clampLeftEdge(ts, firstIndex){ const lr=ts.getVisibleLogicalRange?.(); if(!lr) return; if(lr.from<firstIndex){ const w=lr.to-lr.from; try{ ts.setVisibleLogicalRange({from:firstIndex,to:firstIndex+w}); }catch{} } }
 let userInteracting=false, interactTimer=null;
-const mainHost = document.getElementById('c-main');
-['mousedown','touchstart','wheel'].forEach(ev=>{
-  mainHost.addEventListener(ev, ()=>{
-    userInteracting=true;
-    clearTimeout(interactTimer);
-    interactTimer=setTimeout(()=>{ userInteracting=false; }, 180);
-  }, {passive:true});
-});
-function installGuards(chart){
-  const ts = chart.timeScale();
-  const handler = ()=>{
-    if(guarding || userInteracting) return;
-    guarding = true;
-    try{ clampLeftEdge(ts, 0); anchorLatestSlightRight(ts); }finally{ guarding = false; }
-  };
-  ts.subscribeVisibleLogicalRangeChange(handler);
-}
-installGuards(cMain);
+['mousedown','touchstart','wheel'].forEach(ev=>{ $('c-main').addEventListener(ev, ()=>{ userInteracting=true; clearTimeout(interactTimer); interactTimer=setTimeout(()=>{ userInteracting=false; },180); }, {passive:true}); });
+function installGuards(chart){ const ts=chart.timeScale(); const h=()=>{ if(guarding||userInteracting) return; guarding=true; try{ clampLeftEdge(ts,0); anchorLatestSlightRight(ts); }finally{ guarding=false; } }; ts.subscribeVisibleLogicalRangeChange(h); }
+installGuards(cMain); oscSlots.forEach(o=>installGuards(o.chart));
 
 /* ========= Data & Live ========= */
 let DATA=[], WS=null, OLDEST_MS=null, LOADING_OLD=false, RECONNECT_TRIES=0;
 const MAX_RECONNECT_TRIES=6;
-const closeWS=()=>{try{if(WS){WS.onmessage=null;WS.onclose=null;WS.onerror=null;WS.close();}}catch{} WS=null;};
+const closeWS=()=>{try{WS?.close();}catch{} WS=null;};
 
-function normalizeSymbolInput(sym, quote){
-  if(sym && !sym.endsWith(quote)){
-    sym = sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'') + quote;
-  }
-  return sym;
-}
-function findAnyMarketSymbolLike(base){
-  return (EXINFO.symbols||[]).find(s => (s.status==='TRADING') && s.baseAsset===base)?.symbol;
-}
+function normalizeSymbolInput(sym, quote){ if(sym && !sym.endsWith(quote)){ sym=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'')+quote; } return sym; }
+function findAnyMarketSymbolLike(base){ return (EXINFO.symbols||[]).find(s=>(s.status==='TRADING')&&s.baseAsset===base)?.symbol; }
 
 async function fetchKlines(symbol, interval, limit=1000, endTimeMs=null){
-  const path = (els.market.value==='spot') ? '/api/v3/klines' : '/fapi/v1/klines';
-  const params = new URLSearchParams({ symbol, interval, limit: String(limit) });
-  if(endTimeMs) params.set('endTime', String(endTimeMs));
-  const url = `${API_BASE}${path}?${params}`;
-  const res = await fetch(url);
+  const path=(els.market.value==='spot')?'/api/v3/klines':'/fapi/v1/klines';
+  const params=new URLSearchParams({symbol,interval,limit:String(limit)}); if(endTimeMs) params.set('endTime',String(endTimeMs));
+  const url=`${API_BASE}${path}?${params}`; const res=await fetch(url);
   if(!res.ok) throw new Error('klines fetch failed');
-  const raw = await res.json();
-  return raw.map(k=>({ tms:k[0], time:Math.floor(k[0]/1000), open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5] }));
+  const raw=await res.json();
+  return raw.map(k=>({tms:k[0],time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
 }
 
 function openWS(symbol, interval){
   closeWS();
-  const stream = `${symbol.toLowerCase()}@kline_${interval}`;
-  const url = `${WS_URL_BASE}/${stream}`;
-  try{ WS = new WebSocket(url); }catch(e){ console.warn('WS init failed', e); setStatus(`Live off • ${symbol} • ${interval}`); return; }
-
+  const stream=`${symbol.toLowerCase()}@kline_${interval}`; const url=`${WS_URL_BASE}/${stream}`;
+  try{ WS=new WebSocket(url); }catch(e){ console.warn('WS init failed',e); setStatus(`Live off • ${symbol} • ${interval}`); return; }
   WS.onopen=()=>{ RECONNECT_TRIES=0; setStatus(`Live: ${symbol} • ${interval}`); };
   WS.onerror=()=> setStatus(`Socket error • ${symbol} • ${interval}`);
-  WS.onclose = ()=> {
+  WS.onclose=()=>{
     setStatus(`Disconnected • ${symbol} • ${interval}`);
-    if(RECONNECT_TRIES < MAX_RECONNECT_TRIES){
-      const wait = Math.min(15000, 500 * Math.pow(2, RECONNECT_TRIES));
-      RECONNECT_TRIES++;
-      setTimeout(()=>openWS(symbol, interval), wait);
-    }
+    if(RECONNECT_TRIES<MAX_RECONNECT_TRIES){ const wait=Math.min(15000,500*Math.pow(2,RECONNECT_TRIES++)); setTimeout(()=>openWS(symbol,interval),wait); }
   };
   WS.onmessage=(e)=>{ try{
-    const msg=JSON.parse(e.data);
-    const k = msg.k || msg.data?.k; if(!k) return;
-    const t = Math.floor(k.t/1000);
-    const bar = { time:t, open:+k.o, high:+k.h, low:+k.l, close:+k.c, volume:+k.v, tms:k.t };
+    const msg=JSON.parse(e.data); const k=msg.k||msg.data?.k; if(!k) return;
+    const t=Math.floor(k.t/1000);
+    const bar={time:t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,tms:k.t};
     const last=DATA[DATA.length-1]?.time;
-    if(last===t){
-      DATA[DATA.length-1] = { ...DATA[DATA.length-1], ...bar };
-      sCandle.update(bar);
-      if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); }
-    }else if(last==null || t>last){
-      DATA.push(bar);
-      if(DATA.length>5000) DATA.shift();
-      sCandle.update(bar);
-      if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); }
-    }
+    if(last===t){ DATA[DATA.length-1]={...DATA[DATA.length-1],...bar}; sCandle.update(bar); if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); } }
+    else if(last==null||t>last){ DATA.push(bar); if(DATA.length>5000) DATA.shift(); sCandle.update(bar); if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); } }
     Active.forEach(it=>it.update(DATA));
     if(!userInteracting) anchorLatestSlightRight(cMain.timeScale());
-  }catch(err){ } };
+  }catch{} };
 }
 
 async function loadInitial(symbol, interval){
   setStatus(`Loading ${symbol} • ${interval} …`);
-  DATA = [];
+  DATA=[];
   try{
-    const batch = await fetchKlines(symbol, interval, 1000, null);
+    const batch=await fetchKlines(symbol,interval,1000,null);
     if(!batch.length) throw new Error('No data');
-    DATA = batch;
-    OLDEST_MS = batch[0].tms;
-
+    DATA=batch; OLDEST_MS=batch[0].tms;
     sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-    if(els.haToggle.checked){
-      ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA));
-      sCandle.setData([]);
-    }
-    queueMicrotask(()=> cMain.timeScale().scrollToPosition(-2, false));
+    if(els.haToggle.checked){ ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
+    queueMicrotask(()=> cMain.timeScale().scrollToPosition(-2,false));
     setStatus(`History loaded • ${symbol} • ${interval}`);
     Active.forEach(it=>it.update(DATA));
-    setTimeout(()=>{ clampLeftEdge(cMain.timeScale(),0); anchorLatestSlightRight(cMain.timeScale()); }, 0);
-  }catch(err){
-    console.warn(err);
-    setStatus('History load failed');
-  }
+    setTimeout(()=>{ 
+      clampLeftEdge(cMain.timeScale(),0); 
+      anchorLatestSlightRight(cMain.timeScale()); 
+      snapAlignAll(); 
+      rewireSync();           // ensure live sync after initial load
+    },0);
+  }catch(err){ console.warn(err); setStatus('History load failed'); }
 }
 
-/* Backfill on left-edge (scroll) */
-function debounce(fn, ms=250){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);} }
-const watchBackfill = debounce(async ()=>{
-  const rng = cMain.timeScale().getVisibleLogicalRange?.(); if(!rng) return;
+/* Backfill while scrolling left */
+function debounce(fn,ms=250){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);} }
+const watchBackfill=debounce(async ()=>{
+  const rng=cMain.timeScale().getVisibleLogicalRange?.(); if(!rng) return;
   if(rng.from!==undefined && rng.from<20){
-    if(LOADING_OLD) return;
-    LOADING_OLD=true;
+    if(LOADING_OLD) return; LOADING_OLD=true;
     try{
-      const endTime = OLDEST_MS - 1;
-      const sym=els.symbol.value.toUpperCase(); const tf=els.tf.value;
-      const more = await fetchKlines(sym, tf, 1000, endTime);
+      const endTime=OLDEST_MS-1; const sym=els.symbol.value.toUpperCase(); const tf=els.tf.value;
+      const more=await fetchKlines(sym,tf,1000,endTime);
       if(more.length){
-        OLDEST_MS = more[0].tms;
-        DATA = more.concat(DATA);
+        OLDEST_MS=more[0].tms; DATA=more.concat(DATA);
         sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
         if(haSeries){ haSeries.setData(HeikinAshi(DATA)); }
         Active.forEach(it=>it.update(DATA));
+        snapAlignAll();
       }
     }catch(e){ console.warn(e); }
     LOADING_OLD=false;
@@ -449,143 +455,133 @@ const watchBackfill = debounce(async ()=>{
 },150);
 cMain.timeScale().subscribeVisibleLogicalRangeChange?.(watchBackfill);
 
-/* === Optional month loader (12M / 36M) === */
+/* Month loader */
 async function loadMonths(months){
   try{
     let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
-    sym = normalizeSymbolInput(sym,q);
-    if(!VALID_SET.has(sym)){
+    sym=normalizeSymbolInput(sym,q);
+    if(!VALID_SET.has(sym) && (EXINFO.symbols||[]).length){
       const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
       const guess=findAnyMarketSymbolLike(base);
-      if(guess){
-        const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess);
-        if(info){ els.quote.value=info.quoteAsset; populatePairs(); }
-        sym=guess;
-      }else{
-        setStatus('Symbol not found');
-        return;
-      }
+      if(guess){ const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess); if(info){ els.quote.value=info.quoteAsset; populatePairs(); } sym=guess; }
     }
     els.symbol.value=sym;
-    setStatus(`Preparing ${months}M • ${sym} • ${tf}`);
-    closeWS();
+    setStatus(`Preparing ${months}M • ${sym} • ${tf}`); closeWS();
 
     const nowMs=Date.now(); const approxMonth=30*24*60*60*1000;
-    let end=nowMs; const earliest = nowMs - months*approxMonth;
+    let end=nowMs; const earliest=nowMs-months*approxMonth;
     let out=[];
     while(end>earliest && out.length<200000){
-      const batch = await fetchKlines(sym, tf, 1000, end);
+      const batch=await fetchKlines(sym,tf,1000,end);
       if(!batch.length) break;
-      out = batch.concat(out);
-      end = batch[0].tms - 1;
+      out=batch.concat(out); end=batch[0].tms-1;
       if(out[0].tms<=earliest) break;
-      if(out.length%3000===0){
-        const pct = Math.min(99, (nowMs-end)/(months*approxMonth)*100);
-        setStatus(`Fetching ${months}M • ${sym} • ${tf} • ${pct.toFixed(0)}%`);
-      }
     }
-    DATA = out;
-    OLDEST_MS = out[0]?.tms ?? null;
+    DATA=out; OLDEST_MS=out[0]?.tms??null;
     sCandle.setData(out.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
     if(els.haToggle.checked){ ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
     Active.forEach(it=>it.update(DATA));
     anchorLatestSlightRight(cMain.timeScale());
+    snapAlignAll();
+    rewireSync(); // keep sync after loading a new range
 
-    openWS(sym, tf);
+    openWS(sym,tf);
     setStatus(`Live: ${sym} • ${tf} • ${months}M`);
     saveLayout();
   }catch(err){ console.warn(err); setStatus(`${months}M load error`); }
 }
 
-/* ========= Indicator framework ========= */
+/* ========= Indicators (same core) ========= */
 const Active=[]; let idSeq=1;
-let markerOwners=new Map();
-function updateAllMarkers(){ const all=[]; markerOwners.forEach(a=>{a&&all.push(...a)}); try{ sCandle && sCandle.setMarkers(all); }catch{} }
+function updateAllMarkers(){}
 
-function ensureCandleSeries(){
-  if(!sCandle){
-    sCandle = cMain.addCandlestickSeries({
-      upColor:'#16a34a',downColor:'#ef4444',
-      borderUpColor:'#16a34a',borderDownColor:'#ef4444',
-      wickUpColor:'#16a34a',wickDownColor:'#ef4444'
-    });
-  }
-}
-function ensureHeikinSeries(){
-  if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} }
-  haSeries=cMain.addCandlestickSeries({
-    upColor:'#22c55e',downColor:'#ef4444',
-    borderUpColor:'#22c55e',borderDownColor:'#ef4444',
-    wickUpColor:'#22c55e',wickDownColor:'#ef4444',
-    priceScaleId:'ha'
-  });
-  cMain.priceScale('ha').applyOptions({scaleMargins:{top:0.12,bottom:0.12}});
-}
+/* Edge mode */
+function countActivePanes(){ return new Set(Active.filter(x=>x.kind==='osc').map(x=>x.pane)).size; }
 
-/* Layout toggling */
-function anyOsc(){ return Active.some(x=>x.kind==='osc'); }
+/* === Split ratio logic (Main vs first Osc) === */
+let splitRatio = (()=>{ const v=localStorage.getItem(KEYS.SPLIT); const n=parseFloat(v); return isFinite(n)?Math.max(0.2,Math.min(0.85,n)):0.65; })();
+
+function refreshEdgeMode(){ document.body.classList.toggle('edge', countActivePanes()===0); }
+
+/* Build grid rows */
 function refreshOscLayout(){
-  if(anyOsc()){
-    els.grid.style.gridTemplateRows = 'minmax(260px,1fr) minmax(160px,.6fr)';
-    els.oscSlot.style.display='block';
-    attachSync();
+  const used=new Set(Active.filter(x=>x.kind==='osc').map(x=>x.pane));
+  oscSlots.forEach((o,idx)=>{ o.slot.style.display = used.has(idx+1)?'block':'none'; });
+  const has1 = used.has(1);
+  els.hSizer1.style.display = has1 ? 'block' : 'none';
+
+  const rows=[];
+  if(has1){
+    const mainFr = splitRatio;
+    const osc1Fr = Math.max(0.1, 1 - splitRatio);
+    rows.push(`minmax(260px, ${mainFr}fr)`);
+    rows.push(`minmax(120px, ${osc1Fr}fr)`);
   }else{
-    els.grid.style.gridTemplateRows = '1fr 0px';
-    els.oscSlot.style.display='block';
-    detachSync();
+    rows.push('minmax(260px, 1fr)');
+    rows.push('0px');
   }
-}
-
-function badgeLabel(it){const p=Object.entries(it.params).filter(([k])=>k!=='_color').map(([k,v])=>`${k}:${v}`).join(','); return `${it.key}${p?`(${p})`:''}`;}
-function renderBadges(){
-  els.badges.innerHTML='';
-  Active.forEach(it=>{
-    const s=document.createElement('span'); s.className='badge'; s.textContent=badgeLabel(it)+' ';
-    s.title='Click to edit settings'; s.onclick=()=>openSheet(it.id);
-    const b=document.createElement('button'); b.textContent='×'; b.onclick=(e)=>{e.stopPropagation(); removeIndicator(it.id); saveLayout();};
-    s.appendChild(b); els.badges.appendChild(s);
-  });
-  refreshOscLayout();
-}
-function removeIndicator(id){
-  const idx=Active.findIndex(x=>x.id===id);
-  if(idx>=0){
-    Active[idx].series.forEach(s=>{try{(Active[idx].kind==='osc'?cOsc:cMain).removeSeries(s);}catch{}});
-    if(Active[idx].extraCleanup) Active[idx].extraCleanup();
-    Active.splice(idx,1); markerOwners.delete(id); updateAllMarkers(); renderBadges();
+  for(let i=2;i<=5;i++){
+    rows.push( used.has(i) ? 'minmax(120px, .45fr)' : '0px' );
   }
+  els.grid.style.gridTemplateRows = rows.join(' ');
+  refreshEdgeMode();
+
+  // keep panes straight with main (and rewire sync due to layout change)
+  setTimeout(()=>{ snapAlignAll(); rewireSync(); }, 0);
 }
 
-/* Series helpers */
-function lineOn(chart,opts={}){ return chart.addLineSeries({lineWidth:2, ...opts}); }
-function histOn(chart,opts={}){ return chart.addHistogramSeries({...opts}); }
-function bandOn(chart){ const upper=lineOn(chart), middle=lineOn(chart,{lineWidth:1}), lower=lineOn(chart); return {upper,middle,lower}; }
-function pack(series,updater){ const list=Array.isArray(series)?series:[series]; return {series:list,update:updater}; }
-function packOsc(series,updater){ const p=pack(series,updater); return {...p,kind:'osc'}; }
-function setLine(series,y){ series.setData(DATA.map((d,i)=>({time:d.time,value:y[i]==null?NaN:y[i]}))); }
-function setConstLine(series,val){ series.setData(DATA.map(d=>({time:d.time,value:val}))); }
+/* Drag events for the h-sizer */
+(function setupSizer(){
+  let dragging=false, startY=0, gridBox=null;
+  function onDown(e){
+    dragging=true;
+    startY=(e.touches?e.touches[0].clientY:e.clientY);
+    gridBox=els.grid.getBoundingClientRect();
+    document.body.style.userSelect='none';
+  }
+  function onMove(e){
+    if(!dragging||!gridBox) return;
+    const y=(e.touches?e.touches[0].clientY:e.clientY);
+    const rel = (y - gridBox.top) / gridBox.height;
+    splitRatio = Math.max(0.2, Math.min(0.85, rel));
+    localStorage.setItem(KEYS.SPLIT, splitRatio.toFixed(4));
+    refreshOscLayout();
+  }
+  function onUp(){ dragging=false; gridBox=null; document.body.style.userSelect=''; }
 
-/* ===== Indicators math ===== */
+  els.hSizer1.addEventListener('mousedown', onDown);
+  els.hSizer1.addEventListener('touchstart', onDown, {passive:true});
+  window.addEventListener('mousemove', onMove, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+})();
+
+/* Series helpers & math (unchanged)… */
+const lineOn=(chart,opts={})=> chart.addLineSeries({lineWidth:2,...opts});
+const histOn=(chart,opts={})=> chart.addHistogramSeries({...opts});
+const bandOn=(chart)=>{ const upper=lineOn(chart), middle=lineOn(chart,{lineWidth:1}), lower=lineOn(chart); return {upper,middle,lower}; };
+const pack=(series,updater,kind,chart,pane)=>({series:Array.isArray(series)?series:[series],update:updater,kind,chart,pane});
+const setLine=(series,y)=> series.setData(DATA.map((d,i)=>({time:d.time,value:(y[i]==null)?NaN:y[i]})));
+const setConstLine=(series,val)=> series.setData(DATA.map(d=>({time:d.time,value:val})));
+
+/* === Indicators math (same as before) === */
 const val=o=>o.close;
-function SMA(arr,p,acc=val){const out=Array(arr.length).fill(null); let s=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); s+=x; if(i>=p) s-=acc(arr[i-p]); if(i>=p-1) out[i]=s/p;} return out;}
-function EMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const k=2/(p+1); let prev=null; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); if(prev==null){ if(i>=p-1){ prev=SMA(arr.slice(0,i+1),p,acc)[i]; out[i]=prev;} } else { prev=x*k+prev*(1-k); out[i]=prev; } } return out;}
-function WMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const denom=p*(p+1)/2; for(let i=0;i<arr.length;i++){ if(i<p-1) continue; let s=0,w=0; for(let j=0;j<p;j++){ s += acc(arr[i-j])*(p-j); w+= (p-j);} out[i]=s/denom; } return out;}
+function SMA(arr,p,acc=val){const out=Array(arr.length).fill(null); let s=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); s+=x; if(i>=p) s-=acc(arr[i-p],i-p); if(i>=p-1) out[i]=s/p;} return out;}
+function EMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const k=2/(p+1); let prev=null; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); if(prev==null){ if(i>=p-1){ prev=SMA(arr.slice(0,i+1),p,acc)[i]; out[i]=prev;} } else { prev=x*k+prev*(1-k); out[i]=prev; } } return out;}
+function WMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const denom=p*(p+1)/2; for(let i=0;i<arr.length;i++){ if(i<p-1) continue; let s=0; for(let j=0;j<p;j++){ s += acc(arr[i],i-j)*(p-j);} out[i]=s/denom; } return out;}
 function HMA(arr,p,acc=val){const w1=WMA(arr,Math.floor(p/2),acc), w2=WMA(arr,p,acc); const diff=arr.map((_,i)=>({close:(w1[i]??0)*2-(w2[i]??0)})); return WMA(diff,Math.round(Math.sqrt(p)),x=>x.close);}
-function DEMA(arr,p,acc=val){const e=EMA(arr,p,acc); const e2=EMA(arr,p,i=>e[i]??acc(arr[i])); return e.map((v,i)=> v!=null && e2[i]!=null ? 2*v - e2[i] : null);}
-function TEMA(arr,p,acc=val){const e=EMA(arr,p,acc); const e2=EMA(arr,p,i=>e[i]??acc(arr[i])); const e3=EMA(arr,p,i=>e2[i]??acc(arr[i])); return e.map((v,i)=> (v!=null&&e2[i]!=null&&e3[i]!=null)? 3*(v - e2[i]) + e3[i] : null);}
-function VWMA(arr,p){return EMA(arr,p,(o,i)=>o.close*(o.volume||0))/EMA(arr,p,(o)=>o.volume||0);}
+function DEMA(arr,p,acc=val){const e=EMA(arr,p,acc); const e2=EMA(arr,p,(_,i)=>e[i]??acc(arr[i],i)); return e.map((v,i)=> v!=null && e2[i]!=null ? 2*v - e2[i] : null);}
+function TEMA(arr,p,acc=val){const e=EMA(arr,p,acc); const e2=EMA(arr,p,(_,i)=>e[i]??acc(arr[i],i)); const e3=EMA(arr,p,(_,i)=>e2[i]??acc(arr[i],i)); return e.map((v,i)=> (v!=null&&e2[i]!=null&&e3[i]!=null)? 3*(v - e2[i]) + e3[i] : null);}
+function VWMA(arr,p){ const num=EMA(arr,p,(o)=>o.close*(o.volume||0)); const den=EMA(arr,p,(o)=>o.volume||0); return num.map((v,i)=> (den[i]? v/den[i] : null)); }
 function ATR(arr,p=14){const out=Array(arr.length).fill(null); let prevC=null,trEMA=null; const k=2/(p+1); for(let i=0;i<arr.length;i++){const h=arr[i].high,l=arr[i].low,c=arr[i].close; const tr=prevC==null?(h-l):Math.max(h-l,Math.abs(h-prevC),Math.abs(l-prevC)); trEMA = trEMA==null? tr : (trEMA*(1-k)+tr*k); out[i]=trEMA; prevC=c;} return out;}
 function RSI(arr,p=14){const out=Array(arr.length).fill(null); let g=0,l=0; for(let i=1;i<arr.length;i++){const ch=arr[i].close-arr[i-1].close; const up=Math.max(ch,0),dn=Math.max(-ch,0); if(i<=p){ g+=up; l+=dn; if(i===p){ const rs=(g/p)/((l/p)||1e-12); out[i]=100-100/(1+rs);} } else { g=(g*(p-1)+up)/p; l=(l*(p-1)+dn)/p; const rs=g/(l||1e-12); out[i]=100-100/(1+rs);} } return out;}
 function HeikinAshi(arr){const out=[]; let prevO=(arr[0].open+arr[0].close)/2, prevC=(arr[0].open+arr[0].high+arr[0].low+arr[0].close)/4;
-  for(let i=0;i<arr.length;i++){
-    const c=(arr[i].open+arr[i].high+arr[i].low+arr[i].close)/4;
-    const o=(prevO+prevC)/2; const h=Math.max(arr[i].high,o,c), l=Math.min(arr[i].low,o,c);
-    out.push({time:arr[i].time,open:o,high:h,low:l,close:c,volume:arr[i].volume}); prevO=o; prevC=c;
-  } return out;
-}
-function STD(arr,p,acc=val){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p-1) continue; const slice=arr.slice(i-p+1,i+1).map(acc); const m=slice.reduce((a,b)=>a+b,0)/p; const v=slice.reduce((a,b)=>a+(b-m)**2,0)/p; out[i]=Math.sqrt(v);} return out;}
-function highest(arr,p,acc=val){const out=Array(arr.length).fill(null); let dq=[]; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); while(dq.length && dq[dq.length-1].v<=x) dq.pop(); dq.push({i,v:x}); while(dq[0] && dq[0].i<=i-p) dq.shift(); if(i>=p-1) out[i]=dq[0].v;} return out;}
-function lowest(arr,p,acc=val){const out=Array(arr.length).fill(null); let dq=[]; for(let i=0;i<arr.length;i++){const x=acc(arr[i]); while(dq.length && dq[dq.length-1].v>=x) dq.pop(); dq.push({i,v:x}); while(dq[0] && dq[0].i<=i-p) dq.shift(); if(i>=p-1) out[i]=dq[0].v;} return out;}
+  for(let i=0;i<arr.length;i++){const c=(arr[i].open+arr[i].high+arr[i].low+arr[i].close)/4; const o=(prevO+prevC)/2; const h=Math.max(arr[i].high,o,c), l=Math.min(arr[i].low,o,c);
+    out.push({time:arr[i].time,open:o,high:h,low:l,close:c,volume:arr[i].volume}); prevO=o; prevC=c;} return out; }
+function STD(arr,p,acc=val){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p-1) continue; const slice=arr.slice(i-p+1,i+1).map((x,j)=>acc(x,i-p+1+j)); const m=slice.reduce((a,b)=>a+b,0)/p; const v=slice.reduce((a,b)=>a+(b-m)**2,0)/p; out[i]=Math.sqrt(v);} return out;}
+function highest(arr,p,acc=val){const out=Array(arr.length).fill(null); let dq=[]; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); while(dq.length && dq[dq.length-1].v<=x) dq.pop(); dq.push({i,v:x}); while(dq[0] && dq[0].i<=i-p) dq.shift(); if(i>=p-1) out[i]=dq[0].v;} return out;}
+function lowest(arr,p,acc=val){const out=Array(arr.length).fill(null); let dq=[]; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); while(dq.length && dq[dq.length-1].v>=x) dq.pop(); dq.push({i,v:x}); while(dq[0] && dq[0].i<=i-p) dq.shift(); if(i>=p-1) out[i]=dq[0].v;} return out;}
 function ROC(arr,p){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p) continue; const prev=arr[i-p].close; out[i]=(arr[i].close-prev)/prev*100;} return out;}
 function CCI(arr,p=20){const out=Array(arr.length).fill(null); const tp=arr.map(o=>(o.high+o.low+o.close)/3); const sma=SMA(arr,p,(_,i)=>tp[i]); const dev=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p-1) continue; let s=0; for(let j=i-p+1;j<=i;j++){ s += Math.abs(tp[j]-sma[i]); } dev[i]=s/p; out[i]=(tp[i]-sma[i])/(0.015*(dev[i]||1)); } return out;}
 function Stochastic(arr,kp=14,dp=3){const hh=highest(arr,kp,o=>o.high), ll=lowest(arr,kp,o=>o.low); const k=arr.map((o,i)=> hh[i]==null?null:((o.close-ll[i])/(hh[i]-ll[i]||1))*100 ); const d=SMA(arr,dp,(_,i)=>k[i]??0); return {k,d};}
@@ -597,36 +593,12 @@ function TRIX(arr,p=15){const e1=EMA(arr,p), e2=EMA(arr,p,(_,i)=>e1[i]??val(_)),
 function TSI(arr,short=25,long=13){const m=[]; for(let i=1;i<arr.length;i++){ m[i]=arr[i].close-arr[i-1].close; } const abs=m.map(x=>Math.abs(x||0)); const ema1=EMA(m.map((x,i)=>({close:x??0})),short,x=>x.close), ema2=EMA(ema1.map((x)=>({close:x??0})),long,x=>x.close); const a1=EMA(abs.map((x)=>({close:x??0})),short,x=>x.close), a2=EMA(a1.map((x)=>({close:x??0})),long,x=>x.close); return ema2.map((v,i)=> (a2[i]? (v/a2[i])*100 : null));}
 function WilliamsR(arr,p=14){const hh=highest(arr,p,o=>o.high), ll=lowest(arr,p,o=>o.low); return arr.map((o,i)=> hh[i]==null?null: ((hh[i]-o.close)/(hh[i]-ll[i]||1))*-100 );}
 function Aroon(arr,p=14){const outUp=[], outDown=[]; for(let i=0;i<arr.length;i++){ if(i<p-1){outUp[i]=null; outDown[i]=null; continue;} let imax=i, imin=i; for(let j=i-p+1;j<=i;j++){ if(arr[j].high>arr[imax].high) imax=j; if(arr[j].low<arr[imin].low) imin=j; } outUp[i]=((p-(i-imax))/p)*100; outDown[i]=((p-(i-imin))/p)*100; } return {up:outUp,down:outDown};}
-function DM(arr){ // directional movement components
-  const plusDM=[], minusDM=[], tr=[]; for(let i=1;i<arr.length;i++){ const up=arr[i].high-arr[i-1].high; const dn=arr[i-1].low-arr[i].low; plusDM[i]= (up>dn && up>0)? up:0; minusDM[i]=(dn>up && dn>0)? dn:0;
-    const high=arr[i].high, low=arr[i].low, prevClose=arr[i-1].close; tr[i]=Math.max(high-low, Math.abs(high-prevClose), Math.abs(low-prevClose)); }
-  return {plusDM,minusDM,tr};
-}
-function ADX(arr,p=14){const {plusDM,minusDM,tr} = DM(arr); const atr=EMA(tr.map(x=>({close:x||0})),p,x=>x.close);
-  const plusDI=plusDM.map((v,i)=> atr[i]? (v/atr[i])*100 : null); const minusDI=minusDM.map((v,i)=> atr[i]? (v/atr[i])*100 : null);
-  const dx=plusDI.map((v,i)=> (v==null||minusDI[i]==null||(v+minusDI[i])===0)?null:(Math.abs(v-minusDI[i])/(v+minusDI[i]))*100 );
-  const adx = EMA(dx.map(x=>({close:x??0})), p, x=>x.close);
-  return {plusDI,minusDI,adx};
-}
+function DM(arr){ const plusDM=[], minusDM=[], tr=[]; for(let i=1;i<arr.length;i++){ const up=arr[i].high-arr[i-1].high; const dn=arr[i-1].low-arr[i].low; plusDM[i]=(up>dn&&up>0)?up:0; minusDM[i]=(dn>up&&dn>0)?dn:0; const high=arr[i].high, low=arr[i].low, prevClose=arr[i-1].close; tr[i]=Math.max(high-low,Math.abs(high-prevClose),Math.abs(low-prevClose)); } return {plusDM,minusDM,tr}; }
+function ADX(arr,p=14){const {plusDM,minusDM,tr}=DM(arr); const atr=EMA(tr.map(x=>({close:x||0})),p,x=>x.close); const plusDI=plusDM.map((v,i)=> atr[i]? (v/atr[i])*100 : null); const minusDI=minusDM.map((v,i)=> atr[i]? (v/atr[i])*100 : null); const dx=plusDI.map((v,i)=> (v==null||minusDI[i]==null||(v+minusDI[i])===0)?null:(Math.abs(v-minusDI[i])/(v+minusDI[i]))*100 ); const adx=EMA(dx.map(x=>({close:x??0})),p,x=>x.close); return {plusDI,minusDI,adx};}
 function Awesome(arr,fast=5,slow=34){ const m=arr.map(o=>(o.high+o.low)/2); const fastS=SMA(arr,fast,(_,i)=>m[i]); const slowS=SMA(arr,slow,(_,i)=>m[i]); return m.map((_,i)=> (fastS[i]==null||slowS[i]==null)?null:(fastS[i]-slowS[i])); }
-function PSAR(arr, step=0.02, max=0.2){
-  const out=Array(arr.length).fill(null); let trend=1; // 1 up, -1 down
-  let af=step; let ep=arr[0].high; let sar=arr[0].low;
-  for(let i=1;i<arr.length;i++){
-    sar = sar + af*(ep - sar);
-    if(trend===1){
-      if(arr[i].low < sar){ trend=-1; sar=ep; ep=arr[i].low; af=step; }
-      else{ if(arr[i].high > ep){ ep=arr[i].high; af=Math.min(max,af+step); } }
-      // ensure sar below last two lows
-      if(i>=2) sar=Math.min(sar, arr[i-1].low, arr[i-2].low);
-    }else{
-      if(arr[i].high > sar){ trend=1; sar=ep; ep=arr[i].high; af=step; }
-      else{ if(arr[i].low < ep){ ep=arr[i].low; af=Math.min(max,af+step);} }
-      if(i>=2) sar=Math.max(sar, arr[i-1].high, arr[i-2].high);
-    }
-    out[i]=sar;
-  } return out;
-}
+function PSAR(arr, step=0.02, max=0.2){ const out=Array(arr.length).fill(null); let trend=1,af=step,ep=arr[0].high,sar=arr[0].low;
+  for(let i=1;i<arr.length;i++){ sar=sar+af*(ep-sar); if(trend===1){ if(arr[i].low<sar){trend=-1;sar=ep;ep=arr[i].low;af=step;} else{ if(arr[i].high>ep){ep=arr[i].high;af=Math.min(max,af+step);} } if(i>=2) sar=Math.min(sar,arr[i-1].low,arr[i-2].low);
+  }else{ if(arr[i].high>sar){trend=1;sar=ep;ep=arr[i].high;af=step;} else{ if(arr[i].low<ep){ep=arr[i].low;af*Math.min;af=Math.min(max,af+step);} } if(i>=2) sar=Math.max(sar,arr[i-1].high,arr[i-2].high);} out[i]=sar;} return out; }
 function Supertrend(arr, period=10, mult=3){
   const tr=ATR(arr,period); const hl2=arr.map(o=>(o.high+o.low)/2);
   const upper=tr.map((v,i)=> v==null?null:(hl2[i]+mult*v)); const lower=tr.map((v,i)=> v==null?null:(hl2[i]-mult*v));
@@ -637,12 +609,9 @@ function Supertrend(arr, period=10, mult=3){
   const trend=Array(arr.length).fill(null); const st=Array(arr.length).fill(null);
   for(let i=1;i<arr.length;i++){
     if(st[i-1]==null){ st[i]=hl2[i]>hl2[i-1]?finalLower[i]:finalUpper[i]; trend[i]=hl2[i]>hl2[i-1]?1:-1; continue; }
-    if(st[i-1]===finalUpper[i-1]){
-      st[i] = (arr[i].close>finalUpper[i]) ? finalLower[i] : finalUpper[i];
-    } else {
-      st[i] = (arr[i].close<finalLower[i]) ? finalUpper[i] : finalLower[i];
-    }
-    trend[i] = (st[i]===finalLower[i])?1:-1;
+    if(st[i-1]===finalUpper[i-1]){ st[i]=(arr[i].close>finalUpper[i])?finalLower[i]:finalUpper[i]; }
+    else{ st[i]=(arr[i].close<finalLower[i])?finalUpper[i]:finalLower[i]; }
+    trend[i]=(st[i]===finalLower[i])?1:-1;
   }
   return {st,trend};
 }
@@ -650,44 +619,39 @@ function Donchian(arr,p=20){ return {hi:highest(arr,p,o=>o.high), lo:lowest(arr,
 function Keltner(arr,p=20,mult=2){ const ema=EMA(arr,p); const atr=ATR(arr,p); return {upper:atr.map((v,i)=> (ema[i]==null||v==null)?null: ema[i]+mult*v), middle:ema, lower:atr.map((v,i)=> (ema[i]==null||v==null)?null: ema[i]-mult*v)};}
 function BB(arr,p=20,stdMult=2){ const basis=SMA(arr,p); const dev=STD(arr,p); return {upper:dev.map((v,i)=> (basis[i]==null||v==null)?null:basis[i]+stdMult*v), middle:basis, lower:dev.map((v,i)=> (basis[i]==null||v==null)?null:basis[i]-stdMult*v)}; }
 function VWAPcalc(arr){ let cumPV=0,cumV=0; const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ const tp=(arr[i].high+arr[i].low+arr[i].close)/3; const v=arr[i].volume||0; cumPV += tp*v; cumV += v; out[i] = cumV? (cumPV/cumV) : null; } return out; }
-function OBVcalc(arr){ const out=Array(arr.length).fill(0); for(let i=1;i<arr.length;i++){ if(arr[i].close>arr[i-1].close) out[i]=out[i-1]+(arr[i].volume||0); else if(arr[i].close<arr[i-1].close) out[i]=out[i-1]-(arr[i].volume||0); else out[i]=out[i-1]; } return out; }
+function OBVcalc(arr){ const out=Array(arr.length).fill(0); for(let i=1;i<arr.length;i++){ if(arr[i].close>arr[i-1].close) out[i]=out[i-1]+(arr[i].volume||0); else if(arr[i].close<arr[i-1].close) out[i]=out[i-1]-(arr[i].volume||0); else out[i]=arr[i-1]; } return out; }
 function MFIcalc(arr,p=14){ const tp=arr.map(o=>(o.high+o.low+o.close)/3); const mf=arr.map((o,i)=> tp[i]*(o.volume||0)); const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ let pos=0,neg=0; for(let j=i-p+1;j<=i;j++){ if(tp[j]>tp[j-1]) pos+=mf[j]; else if(tp[j]<tp[j-1]) neg+=mf[j]; } const mr = neg? pos/neg : 0; out[i]=100-(100/(1+mr)); } return out; }
 function CMFcalc(arr,p=20){ const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let sumMF=0,sumV=0; for(let j=i-p+1;j<=i;j++){ const mfm = ((arr[j].close - arr[j].low) - (arr[j].high - arr[j].close)) / ((arr[j].high - arr[j].low)||1); const mfv = mfm * (arr[j].volume||0); sumMF+=mfv; sumV+=(arr[j].volume||0); } out[i] = sumV? (sumMF/sumV) : 0; } return out; }
 function ADLcalc(arr){ const out=Array(arr.length).fill(0); for(let i=0;i<arr.length;i++){ const mfm = ((arr[i].close - arr[i].low) - (arr[i].high - arr[i].close)) / ((arr[i].high - arr[i].low)||1); const mfv = mfm * (arr[i].volume||0); out[i] = (out[i-1]||0) + mfv; } return out; }
 
 /* ===== Registry ===== */
 const Registry={
-  /* Moving Averages */
-  SMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)));}},
-  EMA:{kind:'overlay',params:[{k:'period',v:50,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,EMA(A,p.period)));}},
-  WMA:{kind:'overlay',params:[{k:'period',v:30,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WMA(A,p.period)));}},
-  HMA:{kind:'overlay',params:[{k:'period',v:55,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,HMA(A,p.period)));}},
-  DEMA:{kind:'overlay',params:[{k:'period',v:21,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,DEMA(A,p.period)));}},
-  TEMA:{kind:'overlay',params:[{k:'period',v:34,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TEMA(A,p.period)));}},
-  VWMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWMA(A,p.period)));}},
-
-  /* Volatility / Bands */
+  SMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)),'overlay',cMain,0);}},
+  EMA:{kind:'overlay',params:[{k:'period',v:50,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,EMA(A,p.period)),'overlay',cMain,0);}},
+  WMA:{kind:'overlay',params:[{k:'period',v:30,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WMA(A,p.period)),'overlay',cMain,0);}},
+  HMA:{kind:'overlay',params:[{k:'period',v:55,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,HMA(A,p.period)),'overlay',cMain,0);}},
+  DEMA:{kind:'overlay',params:[{k:'period',v:21,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,DEMA(A,p.period)),'overlay',cMain,0);}},
+  TEMA:{kind:'overlay',params:[{k:'period',v:34,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TEMA(A,p.period)),'overlay',cMain,0);}},
+  VWMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWMA(A,p.period)),'overlay',cMain,0);}},
   BB:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'std',v:2,step:0.1},{k:'_color',v:'#60a5fa'}],
     add(p){const {upper,middle,lower}=bandOn(cMain); setSeriesColor(upper,p._color); setSeriesColor(middle,hexToRGBA(p._color,0.7)); setSeriesColor(lower,p._color);
-      return pack([upper,middle,lower],A=>{ const b=BB(A,p.period,p.std); setLine(upper,b.upper); setLine(middle,b.middle); setLine(lower,b.lower); });
+      return pack([upper,middle,lower],A=>{ const b=BB(A,p.period,p.std); setLine(upper,b.upper); setLine(middle,b.middle); setLine(lower,b.lower); },'overlay',cMain,0);
     }},
   Keltner:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'mult',v:2,step:0.1},{k:'_color',v:'#34d399'}],
     add(p){const {upper,middle,lower}=bandOn(cMain); setSeriesColor(upper,p._color); setSeriesColor(middle,hexToRGBA(p._color,0.7)); setSeriesColor(lower,p._color);
-      return pack([upper,middle,lower],A=>{ const k=Keltner(A,p.period,p.mult); setLine(upper,k.upper); setLine(middle,k.middle); setLine(lower,k.lower); });
+      return pack([upper,middle,lower],A=>{ const k=Keltner(A,p.period,p.mult); setLine(upper,k.upper); setLine(middle,k.middle); setLine(lower,k.lower); },'overlay',cMain,0);
     }},
   Donchian:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:'#f472b6'}],
     add(p){const {upper,middle,lower}=bandOn(cMain); setSeriesColor(upper,p._color); setSeriesColor(middle,hexToRGBA(p._color,0.7)); setSeriesColor(lower,p._color);
-      return pack([upper,middle,lower],A=>{ const d=Donchian(A,p.period); setLine(upper,d.hi); setLine(lower,d.lo); setLine(middle,d.mid); });
+      return pack([upper,middle,lower],A=>{ const d=Donchian(A,p.period); setLine(upper,d.hi); setLine(lower,d.lo); setLine(middle,d.mid); },'overlay',cMain,0);
     }},
-  ATR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fcd535'}],add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,ATR(A,p.period)));}},
+  ATR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fcd535'}],add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,ATR(A,p.period)),'osc',chart,chart.__paneIdx);}},
   Supertrend:{kind:'overlay',params:[{k:'period',v:10,min:1},{k:'mult',v:3,step:0.1},{k:'_color',v:'#22c55e'}],
-    add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>{ const st=Supertrend(A,p.period,p.mult); setLine(s,st.st); });}},
+    add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>{ const st=Supertrend(A,p.period,p.mult); setLine(s,st.st); },'overlay',cMain,0);}},
   PSAR:{kind:'overlay',params:[{k:'step',v:0.02,step:0.01},{k:'max',v:0.2,step:0.01},{k:'_color',v:'#eab308'}],
-    add(p){const s=lineOn(cMain,{lineWidth:1}); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,PSAR(A,p.step,p.max)));}},
-
-  /* Price / Overlay extras */
-  VWAP:{kind:'overlay',params:[{k:'_color',v:'#a78bfa'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWAPcalc(A)));}},
-  HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return {series:[haSeries],update:(A)=>haSeries.setData(HeikinAshi(A)),extraCleanup:()=>{try{cMain.removeSeries(haSeries)}catch{}}};}},
+    add(p){const s=lineOn(cMain,{lineWidth:1}); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,PSAR(A,p.step,p.max)),'overlay',cMain,0);}},
+  VWAP:{kind:'overlay',params:[{k:'_color',v:'#a78bfa'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWAPcalc(A)),'overlay',cMain,0);}},
+  HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return pack(haSeries,(A)=>haSeries.setData(HeikinAshi(A)),'overlay',cMain,0);}},
   Ichimoku:{kind:'overlay',params:[{k:'conv',v:9,min:1},{k:'base',v:26,min:1},{k:'spanB',v:52,min:1},{k:'_color',v:'#38bdf8'}],
     add(p){const conv=lineOn(cMain), base=lineOn(cMain), spanA=lineOn(cMain,{lineWidth:1}), spanB=lineOn(cMain,{lineWidth:1});
       setSeriesColor(conv,p._color); setSeriesColor(base,hexToRGBA(p._color,0.7)); setSeriesColor(spanA,hexToRGBA(p._color,0.6)); setSeriesColor(spanB,hexToRGBA(p._color,0.6));
@@ -696,71 +660,87 @@ const Registry={
         const spanALine=convLine.map((v,i)=> (v==null||baseLine[i]==null)?null: (v+baseLine[i])/2 );
         const spanBLine=A.map((_,i)=>{ const hi=highest(A,p.spanB,o=>o.high)[i], lo=lowest(A,p.spanB,o=>o.low)[i]; return (hi==null||lo==null)?null:(hi+lo)/2; });
         setLine(conv,convLine); setLine(base,baseLine); setLine(spanA,spanALine); setLine(spanB,spanBLine);
-      }; return pack([conv,base,spanA,spanB],up);
+      }; return pack([conv,base,spanA,spanB],up,'overlay',cMain,0);
     }},
-  PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],
-    add(p){const r=lineOn(cMain,{lineWidth:1}); setSeriesColor(r,p._color);
-      return pack(r,A=>{ const piv=A.map(o=> (o.high+o.low+o.close)/3 ); setLine(r,piv); });
-    }},
-
-  /* Oscillators */
-  RSI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#ef4444'},{k:'overBought',v:70},{k:'obSize',v:1},{k:'overSold',v:30},{k:'osSize',v:1},{k:'showZone',v:true,type:'bool'}],
-    add(p){const rsiLine=lineOn(cOsc,{lineWidth:2}); setSeriesColor(rsiLine,p._color||'#ef4444'); const guideOB=lineOn(cOsc,{lineWidth:p.obSize||1}); const guideOS=lineOn(cOsc,{lineWidth:p.osSize||1}); guideOB.applyOptions({color:'#ef4444'}); guideOS.applyOptions({color:'#ef4444'});
+  PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],add(p){const r=lineOn(cMain,{lineWidth:1}); setSeriesColor(r,p._color); return pack(r,A=>{ const piv=A.map(o=> (o.high+o.low+o.close)/3 ); setLine(r,piv); },'overlay',cMain,0);}},
+  RSI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#ef4444'},{k:'overBought',v:70},{k:'obSize',v:1},{k:'overSold',v:30},{k:'osSize',v:1}],
+    add(p,chart){chart=chart||oscPickChart(); const rsiLine=lineOn(chart,{lineWidth:2}); setSeriesColor(rsiLine,p._color||'#ef4444'); const guideOB=lineOn(chart,{lineWidth:p.obSize||1}); const guideOS=lineOn(chart,{lineWidth:p.osSize||1}); guideOB.applyOptions({color:'#ef4444'}); guideOS.applyOptions({color:'#ef4444'});
       const updater=A=>{ const r=RSI(A,p.period); setLine(rsiLine,r); guideOB.applyOptions({lineWidth:p.obSize||1}); guideOS.applyOptions({lineWidth:p.osSize||1}); setConstLine(guideOB,p.overBought??70); setConstLine(guideOS,p.overSold??30); };
-      return packOsc([rsiLine,guideOB,guideOS],updater);
+      return pack([rsiLine,guideOB,guideOS],updater,'osc',chart,chart.__paneIdx);
     }},
   MACD:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#60a5fa'}],
-    add(p){const l=lineOn(cOsc), s=lineOn(cOsc,{lineWidth:1}); const h=histOn(cOsc,{priceFormat:{type:'price',precision:4},base:0}); setSeriesColor(l,p._color); setSeriesColor(s,hexToRGBA(p._color,0.7));
-      return packOsc([l,s,h],A=>{ const m=MACD(A,p.fast,p.slow,p.signal); setLine(l,m.macd); setLine(s,m.sig); h.setData(A.map((d,i)=>({time:d.time,value:m.hist[i]==null?NaN:m.hist[i]}))); });
+    add(p,chart){chart=chart||oscPickChart(); const l=lineOn(chart), s=lineOn(chart,{lineWidth:1}); const h=histOn(chart,{priceFormat:{type:'price',precision:4},base:0}); setSeriesColor(l,p._color); setSeriesColor(s,hexToRGBA(p._color,0.7));
+      return pack([l,s,h],A=>{ const m=MACD(A,p.fast,p.slow,p.signal); setLine(l,m.macd); setLine(s,m.sig); h.setData(A.map((d,i)=>({time:d.time,value:m.hist[i]==null?NaN:m.hist[i]}))); },'osc',chart,chart.__paneIdx);
     }},
   Stochastic:{kind:'osc',params:[{k:'k',v:14,min:1},{k:'d',v:3,min:1},{k:'_color',v:'#34d399'}],
-    add(p){const kL=lineOn(cOsc), dL=lineOn(cOsc,{lineWidth:1}); setSeriesColor(kL,p._color); setSeriesColor(dL,hexToRGBA(p._color,0.7)); return packOsc([kL,dL],A=>{ const {k,d}=Stochastic(A,p.k,p.d); setLine(kL,k); setLine(dL,d); });}},
+    add(p,chart){chart=chart||oscPickChart(); const kL=lineOn(chart), dL=lineOn(chart,{lineWidth:1}); setSeriesColor(kL,p._color); setSeriesColor(dL,hexToRGBA(p._color,0.7)); return pack([kL,dL],A=>{ const {k,d}=Stochastic(A,p.k,p.d); setLine(kL,k); setLine(dL,d); },'osc',chart,chart.__paneIdx);}},
   StochRSI:{kind:'osc',params:[{k:'period',v:14},{k:'smK',v:3},{k:'smD',v:3},{k:'_color',v:'#a78bfa'}],
-    add(p){const kL=lineOn(cOsc), dL=lineOn(cOsc,{lineWidth:1}); setSeriesColor(kL,p._color); setSeriesColor(dL,hexToRGBA(p._color,0.7)); return packOsc([kL,dL],A=>{ const r=StochRSI(A,p.period,p.smK,p.smD); setLine(kL,r.k); setLine(dL,r.d); });}},
+    add(p,chart){chart=chart||oscPickChart(); const kL=lineOn(chart), dL=lineOn(chart,{lineWidth:1}); setSeriesColor(kL,p._color); setSeriesColor(dL,hexToRGBA(p._color,0.7)); return pack([kL,dL],A=>{ const r=StochRSI(A,p.period,p.smK,p.smD); setLine(kL,r.k); setLine(dL,r.d); },'osc',chart,chart.__paneIdx);}},
   CCI:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#f472b6'}],
-    add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,CCI(A,p.period)));}},
+    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,CCI(A,p.period)),'osc',chart,chart.__paneIdx);}},
   PPO:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#f59e0b'}],
-    add(p){const l=lineOn(cOsc), s=lineOn(cOsc,{lineWidth:1}); const h=histOn(cOsc,{base:0}); setSeriesColor(l,p._color); setSeriesColor(s,hexToRGBA(p._color,0.7));
-      return packOsc([l,s,h],A=>{ const m=PPO(A,p.fast,p.slow,p.signal); setLine(l,m.ppo); setLine(s,m.sig); h.setData(A.map((d,i)=>({time:d.time,value:m.hist[i]==null?NaN:m.hist[i]}))); });
+    add(p,chart){chart=chart||oscPickChart(); const l=lineOn(chart), s=lineOn(chart,{lineWidth:1}); const h=histOn(chart,{base:0}); setSeriesColor(l,p._color); setSeriesColor(s,hexToRGBA(p._color,0.7));
+      return pack([l,s,h],A=>{ const m=PPO(A,p.fast,p.slow,p.signal); setLine(l,m.ppo); setLine(s,m.sig); h.setData(A.map((d,i)=>({time:d.time,value:m.hist[i]==null?NaN:m.hist[i]}))); },'osc',chart,chart.__paneIdx);
     }},
   TRIX:{kind:'osc',params:[{k:'period',v:15},{k:'_color',v:'#22c55e'}],
-    add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,TRIX(A,p.period)));}},
+    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TRIX(A,p.period)),'osc',chart,chart.__paneIdx);}},
   TSI:{kind:'osc',params:[{k:'short',v:25},{k:'long',v:13},{k:'_color',v:'#fb7185'}],
-    add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,TSI(A,p.short,p.long)));}},
+    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TSI(A,p.short,p.long)),'osc',chart,chart.__paneIdx);}},
   WilliamsR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#94a3b8'}],
-    add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=>setLine(s,WilliamsR(A,p.period)));}},
+    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WilliamsR(A,p.period)),'osc',chart,chart.__paneIdx);}},
   Aroon:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#38bdf8'}],
-    add(p){const up=lineOn(cOsc), down=lineOn(cOsc,{lineWidth:1}); setSeriesColor(up,p._color); setSeriesColor(down,hexToRGBA(p._color,0.7)); return packOsc([up,down],A=>{ const a=Aroon(A,p.period); setLine(up,a.up); setLine(down,a.down); });}},
+    add(p,chart){chart=chart||oscPickChart(); const up=lineOn(chart), down=lineOn(chart,{lineWidth:1}); setSeriesColor(up,p._color); setSeriesColor(down,hexToRGBA(p._color,0.7)); return pack([up,down],A=>{ const a=Aroon(A,p.period); setLine(up,a.up); setLine(down,a.down); },'osc',chart,chart.__paneIdx);}},
   ADX:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fbbf24'}],
-    add(p){const adxL=lineOn(cOsc), plus=lineOn(cOsc,{lineWidth:1}), minus=lineOn(cOsc,{lineWidth:1});
+    add(p,chart){chart=chart||oscPickChart(); const adxL=lineOn(chart), plus=lineOn(chart,{lineWidth:1}), minus=lineOn(chart,{lineWidth:1});
       setSeriesColor(adxL,p._color); setSeriesColor(plus,hexToRGBA('#22c55e',0.9)); setSeriesColor(minus,hexToRGBA('#ef4444',0.9));
-      return packOsc([adxL,plus,minus],A=>{ const a=ADX(A,p.period); setLine(adxL,a.adx); setLine(plus,a.plusDI); setLine(minus,a.minusDI); });
+      return pack([adxL,plus,minus],A=>{ const a=ADX(A,p.period); setLine(adxL,a.adx); setLine(plus,a.plusDI); setLine(minus,a.minusDI); },'osc',chart,chart.__paneIdx);
     }},
   Awesome:{kind:'osc',params:[{k:'fast',v:5},{k:'slow',v:34},{k:'_color',v:'#67e8f9'}],
-    add(p){const s=histOn(cOsc,{base:0}); return packOsc(s,A=> s.setData(A.map((d,i)=>({time:d.time,value:Awesome(A,p.fast,p.slow)[i]??NaN}))) );}},
+    add(p,chart){chart=chart||oscPickChart(); const s=histOn(chart,{base:0}); return pack(s,A=> s.setData(A.map((d,i)=>({time:d.time,value:Awesome(A,p.fast,p.slow)[i]??NaN}))) ,'osc',chart,chart.__paneIdx);}},
   ElderRay:{kind:'osc',params:[{k:'ema',v:13},{k:'_color',v:'#fca5a5'}],
-    add(p){ // Bull Power = High - EMA, Bear Power = Low - EMA
-      const bull=histOn(cOsc,{base:0}), bear=histOn(cOsc,{base:0});
-      return packOsc([bull,bear],A=>{
-        const e=EMA(A,p.ema); bull.setData(A.map((d,i)=>({time:d.time,value:e[i]==null?NaN:(d.high-e[i])})));
+    add(p,chart){chart=chart||oscPickChart(); const bull=histOn(chart,{base:0}), bear=histOn(chart,{base:0});
+      return pack([bull,bear],A=>{ const e=EMA(A,p.ema); bull.setData(A.map((d,i)=>({time:d.time,value:e[i]==null?NaN:(d.high-e[i])})));
         bear.setData(A.map((d,i)=>({time:d.time,value:e[i]==null?NaN:(d.low-e[i])})));
-      });
+      },'osc',chart,chart.__paneIdx);
     }},
-
-  /* Volume / Flow */
-  Volume:{kind:'overlay',params:[{k:'_color',v:'#64748b'}],
-    add(p){const v=histOn(cMain,{priceFormat:{type:'volume'}, priceScaleId:'left'}); return pack(v,A=> v.setData(A.map(d=>({time:d.time,value:d.volume??0}))) );}},
-  OBV:{kind:'osc',params:[{k:'_color',v:'#c084fc'}], add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=> setLine(s,OBVcalc(A)) );}},
-  MFI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#10b981'}], add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=> setLine(s,MFIcalc(A,p.period)) );}},
-  CMF:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#93c5fd'}], add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=> setLine(s,CMFcalc(A,p.period)) );}},
-  ADL:{kind:'osc',params:[{k:'_color',v:'#e879f9'}], add(p){const s=lineOn(cOsc); setSeriesColor(s,p._color); return packOsc(s,A=> setLine(s,ADLcalc(A)) );}},
+  Volume:{kind:'overlay',params:[{k:'_color',v:'#64748b'}], add(p){const v=histOn(cMain,{priceFormat:{type:'volume'},priceScaleId:'left'}); return pack(v,A=> v.setData(A.map(d=>({time:d.time,value:d.volume??0}))) ,'overlay',cMain,0);}},
+  OBV:{kind:'osc',params:[{k:'_color',v:'#c084fc'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,OBVcalc(A)) ,'osc',chart,chart.__paneIdx);}},
+  MFI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#10b981'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,MFIcalc(A,p.period)) ,'osc',chart,chart.__paneIdx);}},
+  CMF:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#93c5fd'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,CMFcalc(A,p.period)) ,'osc',chart,chart.__paneIdx);}},
+  ADL:{kind:'osc',params:[{k:'_color',v:'#e879f9'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,ADLcalc(A)) ,'osc',chart,chart.__paneIdx);}},
 };
 
-/* Presets UI */
-function loadPresets(){ try{ return JSON.parse(localStorage.getItem(KEYS.PRESETS)||'{}'); }catch{ return {}; } }
-function savePresetsStore(obj){ localStorage.setItem(KEYS.PRESETS, JSON.stringify(obj)); }
-function renderPresetDropdown(){ const type=els.indSel.value, all=loadPresets(), list=Object.keys(all[type]||{}); els.presetSel.innerHTML='<option value=\"\">— none —</option>'+list.map(n=>`<option>${n}</option>`).join(''); }
-els.indSel.addEventListener('change', ()=>{ renderParams(); renderPresetDropdown(); });
+/* Pane picker */
+let paneCursor=0;
+function oscPickChart(){
+  const counts=[1,2,3,4,5].map(p=> Active.filter(x=>x.kind==='osc'&&x.pane===p).length);
+  let min=Math.min(...counts); let idx=counts.indexOf(min); if(min===0){ idx=paneCursor%5; paneCursor++; }
+  const slot=oscSlots[idx]; slot.slot.style.display='block'; slot.chart.__paneIdx=idx+1;
+  refreshOscLayout();
+  return slot.chart;
+}
+
+/* Badges & remove */
+function badgeLabel(it){const p=Object.entries(it.params).filter(([k])=>k!=='_color').map(([k,v])=>`${k}:${v}`).join(','); return `${it.key}${p?`(${p})`:''}`;}
+function renderBadges(){
+  els.badges.innerHTML='';
+  Active.forEach(it=>{
+    const s=document.createElement('span'); s.className='badge'; s.textContent=badgeLabel(it)+' ';
+    s.title='Click to edit settings';
+    s.onclick=()=>openSheet(it.id);
+    const b=document.createElement('button'); b.textContent='×'; b.onclick=(e)=>{e.stopPropagation(); removeIndicator(it.id); saveLayout();};
+    s.appendChild(b); els.badges.appendChild(s);
+  });
+  refreshOscLayout();
+  rewireSync();
+}
+function removeIndicator(id){
+  const idx=Active.findIndex(x=>x.id===id);
+  if(idx>=0){
+    Active[idx].series.forEach(s=>{try{(Active[idx].kind==='osc'?Active[idx].chart:cMain).removeSeries(s);}catch{}});
+    Active.splice(idx,1); renderBadges();
+  }
+}
 
 /* Params UI */
 function renderParams(){
@@ -769,132 +749,109 @@ function renderParams(){
   (def?.params||[]).forEach(p=>{
     const w=document.createElement('div'); w.className='kvs';
     const lab=document.createElement('label'); lab.className='hint'; lab.textContent=p.k==='_color'?'COLOR':p.k.toUpperCase();
-    let inp;
-    if(p.type==='bool'){ inp=document.createElement('input'); inp.type='checkbox'; inp.checked=!!p.v; }
-    else{ inp=document.createElement('input'); inp.type = (p.k==='_color') ? 'color' : 'number'; inp.value=p.v; if(p.k!=='_color'){ if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; } }
+    let inp; if(p.type==='bool'){ inp=document.createElement('input'); inp.type='checkbox'; inp.checked=!!p.v; }
+    else{ inp=document.createElement('input'); inp.type=(p.k==+'_color')?'color':'number'; if(p.k==='_color') inp.type='color'; else inp.type='number';
+      inp.value=p.v; if(p.k!=='_color'){ if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; } }
     inp.dataset.key=p.k; w.appendChild(lab); w.appendChild(inp); els.paramRow.appendChild(w);
   });
 }
-renderParams(); renderPresetDropdown();
-
 function collectParams(){
-  const ps={};
-  [...els.paramRow.querySelectorAll('input')].forEach(i=>{
+  const ps={}; [...els.paramRow.querySelectorAll('input')].forEach(i=>{
     const k=i.dataset.key;
     if(i.type==='color') ps[k]=i.value;
     else if(i.type==='checkbox') ps[k]=i.checked;
-    else{
-      const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10);
-      ps[k]=isNaN(num)?parseFloat(i.value):num;
-    }
-  });
-  return ps;
+    else{ const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10); ps[k]=isNaN(num)?parseFloat(i.value):num; }
+  }); return ps;
 }
+els.indSel.addEventListener('change', ()=>{ renderParams(); renderPresetDropdown(); });
+renderParams();
 
+/* Add indicator */
 function addIndicator(){
-  const key=els.indSel.value, def=Registry[key];
-  if(!def){ setStatus('Indicator not implemented'); return; }
-  const params=collectParams();
-  if(params._color==null) params._color=defaultColor;
-  const pack=def.add(params);
-  setPackColor(pack, params._color);
-  const item={id:idSeq++,key,kind:def.kind||'overlay',params,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
-  Active.push(item);
-  renderBadges();
-  if(DATA.length) item.update(DATA);
-  saveLayout();
+  const key=els.indSel.value, def=Registry[key]; if(!def){ setStatus('Indicator not implemented'); return; }
+  const params=collectParams(); if(params._color==null) params._color=defaultColor;
+  let targetChart=cMain, pane=0; if(def.kind==='osc'){ targetChart=oscPickChart(); pane=targetChart.__paneIdx; }
+  const pk=def.add(params,targetChart); setPackColor(pk,params._color);
+  const item={id:idSeq++,key,kind:def.kind||'overlay',params,series:pk.series,update:pk.update,visible:true,chart:targetChart,pane};
+  Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout();
+
+  snapAlignAll();
+  rewireSync(); // include the newly added pane in sync
 }
 els.addInd.addEventListener('click', addIndicator);
 
 /* Heikin-Ashi toggle */
 els.haToggle.addEventListener('change', ()=>{
   if(!DATA.length) return;
-  if(els.haToggle.checked){
-    ensureCandleSeries(); ensureHeikinSeries();
-    haSeries.setData(HeikinAshi(DATA));
-    sCandle.setData([]);
-  }else{
-    ensureCandleSeries();
-    sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-    if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; }
-  }
-  updateAllMarkers(); saveLayout();
-  if(!userInteracting) anchorLatestSlightRight(cMain.timeScale());
+  if(els.haToggle.checked){ ensureCandleSeries(); ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
+  else{ ensureCandleSeries(); sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close}))); if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; } }
+  saveLayout(); if(!userInteracting) anchorLatestSlightRight(cMain.timeScale());
+  snapAlignAll(); rewireSync();
 });
+function ensureCandleSeries(){ if(!sCandle){ sCandle=cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'}); } }
+function ensureHeikinSeries(){ if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} } haSeries=cMain.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e',wickDownColor:'#ef4444',priceScaleId:'ha'}); cMain.priceScale('ha').applyOptions({scaleMargins:{top:0.12,bottom:0.12}}); }
 
 /* Settings modal */
 const sheetWrap=$('sheetWrap'), sheetParams=$('sheetParams'), sheetTitle=$('sheetTitle'), sheetSub=$('sheetSub');
 $('sheetClose').onclick=()=>sheetWrap.style.display='none';
 function openSheet(id){
   const it=Active.find(x=>x.id===id); if(!it) return;
-  sheetTitle.textContent=`${it.key} — Settings`;
-  sheetSub.textContent=`ID ${id} • ${it.kind==='osc'?'Oscillator':'Overlay'}`;
-  sheetParams.innerHTML='';
+  sheetTitle.textContent=`${it.key} — Settings`; sheetSub.textContent=`ID ${id} • ${it.kind==='osc'?'Oscillator pane '+it.pane:'Overlay'}`; sheetParams.innerHTML='';
   const def=Registry[it.key];
   (def.params||[]).forEach(p=>{
-    const val= it.params[p.k] ?? p.v;
-    const row=document.createElement('div'); row.className='kv';
-    if(p.type==='bool'){
-      row.innerHTML = `<label class="hint" style="width:160px">${p.k.toUpperCase()}</label>
-        <input type="checkbox" data-k="${p.k}" ${val? 'checked':''} />`;
-    }else{
-      const type = p.k==='_color' ? 'color' : 'number';
-      const extra = p.k==='_color' ? '' : `${p.min!=null?`min="${p.min}"`:''} ${p.step!=null?`step="${p.step}"`:''}`;
-      row.innerHTML = `<label class="hint" style="width:160px">${p.k==='_color'?'COLOR':p.k.toUpperCase()}</label>
-        <input type="${type}" data-k="${p.k}" value="${val}" ${extra} />`;
-    }
+    const val=it.params[p.k]??p.v; const row=document.createElement('div'); row.className='kvs';
+    const type=p.type==='bool'?'checkbox':(p.k==='_color'?'color':'number');
+    row.innerHTML=`<label class="hint" style="width:160px">${p.k==='_color'?'COLOR':p.k.toUpperCase()}</label><input type="${type}" data-k="${p.k}" ${type==='checkbox'?(val?'checked':''):`value="${val}" ${p.min!=null?`min="${p.min}"`:''} ${p.step!=null?`step="${p.step}"`:''}`}/>`;
     sheetParams.appendChild(row);
   });
-
   $('sheetApply').onclick=()=>{
-    const upd={}; [...sheetParams.querySelectorAll('input')].forEach(i=>{
-      const k=i.dataset.k;
-      if(i.type==='color') upd[k]=i.value;
-      else if(i.type==='checkbox') upd[k]=i.checked;
-      else{
-        const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10);
-        upd[k]=isNaN(num)?parseFloat(i.value):num;
-      }
-    });
-    const idx=Active.findIndex(x=>x.id===id); const keepKind=Active[idx].kind; const key=Active[idx].key;
-    removeIndicator(id);
-    const pack=Registry[key].add(upd); setPackColor(pack,upd._color);
-    const newItem={id:idSeq++,key,kind:keepKind,params:upd,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
-    Active.splice(idx,0,newItem); renderBadges(); if(DATA.length) newItem.update(DATA); sheetWrap.style.display='none'; saveLayout();
+    const upd={}; [...sheetParams.querySelectorAll('input')].forEach(i=>{ const k=i.dataset.k; if(i.type==='color') upd[k]=i.value; else if(i.type==='checkbox') upd[k]=i.checked; else{ const step=i.getAttribute('step')||''; const num= step.includes('.')?parseFloat(i.value):parseInt(i.value,10); upd[k]=isNaN(num)?parseFloat(i.value):num; } });
+    const idx=Active.findIndex(x=>x.id===id); const keepKind=Active[idx].kind; const key=Active[idx].key; const pane=Active[idx].pane; const chart=Active[idx].chart;
+    removeIndicator(id); const pk=Registry[key].add(upd,chart); setPackColor(pk,upd._color);
+    const newItem={id:idSeq++,key,kind:keepKind,params:upd,series:pk.series,update:pk.update,visible:true,chart,pane}; Active.splice(idx,0,newItem); renderBadges(); if(DATA.length) newItem.update(DATA); sheetWrap.style.display='none'; saveLayout();
+    snapAlignAll(); rewireSync();
   };
-  $('sheetRemove').onclick=()=>{ removeIndicator(id); sheetWrap.style.display='none'; saveLayout(); };
-  $('sheetDuplicate').onclick=()=>{ const p=JSON.parse(JSON.stringify(Active.find(x=>x.id===id).params)); const pack=Registry[it.key].add(p); setPackColor(pack,p._color); const item={id:idSeq++,key:it.key,kind:it.kind,params:p,series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true}; Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout(); };
-  $('sheetToggleVis').onclick=()=>{ const it=Active.find(x=>x.id===id); it.visible=!it.visible; (it.series||[]).forEach(s=>{try{s.applyOptions({visible:it.visible})}catch{}}); };
+  $('sheetRemove').onclick=()=>{ removeIndicator(id); sheetWrap.style.display='none'; saveLayout(); snapAlignAll(); rewireSync(); };
+  $('sheetDuplicate').onclick=()=>{ const p=JSON.parse(JSON.stringify(Active.find(x=>x.id===id).params)); const chart=oscPickChart(); const pk=Registry[it.key].add(p, it.kind==='osc'?chart:cMain); setPackColor(pk,p._color); const item={id:idSeq++,key:it.key,kind:it.kind,params:p,series:pk.series,update:pk.update,visible:true,chart,pane: it.kind==='osc'? chart.__paneIdx:0}; Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout(); snapAlignAll(); rewireSync(); };
+  $('sheetMoveUp').onclick=()=>{ movePane(id,-1); snapAlignAll(); rewireSync(); };
+  $('sheetMoveDown').onclick=()=>{ movePane(id,1); snapAlignAll(); rewireSync(); };
   sheetWrap.style.display='flex';
 }
+function movePane(id,dir){
+  const it=Active.find(x=>x.id===id); if(!it||it.kind!=='osc') return;
+  let next=it.pane+dir; if(next<1) next=1; if(next>5) next=5; if(next===it.pane) return;
+  const params={...it.params}; removeIndicator(id);
+  const slot=oscSlots[next-1]; const chart=slot.chart; chart.__paneIdx=next; slot.slot.style.display='block';
+  const pk=Registry[it.key].add(params,chart); setPackColor(pk,params._color);
+  const item={id:idSeq++,key:it.key,kind:'osc',params,series:pk.series,update:pk.update,visible:true,chart,pane:next}; Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout();
+}
 
-/* Presets store buttons */
+/* Presets */
+function loadPresets(){ try{ return JSON.parse(localStorage.getItem(KEYS.PRESETS)||'{}'); }catch{ return {}; } }
+function savePresetsStore(obj){ localStorage.setItem(KEYS.PRESETS, JSON.stringify(obj)); }
+function renderPresetDropdown(){ const type=els.indSel.value, all=loadPresets(), list=Object.keys(all[type]||{}); els.presetSel.innerHTML='<option value=\"\">— none —</option>'+list.map(n=>`<option>${n}</option>`).join(''); }
 $('savePreset').onclick=()=>{ const key=els.indSel.value; const name=prompt('Preset name?'); if(!name) return; const all=loadPresets(); (all[key] ||= {})[name]=collectParams(); savePresetsStore(all); renderPresetDropdown(); setStatus('Preset saved'); };
 $('applyPreset').onclick=()=>{ const key=els.indSel.value; const name=els.presetSel.value; if(!name) return; const all=loadPresets(); const p=all[key]?.[name]; if(!p) return; (els.paramRow.querySelectorAll('input')).forEach(inp=>{ const k=inp.dataset.key; if(k in p){ if(inp.type==='color') inp.value=p[k]; else if(inp.type==='checkbox') inp.checked=!!p[k]; else inp.value=p[k]; } }); setStatus('Preset applied'); };
 $('delPreset').onclick=()=>{ const key=els.indSel.value; const name=els.presetSel.value; if(!name) return; const all=loadPresets(); delete (all[key]||{})[name]; savePresetsStore(all); renderPresetDropdown(); setStatus('Preset deleted'); };
 
-/* Layout save/restore */
-function saveLayout(){
-  const layout={market:els.market.value,quote:els.quote.value,symbol:els.symbol.value,tf:els.tf.value,ha:els.haToggle.checked,indicators:Active.map(x=>({key:x.key,kind:x.kind,params:x.params}))};
-  localStorage.setItem(KEYS.LAYOUT, JSON.stringify(layout));
-}
+/* Layout */
+function saveLayout(){ const layout={market:els.market.value,quote:els.quote.value,symbol:els.symbol.value,tf:els.tf.value,ha:els.haToggle.checked,indicators:Active.map(x=>({key:x.key,kind:x.kind,params:x.params,pane:x.pane||0}))}; localStorage.setItem(KEYS.LAYOUT, JSON.stringify(layout)); }
 function restoreLayout(){
   try{
-    const raw=localStorage.getItem(KEYS.LAYOUT); if(!raw) return;
-    const L=JSON.parse(raw);
-    if(L.market){ els.market.value=L.market; }
-    if(L.quote){ els.quote.value=L.quote; }
-    populatePairs();
-    if(L.symbol){ els.symbol.value=L.symbol; }
-    if(L.tf){ els.tf.value=L.tf; }
-    if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
+    const raw=localStorage.getItem(KEYS.LAYOUT); if(!raw) return; const L=JSON.parse(raw);
+    if(L.market){ els.market.value=L.market; } if(L.quote){ els.quote.value=L.quote; } populatePairs();
+    if(L.symbol){ els.symbol.value=L.symbol; } if(L.tf){ els.tf.value=L.tf; } if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
     (L.indicators||[]).forEach(it=>{
       const add=Registry[it.key]; if(!add) return;
-      const pack=add.add(it.params||{}); setPackColor(pack,(it.params||{})._color);
-      const item={id:idSeq++,key:it.key,kind:(add.kind||'overlay'),params:(it.params||{}),series:pack.series,update:pack.update,extraCleanup:pack.extraCleanup,visible:true};
+      let chart=(it.kind==='osc')? oscSlots[(Math.min(5,Math.max(1,it.pane||1)))-1].chart : cMain;
+      if(it.kind==='osc'){ chart.__paneIdx=(it.pane||1); const slot=oscSlots[(chart.__paneIdx-1)]; slot.slot.style.display='block'; }
+      const pk=add.add(it.params||{},chart); setPackColor(pk,(it.params||{})._color);
+      const item={id:idSeq++,key:it.key,kind:(add.kind||'overlay'),params:(it.params||{}),series:pk.series,update:pk.update,visible:true,chart,pane:(chart.__paneIdx||0)};
       Active.push(item);
     });
     renderBadges(); if(DATA.length){ Active.forEach(i=>i.update(DATA)); }
+    snapAlignAll();
+    rewireSync();
   }catch{}
 }
 
@@ -903,26 +860,23 @@ async function loadAll(){
   try{
     applyMarketEndpoints();
     let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
-    sym = normalizeSymbolInput(sym, q);
-    if(!VALID_SET.has(sym)){
-      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
-      const guess=findAnyMarketSymbolLike(base);
-      if(guess){
-        const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess);
-        if(info){ els.quote.value=info.quoteAsset; populatePairs(); }
-        sym=guess;
-      }else{
-        setStatus('Symbol not found'); 
-        return;
-      }
+    sym=normalizeSymbolInput(sym,q);
+
+    if(VALID_SET.size && !VALID_SET.has(sym)){
+      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,''); const guess=findAnyMarketSymbolLike(base);
+      if(guess){ const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess); if(info){ els.quote.value=info.quoteAsset; populatePairs(); } sym=guess; }
+      else{ setStatus('Symbol not found, trying anyway'); }
     }
+    if(!sym) sym='BTCUSDT';
     els.symbol.value=sym;
+
     setStatus(`Loading ${sym} • ${tf} …`);
     closeWS();
-
     await loadInitial(sym, tf);
     openWS(sym, tf);
     saveLayout();
+    snapAlignAll();
+    rewireSync();
   }catch(err){ console.warn(err); setStatus('Load error'); }
 }
 
@@ -930,7 +884,7 @@ async function loadAll(){
 $('reload').addEventListener('click', ()=>{ Active.slice().forEach(it=>removeIndicator(it.id)); loadAll(); });
 els.tf.addEventListener('change', loadAll);
 els.symbol.addEventListener('keydown', e=>{ if(e.key==='Enter') loadAll(); });
-els.symbol.addEventListener('change', ()=>{ const v=els.symbol.value.toUpperCase(); if(VALID_SET.has(v)) loadAll(); });
+els.symbol.addEventListener('change', ()=>{ const v=els.symbol.value.toUpperCase(); if(!VALID_SET.size || VALID_SET.has(v)) loadAll(); });
 els.quote.addEventListener('change', ()=>{ populatePairs(); loadAll(); });
 els.market.addEventListener('change', async ()=>{ try{ await loadExchangeInfo(); populatePairs(); loadAll(); }catch(e){ console.warn(e); setStatus('Failed to switch market'); } });
 els.range12.addEventListener('click', ()=> loadMonths(12));
@@ -939,7 +893,9 @@ els.range36.addEventListener('click', ()=> loadMonths(36));
 /* ========= Boot ========= */
 (async function(){
   window.addEventListener('unhandledrejection', e=>{ e.preventDefault?.(); console.warn('silenced rejection', e.reason); });
-  window.addEventListener('error', e=>{ /* keep console only */ });
+  window.addEventListener('error', e=>{ /* console only */ });
+
+  setHeaderHeightVar();
 
   await loadExchangeInfo(); populatePairs();
 
@@ -956,176 +912,15 @@ els.range36.addEventListener('click', ()=> loadMonths(36));
     }
   }catch{}
 
-  if(!els.symbol.value){
-    const q=els.quote.value; const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT';
-    els.symbol.value=def;
-  }
+  if(!els.symbol.value){ const q=els.quote.value; const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT'; els.symbol.value=def; }
 
-  await loadAll();   // initial
+  await loadAll();
   restoreLayout();
   refreshOscLayout();
 
-  setTimeout(()=>{ if(!userInteracting){ clampLeftEdge(cMain.timeScale(), 0); anchorLatestSlightRight(cMain.timeScale()); } }, 50);
+  setTimeout(()=>{ clampLeftEdge(cMain.timeScale(),0); anchorLatestSlightRight(cMain.timeScale()); snapAlignAll(); rewireSync(); }, 50);
+  window.addEventListener('resize', ()=>{ setHeaderHeightVar(); snapAlignAll(); rewireSync(); });
 })();
 </script>
-
-<!-- =================== LUMINOUS BLUE & GREEN THEME ADD-ON =================== -->
-<style id="luminous-theme">
-  :root{
-    --lum-blue:#7dd3fc;        /* light blue (shine) */
-    --lum-blue-2:#38bdf8;      /* deeper blue */
-    --lum-green:#34f5c5;       /* mint/shine green */
-    --lum-ink:#eaf6ff;
-    --lum-line:#16324a;
-  }
-  body.theme-luminous{
-    color:var(--lum-ink);
-    background:
-      radial-gradient(1200px 700px at 20% -10%, rgba(56,189,248,.18), transparent 60%),
-      radial-gradient(900px 500px at 90% 110%, rgba(52,245,197,.14), transparent 60%),
-      linear-gradient(180deg,#081019,#0a1420 35%,#0a1219);
-  }
-  body.theme-luminous header{
-    background:linear-gradient(180deg,rgba(8,18,28,.8),rgba(8,14,22,.7));
-    border-bottom-color:var(--lum-line);
-    box-shadow:0 10px 30px rgba(56,189,248,.08), inset 0 -1px 0 rgba(56,189,248,.25);
-  }
-  body.theme-luminous .card{
-    border-color:var(--lum-line);
-    background:linear-gradient(180deg,#0a1522,#0a1520);
-    box-shadow:
-      0 20px 50px rgba(0,0,0,.4),
-      0 0 0 1px rgba(56,189,248,.18),
-      0 0 32px rgba(56,189,248,.08), 0 0 64px rgba(52,245,197,.06);
-    position:relative;
-  }
-  body.theme-luminous .card::after{
-    content:"";
-    position:absolute; inset:-2px;
-    background:
-      radial-gradient(600px 260px at 25% 0%, rgba(56,189,248,.12), transparent 60%),
-      radial-gradient(600px 260px at 85% 100%, rgba(52,245,197,.10), transparent 60%);
-    pointer-events:none;
-    filter:saturate(120%);
-    animation:glowFloat 10s ease-in-out infinite alternate;
-  }
-  @keyframes glowFloat{
-    0%{opacity:.6; transform:translateY(0px)}
-    100%{opacity:.85; transform:translateY(-6px)}
-  }
-  body.theme-luminous select,
-  body.theme-luminous input,
-  body.theme-luminous button{
-    border-color:var(--lum-line);
-    background:linear-gradient(180deg,#0b1926,#0a1722);
-    color:var(--lum-ink);
-    box-shadow:inset 0 0 0 1px rgba(56,189,248,.18);
-  }
-  body.theme-luminous .pill,
-  body.theme-luminous .badge{
-    border-color:var(--lum-line);
-    background:rgba(12,26,38,.7);
-    color:#d8f2ff;
-    box-shadow:0 0 0 1px rgba(56,189,248,.22);
-  }
-  body.theme-luminous .toolbar{
-    background:linear-gradient(180deg,rgba(9,20,31,.5),rgba(10,22,32,.45));
-    border-top-color:var(--lum-line);
-  }
-  body.theme-luminous .corner-logo{
-    opacity:.75; filter:drop-shadow(0 0 10px rgba(56,189,248,.35));
-  }
-  .luminous-toggle{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:8px 12px; border-radius:999px; cursor:pointer;
-    border:1px solid var(--lum-line);
-    background:linear-gradient(180deg,#0b1c2a,#0a1622);
-    box-shadow:
-      inset 0 0 0 1px rgba(56,189,248,.25),
-      0 0 22px rgba(52,245,197,.12);
-  }
-  .luminous-dot{
-    width:10px; height:10px; border-radius:999px;
-    background:radial-gradient(circle at 30% 30%, var(--lum-green), var(--lum-blue-2));
-    box-shadow:0 0 10px rgba(52,245,197,.6), 0 0 18px rgba(56,189,248,.5);
-  }
-</style>
-
-<script>
-/* ===== Luminous theme hook & chart recolor ===== */
-(function(){
-  const hdr = document.querySelector('header');
-  if(!hdr) return;
-
-  const btn = document.createElement('button');
-  btn.className = 'luminous-toggle';
-  btn.innerHTML = '<span class="luminous-dot"></span><span>Theme: Luminous</span>';
-  btn.title = 'Toggle Luminous Blue & Green theme';
-  hdr.appendChild(btn);
-
-  let luminousOn = false;
-
-  function applyChartLuminous(on){
-    if(typeof cMain==='undefined' || typeof cOsc==='undefined') return;
-
-    const gridCols = on ? {vertLines:{color:'#132536'}, horzLines:{color:'#132536'}}
-                        : {vertLines:{color:'#0e1a28'}, horzLines:{color:'#0e1a28'}};
-    const borderCol = on ? '#1a3650' : '#223246';
-    const txtCol    = on ? '#eaf6ff' : '#cfe3ff';
-
-    try{
-      cMain.applyOptions({ layout:{ textColor:txtCol }, grid:gridCols, rightPriceScale:{ borderColor:borderCol }, timeScale:{ borderColor:borderCol } });
-      cOsc.applyOptions({  layout:{ textColor:txtCol }, grid:gridCols, rightPriceScale:{ borderColor:borderCol }, timeScale:{ borderColor:borderCol } });
-    }catch{}
-
-    try{
-      sCandle && sCandle.applyOptions({
-        upColor: on ? '#22e39f' : '#16a34a',
-        borderUpColor: on ? '#22e39f' : '#16a34a',
-        wickUpColor: on ? '#22e39f' : '#16a34a',
-        downColor: on ? '#ef5a5a' : '#ef4444',
-        borderDownColor: on ? '#ef5a5a' : '#ef4444',
-        wickDownColor: on ? '#ef5a5a' : '#ef4444'
-      });
-      if(typeof haSeries!=='undefined' && haSeries){
-        haSeries.applyOptions({
-          upColor: on ? '#2df5b3' : '#22c55e',
-          borderUpColor: on ? '#2df5b3' : '#22c55e',
-          wickUpColor: on ? '#2df5b3' : '#22c55e'
-        });
-      }
-    }catch{}
-  }
-
-  function recolorActiveIndicators(){
-    if(typeof Active==='undefined') return;
-    const palette = ['#7dd3fc', '#34f5c5', '#38bdf8', '#67f2da'];
-    let p = 0;
-    Active.forEach(it=>{
-      try{
-        const newColor = palette[p++ % palette.length];
-        if(it.params){ it.params._color = newColor; }
-        (it.series||[]).forEach(s=>{ try{ s.applyOptions({ color:newColor }); }catch{} });
-        if(typeof setPackColor==='function'){ setPackColor(it, newColor); }
-        if(typeof it.update==='function' && Array.isArray(window.DATA)){ it.update(window.DATA); }
-      }catch{}
-    });
-  }
-
-  function toggleLuminous(){
-    luminousOn = !luminousOn;
-    document.body.classList.toggle('theme-luminous', luminousOn);
-    applyChartLuminous(luminousOn);
-    if(luminousOn) recolorActiveIndicators();
-  }
-
-  btn.addEventListener('click', toggleLuminous);
-
-  // Auto-enable on first load
-  requestAnimationFrame(()=>{ toggleLuminous(); });
-})();
-</script>
-<!-- ================= END LUMINOUS BLUE & GREEN THEME ADD-ON ================ -->
-
 </body>
 </html>
