@@ -1,1294 +1,705 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Signal Studio — Mega Indicators Pack (v2) + Main Chart Engine</title>
-<link rel="preconnect" href="https://unpkg.com"/>
-<script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Binance Signal Group — Admin-Only Chat + Members (100 Countries) + Profit Cards (Real Prices)</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
+
 <style>
   :root{
     --bg:#0b0f14; --panel:#0f1621; --panel2:#0b1320; --ink:#e6eef7; --muted:#9eb1c7;
     --line:#1a2736; --accent:#fcd535; --up:#16a34a; --down:#ef4444;
-    --hdr-h:60px;
+    --online:#10b981; --offline:#6b7280;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{
-    margin:0; overflow-y:auto;
-    background:linear-gradient(180deg,#080c12,#0b1119 30%,#0b0f14);
-    color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
+  .wrap{display:grid; grid-template-rows:auto 1fr auto; height:100vh;}
+  header{display:flex; align-items:center; gap:16px; padding:14px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg,#111827, #0b0f14 70%);} 
+  .logo{width:36px; height:36px; border-radius:10px; background:radial-gradient(circle at 30% 30%, #ffd84d, #b99000); display:grid; place-items:center; font-weight:800; color:#111;}
+  header h1{margin:0; font-size:18px; font-weight:700; letter-spacing:0.2px}
+  header .sub{color:var(--muted); font-size:12px}
+  .stats{margin-left:auto; display:flex; align-items:center; gap:22px}
+  .stat{display:flex; flex-direction:column; align-items:flex-end}
+  .stat .v{font-size:18px; font-weight:700}
+  .segments{display:flex; gap:4px; align-items:center}
+  .seg{width:22px; height:8px; border-radius:3px; background:#263446; outline:1px solid #1e2a39}
+  .seg.fill{background:var(--accent)}
+  .seg.half{background:linear-gradient(90deg, var(--accent) 50%, #263446 50%)}
+  main{display:grid; grid-template-columns:1fr 330px; gap:0; min-height:0;}
+  .chat{display:flex; flex-direction:column; min-height:0;}
+  .chat-head{display:flex; gap:10px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--panel2)}
+  .pill{font-size:12px; padding:4px 8px; border-radius:999px; background:#152235; color:var(--muted); border:1px solid #1f3047}
+  .chat-scroll{flex:1; overflow:auto; padding:16px; background:radial-gradient(1200px 400px at 20% -10%, rgba(252,213,53,0.06), transparent 50%), linear-gradient(180deg, #0c1118, #0b0f14)}
+  .bub{max-width:70%; margin:10px 0; padding:12px 14px; border-radius:14px; line-height:1.35; font-size:14px; border:1px solid #213149}
+  .bub.admin{margin-left:auto; background:#0f1b2c}
+  .bub .meta{font-size:11px; color:var(--muted); margin-top:6px}
+  .bub img{max-width:100%; border-radius:10px; margin-top:8px; display:block}
+  .composer{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; padding:10px; background:var(--panel); border-top:1px solid var(--line)}
+  .composer input[type="text"]{width:100%; background:#0d1522; border:1px solid #1f2a39; color:var(--ink); border-radius:10px; padding:12px 12px; outline:none}
+  .composer input[type="file"]{display:none}
+  .btn{background:var(--accent); color:#111; border:0; padding:10px 14px; font-weight:700; border-radius:10px; cursor:pointer}
+  .btn:disabled{opacity:.4; cursor:not-allowed}
+  .attach{background:#162236; color:#e6eef7; border:1px dashed #2a3a52; padding:8px 12px; border-radius:10px; cursor:pointer}
+  .attach small{color:var(--muted)}
+  .role{margin-left:8px;}
+  .role label{font-size:12px; color:var(--muted)}
+
+  /* Right members panel */
+  aside{border-left:1px solid var(--line); background:linear-gradient(180deg, #0d1421, #0b0f14); display:flex; flex-direction:column; min-height:0}
+  .aside-head{padding:12px; border-bottom:1px solid var(--line); display:grid; gap:10px}
+  .search{display:flex; gap:8px}
+  .search input{flex:1; background:#0d1522; border:1px solid #1f2a39; color:#e6eef7; border-radius:10px; padding:10px}
+  .members{overflow:auto; padding:8px 8px 14px}
+  .row{
+    display:grid; grid-template-columns:36px 1fr auto; gap:10px; align-items:center;
+    padding:8px; border-radius:12px; border:1px solid #1b2740; background:#0d1626; margin-bottom:8px
+  }
+  .av{
+    width:36px; height:36px; border-radius:10px; display:grid; place-items:center; font-weight:800;
+    background:linear-gradient(135deg,#1f2a40,#0e1726); color:#e6eef7; border:1px solid #213149; letter-spacing:.3px;
+  }
+  .name{font-weight:600; font-size:13px}
+  .status{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:4px 8px; border-radius:999px;
+    border:1px solid #1e2a39; background:#0b1320; color:#cfd8e3;
+  }
+  .dot{width:8px; height:8px; border-radius:999px; display:inline-block}
+  .online .dot{background:var(--online)}
+  .offline .dot{background:var(--offline)}
+  .loadmore{margin:8px;}
+
+  @media (max-width: 980px){
+    main{grid-template-columns:1fr}
+    aside{order:-1}
   }
 
-  header{position:sticky;top:0;z-index:3;background:rgba(11,15,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;padding:10px 14px;flex-wrap:wrap}
-  header h1{font-size:16px;margin:0 10px 0 0;letter-spacing:.2px;color:#fff;white-space:nowrap}
-  .spacer{flex:1}
-  .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .hint{font-size:12px;color:var(--muted)}
-  select,input,button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;outline:none}
-  input[list]{min-width:180px}
-  button{cursor:pointer}
-
-  .wrap{padding:12px;display:grid;gap:12px}
-  .card{
-    background:linear-gradient(180deg,var(--panel),var(--panel2));
-    border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
-    position:relative;overflow:hidden;
-    height:clamp(520px,78vh,1100px);
-    display:flex;flex-direction:column;
+  /* --- OLD Profit Card (unchanged) --- */
+  .pcard{
+    max-width:300px; width:min(90vw,300px);
+    background:url('https://iili.io/KKAe9kv.md.gif') center/cover no-repeat;
+    color:#fff; border-radius:10px; padding:0.5cm 14px; position:relative; overflow:hidden;
+    box-shadow:0 8px 40px rgba(0,0,0,.45);
+    font-family:"Binance PLEX","Segoe UI",Arial,sans-serif;
+    font-variant-numeric:tabular-nums;
   }
-  .chart-scroll{flex:1 1 auto; overflow:auto; scrollbar-gutter:stable both-edges; padding:12px 12px 8px}
-  .chart-scroll::-webkit-scrollbar{height:10px;width:10px}
-  .chart-scroll::-webkit-scrollbar-thumb{background:#1b2a3a;border-radius:8px}
-  .chart-scroll::-webkit-scrollbar-track{background:#0b121a}
+  .pcard .inner{ transform:translateX(0.55cm); }
+  .pcard .header{ display:flex; align-items:flex-start; gap:4px; margin-bottom:0.35cm; transform:translateX(-0.5cm); }
+  .pcard .binance-logo{ width:11px; height:11px; margin-top:-1px; }
+  .pcard .text-block{ display:flex; flex-direction:column; margin-top:-1px; }
+  .pcard .binance-text{ font-weight:800; font-size:.45rem; color:#f0b90b; letter-spacing:.25px; }
+  .pcard .futures-text{ font-size:.5rem; color:#fff; font-weight:700; line-height:1; }
+  .pcard .trade-info{ margin:4px 0; font-size:.45rem; font-weight:600; display:flex; gap:0.25cm; }
+  .pcard .short{ color:#ff4d6b; } .pcard .long{ color:#00c292; }
+  .pcard .percentage{ font-size:1.2rem; font-weight:900; margin:5px 0; }
+  .pcard .percentage.green{ color:#00c292; font-size:1.35rem; }
+  .pcard .percentage.red{ color:#ff4d6b; }
+  .pcard .price-section{ margin:5px 0 6px; }
+  .pcard .price-line{ display:flex; justify-content:flex-start; gap:5px; margin-bottom:2px; }
+  .pcard .price-label{ color:#ccc; font-size:.45rem; width:65px; font-weight:700; }
+  .pcard .price-value{ color:#f0b90b; font-weight:800; font-size:.55rem; margin-left:12px; }
+  .pcard .referral-section{ display:flex; align-items:center; gap:6px; margin-top:0.25cm; }
+  .pcard .qr{ width:24px; height:24px; border-radius:4px; border:1px solid rgba(255,255,255,.18); object-fit:cover; }
+  .pcard .ref-text{ font-size:.42rem; color:#ddd; font-weight:600; }
+  .pcard .referral-code{ font-weight:800; font-size:.55rem; letter-spacing:.2px; }
+  .pcard .app-text{ font-size:.42rem; color:#f0b90b; margin-top:0; font-weight:700; }
 
-  body.edge .wrap{padding:0}
-  body.edge .card{border:none;border-radius:0;box-shadow:none;height:calc(100vh - var(--hdr-h))}
-  body.edge .chart-scroll{padding:0}
-  body.edge .grid{gap:0}
-
-  .grid{display:grid;gap:12px;grid-template-rows:minmax(260px,1fr) 0px 0px 0px 0px 0px;align-content:start;height:100%}
-
-  .slot{position:relative; min-height:0}
-  .chart{position:absolute; inset:0}
-
-  .corner-logo{position:absolute; z-index:2; top:8px; left:8px; width:84px; opacity:.5; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
-
-  .pill{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
-  .toolbar{display:flex;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:rgba(15,22,33,.35)}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .kvs{display:flex;gap:6px;align-items:center}
-  .kvs input[type="number"]{width:90px}
-  .badges{display:flex;gap:6px;flex-wrap:wrap}
-  .badge{font-size:12px;background:#0e1520;border:1px solid var(--line);border-radius:999px;padding:4px 8px;display:inline-flex;gap:6px;align-items:center}
-  .badge button{padding:2px 6px;border-radius:999px;border:1px solid var(--line);background:#101a28;color:#fff;cursor:pointer}
-
-  .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:20}
-  .sheet{width:100%;max-width:720px;margin:0 auto;background:linear-gradient(180deg,#0f1621,#0b1320);border-radius:16px;border:1px solid var(--line);padding:14px 14px 18px}
-  .sheet h3{margin:0 0 8px 0;font-size:14px}
-  .sheet .row{margin-top:8px}
-  .muted{color:var(--muted);font-size:12px}
-  .ghost{background:#0c141f}
-  input[type="color"]{padding:0;width:42px;height:36px;border-radius:8px;border:1px solid var(--line);background:#0e1520}
-
-  /* Drag handle line between Main and first Osc */
-  .h-sizer{
-    position:absolute; left:0; right:0; top:-6px; height:10px;
-    cursor:row-resize; z-index:5;
-    background:linear-gradient(180deg,transparent 0%, rgba(0,0,0,.35) 45%, rgba(255,255,255,.08) 50%, rgba(0,0,0,.35) 55%, transparent 100%);
-    border-top:1px dashed rgba(255,255,255,.1);
-    border-bottom:1px dashed rgba(0,0,0,.25);
-    display:none;
+  /* --- NEW Profit Card (>= 2025-07-25) --- */
+  .nx-card{
+    width:320px;
+    border-radius:16px; overflow:hidden;
+    background:#111 url("https://iili.io/KBlgIse.th.png") center/cover no-repeat;
+    border:2px solid #2e2e2e; box-shadow:0 8px 24px rgba(0,0,0,.45);
+    color:#fff; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   }
-
-  /* ==== Drawing Canvas ==== */
-  .draw-canvas{
-    position:absolute; inset:0; z-index:4;
-    /* pointer-events default off; enable when a draw tool is active */
+  .nx-header{ padding:16px; display:flex; align-items:center; gap:12px; margin-bottom:calc(16px + 1cm); }
+  .nx-av{
+    width:40px; height:40px; aspect-ratio:1/1;
+    border-radius:50%; overflow:hidden; flex:0 0 40px;
+    box-shadow:0 0 0 2px rgba(255,255,255,.08);
+    display:grid; place-items:center; background:#000;
+    --av-shift:-6px;
   }
-  .draw-toolbar .pill{background:#0d1522}
+  .nx-av img{ width:100%; height:100%; display:block; object-fit:cover; object-position:center; border-radius:50%; transform:translateY(var(--av-shift)); }
+  .nx-user{ display:flex; flex-direction:column; line-height:1.1; }
+  .nx-user .nx-name{ font-weight:600; font-size:15px; }
+  .nx-user .nx-time{ font-size:11px; opacity:.9; }
+  .nx-body{ padding:0 16px calc(20px + 1cm); }
+  .nx-title{ font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:.2px; }
+  .nx-pos{ margin:6px 0 10px; display:inline-flex; align-items:center; gap:10px; font-size:13px; font-weight:600; }
+  .nx-pos .nx-short{ color:#ff6b6b; } .nx-pos .nx-long{ color:#0ecb81; }
+  .nx-div{ width:1px; height:12px; background:#6a6a6a; display:inline-block; }
+  .nx-lev{ color:#cfcfcf; }
+
+  /* value line: will show EITHER USDT PnL or ROI% in big font */
+  .nx-pnl{ display:flex; align-items:baseline; gap:8px; margin:6px 0 8px; }
+  .nx-usd, .nx-roi{ font-size:32px; font-weight:800; letter-spacing:-.4px; }
+  .nx-u, .nx-percent{ font-size:16px; font-weight:700; }
+  .posG{ color:#0ecb81; } .posR{ color:#ff6b6b; }
+
+  .nx-prices{ position:relative; display:flex; justify-content:space-between; gap:16px; font-size:12px; }
+  .nx-label{ color:#9a9a9a; font-size:11px; }
+  .nx-value{ color:#fff; }
+  .nx-last{ position:relative; left:-2.6cm; }
+  .nx-foot{ background:#000; }
+  .nx-line{ display:block; height:1px; width:100%; background:#444; }
+  .nx-footc{ padding:14px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .nx-id{ display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto auto; column-gap:8px; row-gap:2px; align-items:center; margin-left:-6px; }
+  .nx-logo{ grid-column:1/2; grid-row:1/2; width:16px; height:16px; display:block; position:relative; left:6px; top:-0.2cm; }
+  .nx-logo img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .nx-brand{ grid-column:2/3; grid-row:1/2; font-family:"Binance PLEX", Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:#fcd535; font-weight:900; font-size:11px; line-height:1; letter-spacing:.2px; text-transform:uppercase; }
+  .nx-futures{ grid-column:2/3; grid-row:2/3; font-size:14px; line-height:1; font-weight:800; text-transform:uppercase; color:#eaeaea; }
+  .nx-ref{ grid-column:2/3; grid-row:3/4; font-size:11px; line-height:1.1; color:#ffffff; letter-spacing:.1px; }
+  .nx-qr{
+    width:62px; height:62px; background:#fff; border-radius:6px; overflow:hidden; display:block;
+    box-shadow:inset 0 0 0 1px #e5e5e5; position:relative;
+    --qr-shift:-8px;
+  }
+  .nx-qr img{ width:100%; height:100%; object-fit:cover; transform:translateY(var(--qr-shift)); display:block; }
+
+  .admintools{display:flex; gap:8px; align-items:center; padding:8px; border-top:1px dashed #263446; background:#0f1621}
+  .admintools input, .admintools select{background:#0d1522; border:1px solid #1f2a39; color:#e6eef7; border-radius:8px; padding:8px}
+  .admintools .btn{padding:8px 12px}
+  .muted{color:#9eb1c7; font-size:12px}
 </style>
 </head>
 <body>
-<header>
-  <h1>AI Signal Studio — Mega Indicators</h1>
-
-  <div class="ctrl">
-    <label class="hint">Market</label>
-    <select id="market">
-      <option value="spot" selected>Spot</option>
-      <option value="um">Futures (USDT-M)</option>
-    </select>
-  </div>
-
-  <div class="spacer"></div>
-
-  <div class="ctrl"><span class="pill" id="status">Loading markets…</span></div>
-
-  <div class="ctrl">
-    <label class="hint">Quote</label>
-    <select id="quote">
-      <option value="USDT" selected>USDT</option><option value="FDUSD">FDUSD</option>
-      <option value="USDC">USDC</option><option value="BTC">BTC</option>
-      <option value="ETH">ETH</option><option value="BNB">BNB</option>
-      <option value="TRY">TRY</option>
-    </select>
-
-    <label class="hint">Symbol</label>
-    <input id="symbol" list="pairs" placeholder="Select pair…"/><datalist id="pairs"></datalist>
-
-    <label class="hint">TF</label>
-    <select id="tf">
-      <option value="1m">1m</option><option value="3m">3m</option>
-      <option value="5m" selected>5m</option><option value="15m">15m</option><option value="30m">30m</option>
-      <option value="1h">1h</option><option value="2h">2h</option><option value="4h">4h</option><option value="1d">1d</option>
-    </select>
-    <button id="reload">Load</button>
-
-    <label class="hint">Range</label>
-    <button id="range12">12M</button>
-    <button id="range36">36M</button>
-  </div>
-
-  <div class="ctrl" style="flex:1 1 100%;gap:12px">
-    <span class="hint">Indicators</span>
-    <select id="indSel">
-      <optgroup label="Trend / MAs">
-        <option>MA</option>
-        <option>EMA</option><option>SMA</option><option>WMA</option><option>HMA</option>
-        <option>DEMA</option><option>TEMA</option><option>VWMA</option>
-      </optgroup>
-      <optgroup label="Volatility / Bands">
-        <option>BB</option><option>Keltner</option><option>Donchian</option><option>ATR</option>
-        <option>Supertrend</option><option>PSAR</option>
-      </optgroup>
-      <optgroup label="Price / Overlay">
-        <option>VWAP</option><option>Ichimoku</option><option>HeikinAshi</option><option>PivotClassic</option>
-      </optgroup>
-      <optgroup label="Oscillators">
-        <option>RSI</option><option>Stochastic</option><option>StochRSI</option><option>MACD</option><option>PPO</option>
-        <option>TRIX</option><option>TSI</option><option>WilliamsR</option><option>CCI</option><option>ROC</option>
-        <option>Aroon</option><option>ADX</option><option>DMI</option><option>Awesome</option><option>ElderRay</option>
-      </optgroup>
-      <optgroup label="Volume / Flow">
-        <option>Volume</option><option>OBV</option><option>MFI</option><option>CMF</option><option>ADL</option>
-      </optgroup>
-    </select>
-
-    <div id="paramRow" class="row kvs"></div>
-    <label class="hint">Preset</label>
-    <select id="presetSel"><option value="">— none —</option></select>
-    <button id="applyPreset" class="ghost">Apply</button>
-    <button id="savePreset">Save</button>
-    <button id="delPreset" class="ghost">Delete</button>
-
-    <button id="addInd">Add</button>
-    <div class="badges" id="activeBadges"></div>
-
-    <label class="toggle"><input type="checkbox" id="haToggle"/> <span class="hint">Use Heikin-Ashi candles</span></label>
-  </div>
-
-  <!-- ===== Drawing Tools (NEW) ===== -->
-  <div class="ctrl draw-toolbar" style="gap:10px;margin-left:auto">
-    <span class="pill">Draw</span>
-    <select id="drawTool">
-      <option value="off" selected>Off</option>
-      <option value="trend">Trendline</option>
-      <option value="hline">Horizontal SR</option>
-      <option value="fib">Fibonacci Retracement</option>
-    </select>
-    <label class="hint">Color</label>
-    <input type="color" id="drawColor" value="#fcd535" />
-    <label class="hint">Width</label>
-    <select id="drawWidth">
-      <option>1</option><option selected>2</option><option>3</option><option>4</option>
-    </select>
-    <button id="drawClear" class="ghost">Clear</button>
-  </div>
-</header>
-
 <div class="wrap">
-  <div class="card">
-    <div class="chart-scroll">
-      <div class="grid" id="grid">
-        <div class="slot">
-          <img class="corner-logo" src="https://iili.io/K7QaAD7.th.jpg" alt="logo"/>
-          <div id="c-main" class="chart"></div>
-          <!-- Drawing canvas overlay (NEW) -->
-          <canvas id="drawCanvas" class="draw-canvas"></canvas>
-        </div>
-        <div class="slot osc" id="oscSlot1" style="display:none">
-          <div id="hSizer1" class="h-sizer"></div>
-          <div id="c-osc-1" class="chart"></div>
-        </div>
-        <div class="slot osc" id="oscSlot2" style="display:none"><div id="c-osc-2" class="chart"></div></div>
-        <div class="slot osc" id="oscSlot3" style="display:none"><div id="c-osc-3" class="chart"></div></div>
-        <div class="slot osc" id="oscSlot4" style="display:none"><div id="c-osc-4" class="chart"></div></div>
-        <div class="slot osc" id="oscSlot5" style="display:none"><div id="c-osc-5" class="chart"></div></div>
+  <header>
+    <div class="logo">B</div>
+    <div>
+      <h1>Binance Signal Group</h1>
+      <div class="sub">Admin-only chat • Valid-countries member directory (≈100 countries)</div>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="v" id="totalMembers">—</div>
+        <small class="sub">Total Members (800K – 850K)</small>
+      </div>
+      <div class="stat">
+        <div class="segments" id="segments"></div>
+        <small class="sub">Laksha breakdown (8.x)</small>
       </div>
     </div>
-    <div class="toolbar"><span class="hint">Tip: Use Draw → Trendline / Horizontal SR / Fibonacci. Right-click twice to place. Drag with left-click. Delete key removes selection. Presets + layout auto-save.</span></div>
-  </div>
-</div>
+  </header>
 
-<div id="sheetWrap" class="sheet-backdrop">
-  <div class="sheet">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <h3 id="sheetTitle">Indicator Settings</h3>
-      <button id="sheetClose">Close</button>
-    </div>
-    <div class="muted" id="sheetSub"></div>
-    <div id="sheetParams" class="row" style="gap:16px;flex-wrap:wrap;margin-top:10px"></div>
-    <div class="row" style="gap:8px;justify-content:flex-end;margin-top:12px">
-      <button id="sheetDuplicate" class="ghost">Duplicate</button>
-      <button id="sheetMoveUp" class="ghost">Move pane ↑</button>
-      <button id="sheetMoveDown" class="ghost">Move pane ↓</button>
-      <button id="sheetRemove">Remove</button>
-      <button id="sheetApply">Apply</button>
-    </div>
-  </div>
+  <main>
+    <!-- Chat Area -->
+    <section class="chat">
+      <div class="chat-head">
+        <span class="pill">Admin Chat</span>
+        <span class="pill">Only admin can send</span>
+        <div class="role">
+          <label><input type="checkbox" id="viewAsMember"> View as member (disable sending)</label>
+        </div>
+      </div>
+      <div class="chat-scroll" id="chatScroll">
+        <div class="bub">
+          👋 Welcome to the Binance Signal Group. Admin posts official updates here.
+          <div class="meta">System • just now</div>
+        </div>
+      </div>
+      <div class="composer">
+        <label class="attach" for="fileInput">📷 Attach photo <small>(optional)</small></label>
+        <input id="msg" type="text" placeholder="Type admin message…"/>
+        <button class="btn" id="sendBtn">Send</button>
+        <input id="fileInput" type="file" accept="image/*"/>
+      </div>
+    </section>
+
+    <!-- Members Panel -->
+    <aside>
+      <div class="aside-head">
+        <div class="search">
+          <input id="search" placeholder="Search member by name…"/>
+        </div>
+        <small class="sub">Right panel: all members listed one by one. Use search to jump.</small>
+      </div>
+      <div class="members" id="members"></div>
+      <button class="btn loadmore" id="loadMore">Load more</button>
+    </aside>
+  </main>
 </div>
 
 <script>
-/* ========= Shared helpers & UI refs ========= */
-const $=id=>document.getElementById(id);
-const els={status:$('status'),market:$('market'),quote:$('quote'),symbol:$('symbol'),pairs:$('pairs'),tf:$('tf'),
-           indSel:$('indSel'),paramRow:$('paramRow'),addInd:$('addInd'),badges:$('activeBadges'),
-           haToggle:$('haToggle'),grid:$('grid'),
-           presetSel:$('presetSel'),savePreset:$('savePreset'),applyPreset:$('applyPreset'),delPreset:$('delPreset'),
-           range12:$('range12'),range36:$('range36'), hSizer1:$('hSizer1'), oscSlot1:$('oscSlot1'),
-           drawTool:$('drawTool'), drawColor:$('drawColor'), drawWidth:$('drawWidth'), drawClear:$('drawClear'),
-           cMainHost:$('c-main'), drawCanvas:$('drawCanvas')};
-const setStatus=t=>{ els.status.textContent=t; };
-
-const defaultColor='#fcd535';
-function hexToRGBA(hex,a=1){const h=hex.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return `rgba(${r},${g},${b},${a})`;}
-function setSeriesColor(series,color){ try{ series.applyOptions({color}); }catch{} }
-function setPackColor(pack,color){
-  const list = Array.isArray(pack.series)? pack.series : [pack.series];
-  if(!color) return;
-  if(list.length===1){ setSeriesColor(list[0],color); }
-  else{
-    const shades=[1,0.7,0.4];
-    list.forEach((s,i)=> setSeriesColor(s, hexToRGBA(color,shades[i%shades.length])));
-  }
+/* ============================================================
+   MEMBERS + HEADER STATS (unchanged)
+============================================================ */
+function numberWithCommas(x){return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function initialsFromName(full){
+  const parts = full.trim().split(/\s+/);
+  const f = parts[0]?.[0] || '';
+  const l = parts[1]?.[0] || '';
+  return (f + l).toUpperCase();
 }
 
-const KEYS={PRESETS:'aiSS_presets_v2', LAYOUT:'aiSS_layout_v2', SPLIT:'aiSS_split_main_osc1', DRAW:'aiSS_draw_v1'};
-let EXINFO=null,BY_QUOTE={},VALID_SET=new Set();
-
-/* ========= Header height var for edge mode ========= */
-function setHeaderHeightVar(){
-  const h=document.querySelector('header')?.getBoundingClientRect().height||60;
-  document.documentElement.style.setProperty('--hdr-h', h+'px');
+const members = [];
+const seedCount = 1200;
+const firsts = ['Alex','Mia','Omar','Yuki','Ishan','Sara','Leo','Noah','Ava','Ethan','Layla','Nina','Ivan','Luis','Aria','Kai','Hana','Zara','Milan','Nora'];
+const lasts  = ['Chen','Silva','Khan','Perera','Singh','Kumar','Gomez','Ivanov','Lee','Nguyen','Hassan','Yilmaz','Costa','Santos','Hansen','Novak','Almeida','Park','Sato','Smith'];
+for (let i=0;i<seedCount;i++){
+  const name = `${pick(firsts)} ${pick(lasts)}`;
+  const status = Math.random()<0.55 ? 'online' : 'offline';
+  members.push({id:i+1, name, status});
 }
-new ResizeObserver(setHeaderHeightVar).observe(document.body);
-
-/* ========= Market endpoints ========= */
-let API_BASE=null, WS_URL_BASE=null;
-function applyMarketEndpoints(){
-  const m=els.market.value;
-  if(m==='spot'){ API_BASE='https://api.binance.com'; WS_URL_BASE='wss://stream.binance.com:9443/ws'; }
-  else{ API_BASE='https://fapi.binance.com'; WS_URL_BASE='wss://fstream.binance.com/ws'; }
+const min = 800000, max = 850000;
+const total = Math.floor(Math.random()*(max-min+1))+min;
+document.getElementById('totalMembers').textContent = numberWithCommas(total);
+const segmentsEl = document.getElementById('segments');
+for(let i=0;i<8;i++){ const d = document.createElement('div'); d.className='seg fill'; segmentsEl.appendChild(d); }
+const remainder = total - 800000;
+if (remainder>0){
+  const d = document.createElement('div');
+  d.className = remainder>=50000? 'seg half':'seg';
+  segmentsEl.appendChild(d);
 }
-
-/* ========= Exchange / Pairs ========= */
-async function loadExchangeInfo(){
-  setStatus('Loading markets…');
-  applyMarketEndpoints();
-  const path = (els.market.value==='spot') ? '/api/v3/exchangeInfo' : '/fapi/v1/exchangeInfo';
-  try{
-    const r=await fetch(`${API_BASE}${path}`); if(!r.ok) throw new Error('exchangeInfo failed');
-    EXINFO=await r.json(); BY_QUOTE={}; VALID_SET=new Set();
-    (EXINFO.symbols||[]).filter(s=>s.status==='TRADING').forEach(s=>{
-      VALID_SET.add(s.symbol); (BY_QUOTE[s.quoteAsset] ||= []).push(s.symbol);
-    });
-    Object.keys(BY_QUOTE).forEach(q=>{
-      BY_QUOTE[q].sort((a,b)=>{
-        const majors=['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TON','AVAX','TRX','LINK','MATIC','NEAR','OP','ARB','DOT','ATOM','LTC','ETC','FIL','SUI','SEI'];
-        const ba=a.replace(q,''), bb=b.replace(q,'');
-        const pa=majors.includes(ba)?0:1, pb=majors.includes(bb)?0:1;
-        return (pa-pb)||a.localeCompare(b);
-      });
-    });
-    setStatus('Markets ready');
-  }catch(err){
-    console.warn(err);
-    setStatus('Markets unavailable • fallback mode');
-    EXINFO={symbols:[]}; BY_QUOTE={}; VALID_SET=new Set();
-  }
-}
-function populatePairs(){
-  const q=els.quote.value, list=BY_QUOTE[q]||[];
-  els.pairs.innerHTML=''; const frag=document.createDocumentFragment();
-  list.forEach(s=>{const o=document.createElement('option'); o.value=s; frag.appendChild(o);});
-  els.pairs.appendChild(frag);
-  if(list.length){
-    const cur=els.symbol.value.toUpperCase();
-    if(!VALID_SET.has(cur)||!cur.endsWith(q)){
-      const pref=list.find(s=>/^(BTC|ETH|BNB|SOL|XRP)/.test(s))||list[0];
-      els.symbol.value=pref;
-    }
-  }else if(!els.symbol.value){ els.symbol.value='BTCUSDT'; }
-}
-
-/* ========= Charts ========= */
-const mkChart=(el,opts={})=>{
-  const c=LightweightCharts.createChart(el,{
-    layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
-    grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
-    rightPriceScale:{borderColor:'#223246',visible:true},
-    timeScale:{borderColor:'#223246',rightOffset:20,barSpacing:8},
-    crosshair:{mode:0},
-    ...opts
+const membersEl = document.getElementById('members');
+const searchEl  = document.getElementById('search');
+const loadMoreBtn = document.getElementById('loadMore');
+let viewSlice = 0; const PAGE=60;
+function renderMembers(){
+  const q = searchEl.value.toLowerCase().trim();
+  const filtered = members.filter(m => q ? m.name.toLowerCase().includes(q) : true);
+  const toShow = filtered.slice(0, viewSlice);
+  membersEl.innerHTML='';
+  toShow.forEach(m=>{
+    const row = document.createElement('div'); row.className='row';
+    const init = initialsFromName(m.name);
+    const badgeCls = m.status === 'online' ? 'online' : 'offline';
+    row.innerHTML = `
+      <div class="av" aria-hidden="true">${init}</div>
+      <div><div class="name">${m.name}</div></div>
+      <div class="status ${badgeCls}" title="${m.status === 'online' ? 'Online' : 'Offline'}">
+        <span class="dot"></span>${m.status === 'online' ? 'Online' : 'Offline'}
+      </div>`;
+    membersEl.appendChild(row);
   });
-  const resize=()=>c.applyOptions({width:el.clientWidth||300,height:el.clientHeight||200});
-  new ResizeObserver(resize).observe(el);
-  setTimeout(resize,0);
-  return c;
+  loadMoreBtn.style.display = (filtered.length>viewSlice)?'block':'none';
+}
+function resetAndRender(){ viewSlice = PAGE; renderMembers(); }
+searchEl.addEventListener('input', resetAndRender);
+loadMoreBtn.addEventListener('click', ()=>{ viewSlice += PAGE; renderMembers(); });
+resetAndRender();
+
+/* ============================================================
+   ADMIN CHAT BASICS (unchanged)
+============================================================ */
+const chatScroll = document.getElementById('chatScroll');
+const fileInput  = document.getElementById('fileInput');
+const msgInput   = document.getElementById('msg');
+const sendBtn    = document.getElementById('sendBtn');
+const viewAsMember = document.getElementById('viewAsMember');
+function setRoleUI(){ const memberMode = viewAsMember.checked; msgInput.disabled = memberMode; sendBtn.disabled = memberMode; }
+setRoleUI(); viewAsMember.addEventListener('change', setRoleUI);
+let attachedDataUrl = null;
+fileInput.addEventListener('change', ()=>{
+  const f = fileInput.files[0];
+  if(!f){attachedDataUrl=null; return}
+  const r = new FileReader();
+  r.onload = ()=>{attachedDataUrl = r.result;};
+  r.readAsDataURL(f);
+});
+function addAdminMessage(text, img){
+  const b = document.createElement('div'); b.className='bub admin';
+  b.innerHTML = `${text ? text.replace(/</g,'&lt;') : ''}${img? `<img src="${img}" alt="attachment">`:''}<div class="meta">Admin • ${new Date().toLocaleString()}</div>`;
+  chatScroll.appendChild(b); chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+addAdminMessage('Today\'s BTC/USDT scalp plan: watch 1m/5m confluence near VWAP. SL tight, TP 2R.');
+addAdminMessage('Upload proof or chart here if needed — admin can attach images to announcements.');
+sendBtn.addEventListener('click', ()=>{
+  if (viewAsMember.checked) return;
+  const t = msgInput.value.trim(); if(!t && !attachedDataUrl) return;
+  addAdminMessage(t, attachedDataUrl);
+  msgInput.value=''; attachedDataUrl=null; fileInput.value='';
+});
+</script>
+
+<script>
+/* ============================================================
+   PROFIT CARDS (REAL BINANCE FUTURES PRICES)
+   - NEW: For dates >= 2025-07-25, “here & there” show ROI% (photo style)
+     instead of USDT amount — while keeping all calculations correct.
+============================================================ */
+const API = {
+  futuresKlines: 'https://fapi.binance.com/fapi/v1/klines',
+  ping: 'https://fapi.binance.com/fapi/v1/ping'
 };
-const cMain=mkChart($('c-main'));
-const oscSlots=[1,2,3,4,5].map(i=>({slot:$('oscSlot'+i),host:$('c-osc-'+i),chart:null,syncH:null}));
-oscSlots.forEach(o=>{ o.chart=mkChart(o.host,{ rightPriceScale:{visible:true} }); o.slot.style.display='none'; });
+const SYMBOLS = [
+  'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','ADAUSDT',
+  'TONUSDT','AVAXUSDT','LINKUSDT','NEARUSDT','MATICUSDT','OPUSDT','ARBUSDT','ATOMUSDT'
+];
+const DOM_CAP = 500;
+const ROI_RANGE = {min:300, max:3500}; // % inclusive
+const CUTOFF_NEW = new Date('2025-07-25T00:00:00Z');
 
-/* Candle/HA series */
-let sCandle=cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'});
-let haSeries=null;
+const BG_BASE = 'https://iili.io/KBlgIse.th.png';
+const BG_ALT  = 'https://iili.io/KWFNXj4.th.png'; // your PNG
+function pickNewBg(){ const bag = [BG_BASE, BG_BASE, BG_BASE, BG_ALT]; return bag[(Math.random()*bag.length)|0]; }
 
-/* ========= FULL SYNC (pan/zoom) between Main and Oscillators ========= */
-const SYNC = { guards:new WeakMap() };
-function withGuard(ts, fn){
-  const flag = SYNC.guards.get(ts);
-  if(flag?.busy) return;
-  SYNC.guards.set(ts,{busy:true});
-  try{ fn(); } finally { SYNC.guards.set(ts,{busy:false}); }
-}
-function getRange(ts){ try{ return ts.getVisibleLogicalRange?.(); }catch{return null;} }
-function setRange(ts, range){ if(!range||range.from==null||range.to==null) return; try{ ts.setVisibleLogicalRange({from:range.from, to:range.to}); }catch{} }
-function syncFromTo(srcChart, dstCharts){
-  const srcTS = srcChart.timeScale();
-  srcTS.subscribeVisibleLogicalRangeChange((r)=>{
-    withGuard(srcTS, ()=>{
-      dstCharts.forEach(ch=>{
-        const ts=ch.timeScale();
-        const g=SYNC.guards.get(ts);
-        if(g && g.busy) return;
-        setRange(ts, r);
-      });
-    });
+/* 60% ROI view, 40% USDT view */
+function pickDisplayMode(){ return Math.random()<0.6 ? 'ROI' : 'USDT'; }
+
+const CHAT = document.getElementById('chatScroll');
+
+(function injectAdminTools(){
+  const composer = document.querySelector('.composer');
+  const bar = document.createElement('div');
+  bar.className = 'admintools';
+  bar.innerHTML = `
+    <span class="muted">Profit Cards:</span>
+    <label class="muted">Per day
+      <input id="pcPerDay" type="number" min="1" max="200" value="100" style="width:70px">
+    </label>
+    <label class="muted">Leverage
+      <select id="pcLev">
+        <option>5</option><option>10</option><option selected>20</option><option>50</option><option>100</option>
+      </select>x
+    </label>
+    <label class="muted">Side Mix
+      <select id="pcSideMix">
+        <option value="mixed" selected>Mixed</option>
+        <option value="long">Long only</option>
+        <option value="short">Short only</option>
+      </select>
+    </label>
+    <label class="muted">Start
+      <input id="pcStart" type="date">
+    </label>
+    <label class="muted">End
+      <input id="pcEnd" type="date">
+    </label>
+    <button class="btn" id="pcGen20">Generate Sample (20)</button>
+    <button class="btn" id="pcBackfill">Backfill 2 Years (Batched)</button>
+    <button class="btn" id="pcExport">Export JSON</button>
+  `;
+  composer.parentNode.insertBefore(bar, composer);
+
+  const today = new Date(); 
+  const start = new Date(today); start.setDate(start.getDate()-730);
+  bar.querySelector('#pcStart').value = start.toISOString().slice(0,10);
+  bar.querySelector('#pcEnd').value = today.toISOString().slice(0,10);
+
+  const getRange = ()=>({ start: new Date(bar.querySelector('#pcStart').value+'T00:00:00Z'), end: new Date(bar.querySelector('#pcEnd').value+'T00:00:00Z') });
+
+  bar.querySelector('#pcGen20').addEventListener('click', async ()=>{
+    await ensurePing();
+    await generateCardsRandom(20, parseInt(bar.querySelector('#pcLev').value,10), bar.querySelector('#pcSideMix').value, getRange());
   });
-}
-function allOscCharts(){ return oscSlots.filter(o=>o.slot.style.display!=='none').map(o=>o.chart); }
-function wireBidirectionalSync(){
-  SYNC.guards = new WeakMap();
-  const osc=allOscCharts();
-  syncFromTo(cMain, osc);
-  osc.forEach(ch=> syncFromTo(ch, [cMain, ...osc.filter(x=>x!==ch)]));
-}
-function rewireSync(){ wireBidirectionalSync(); setTimeout(()=>snapAlignAll(),0); }
 
-/* ========= Keep aligned (one-shot) when sizes change ========= */
-function readMainView(){
-  const ts=cMain.timeScale();
-  return { range: ts.getVisibleLogicalRange?.() || null };
-}
-function applyViewTo(chart, view){
-  if(!view) return;
-  const ts=chart.timeScale();
-  try{
-    if(view.range && view.range.from!=null && view.range.to!=null){
-      ts.setVisibleLogicalRange({from:view.range.from, to:view.range.to});
-    }
-  }catch(e){}
-}
-function snapAlignAll(){
-  const view = readMainView();
-  oscSlots.forEach(o=>{
-    if(o.slot.style.display!=='none') applyViewTo(o.chart, view);
+  bar.querySelector('#pcBackfill').addEventListener('click', async ()=>{
+    await ensurePing();
+    await backfillRange(parseInt(bar.querySelector('#pcPerDay').value,10), parseInt(bar.querySelector('#pcLev').value,10), bar.querySelector('#pcSideMix').value, getRange());
   });
-}
 
-/* Guards + anchor */
-let guarding=false; const ANCHOR_RATIO=0.45;
-function anchorLatestSlightRight(ts){ const lr=ts.getVisibleLogicalRange?.(); if(!lr) return; const w=lr.to-lr.from; try{ ts.setRightOffset(Math.max(2,Math.round(w*ANCHOR_RATIO))); }catch{} }
-function clampLeftEdge(ts, firstIndex){ const lr=ts.getVisibleLogicalRange?.(); if(!lr) return; if(lr.from<firstIndex){ const w=lr.to-lr.from; try{ ts.setVisibleLogicalRange({from:firstIndex,to:firstIndex+w}); }catch{} } }
-let userInteracting=false, interactTimer=null;
-['mousedown','touchstart','wheel'].forEach(ev=>{ $('c-main').addEventListener(ev, ()=>{ userInteracting=true; clearTimeout(interactTimer); interactTimer=setTimeout(()=>{ userInteracting=false; },180); }, {passive:true}); });
-function installGuards(chart){ const ts=chart.timeScale(); const h=()=>{ if(guarding||userInteracting) return; guarding=true; try{ clampLeftEdge(ts,0); anchorLatestSlightRight(ts); }finally{ guarding=false; } }; ts.subscribeVisibleLogicalRangeChange(h); }
-installGuards(cMain); oscSlots.forEach(o=>installGuards(o.chart));
-
-/* ========= Data & Live ========= */
-let DATA=[], WS=null, OLDEST_MS=null, LOADING_OLD=false, RECONNECT_TRIES=0;
-const MAX_RECONNECT_TRIES=6;
-const closeWS=()=>{try{WS?.close();}catch{} WS=null;};
-
-function normalizeSymbolInput(sym, quote){ if(sym && !sym.endsWith(quote)){ sym=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'')+quote; } return sym; }
-function findAnyMarketSymbolLike(base){ return (EXINFO.symbols||[]).find(s=>(s.status==='TRADING')&&s.baseAsset===base)?.symbol; }
-
-async function fetchKlines(symbol, interval, limit=1000, endTimeMs=null){
-  const path=(els.market.value==='spot')?'/api/v3/klines':'/fapi/v1/klines';
-  const params=new URLSearchParams({symbol,interval,limit:String(limit)}); if(endTimeMs) params.set('endTime',String(endTimeMs));
-  const url=`${API_BASE}${path}?${params}`; const res=await fetch(url);
-  if(!res.ok) throw new Error('klines fetch failed');
-  const raw=await res.json();
-  return raw.map(k=>({tms:k[0],time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
-}
-
-function openWS(symbol, interval){
-  closeWS();
-  const stream=`${symbol.toLowerCase()}@kline_${interval}`; const url=`${WS_URL_BASE}/${stream}`;
-  try{ WS=new WebSocket(url); }catch(e){ console.warn('WS init failed',e); setStatus(`Live off • ${symbol} • ${interval}`); return; }
-  WS.onopen=()=>{ RECONNECT_TRIES=0; setStatus(`Live: ${symbol} • ${interval}`); };
-  WS.onerror=()=> setStatus(`Socket error • ${symbol} • ${interval}`);
-  WS.onclose=()=>{
-    setStatus(`Disconnected • ${symbol} • ${interval}`);
-    if(RECONNECT_TRIES<MAX_RECONNECT_TRIES){ const wait=Math.min(15000,500*Math.pow(2,RECONNECT_TRIES++)); setTimeout(()=>openWS(symbol,interval),wait); }
-  };
-  WS.onmessage=(e)=>{ try{
-    const msg=JSON.parse(e.data); const k=msg.k||msg.data?.k; if(!k) return;
-    const t=Math.floor(k.t/1000);
-    const bar={time:t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,tms:k.t};
-    const last=DATA[DATA.length-1]?.time;
-    if(last===t){ DATA[DATA.length-1]={...DATA[DATA.length-1],...bar}; sCandle.update(bar); if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); } }
-    else if(last==null||t>last){ DATA.push(bar); if(DATA.length>5000) DATA.shift(); sCandle.update(bar); if(haSeries){ haSeries.update(HeikinAshi([bar])[0]); } }
-    Active.forEach(it=>it.update(DATA));
-    if(!userInteracting) anchorLatestSlightRight(cMain.timeScale());
-    draw_repaint(); // keep drawings aligned during live updates
-  }catch{} };
-}
-
-async function loadInitial(symbol, interval){
-  setStatus(`Loading ${symbol} • ${interval} …`);
-  DATA=[];
-  try{
-    const batch=await fetchKlines(symbol,interval,1000,null);
-    if(!batch.length) throw new Error('No data');
-    DATA=batch; OLDEST_MS=batch[0].tms;
-    sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-    if(els.haToggle.checked){ ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
-    queueMicrotask(()=> cMain.timeScale().scrollToPosition(-2,false));
-    setStatus(`History loaded • ${symbol} • ${interval}`);
-    Active.forEach(it=>it.update(DATA));
-    setTimeout(()=>{ 
-      clampLeftEdge(cMain.timeScale(),0); 
-      anchorLatestSlightRight(cMain.timeScale()); 
-      snapAlignAll(); 
-      rewireSync();
-      draw_resize(); draw_repaint();
-    },0);
-  }catch(err){ console.warn(err); setStatus('History load failed'); }
-}
-
-/* Backfill while scrolling left */
-function debounce(fn,ms=250){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);} }
-const watchBackfill=debounce(async ()=>{
-  const rng=cMain.timeScale().getVisibleLogicalRange?.(); if(!rng) return;
-  if(rng.from!==undefined && rng.from<20){
-    if(LOADING_OLD) return; LOADING_OLD=true;
-    try{
-      const endTime=OLDEST_MS-1; const sym=els.symbol.value.toUpperCase(); const tf=els.tf.value;
-      const more=await fetchKlines(sym,tf,1000,endTime);
-      if(more.length){
-        OLDEST_MS=more[0].tms; DATA=more.concat(DATA);
-        sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-        if(haSeries){ haSeries.setData(HeikinAshi(DATA)); }
-        Active.forEach(it=>it.update(DATA));
-        snapAlignAll(); draw_repaint();
-      }
-    }catch(e){ console.warn(e); }
-    LOADING_OLD=false;
-  }
-},150);
-cMain.timeScale().subscribeVisibleLogicalRangeChange?.(()=>{ watchBackfill(); draw_repaint(); });
-
-/* Month loader */
-async function loadMonths(months){
-  try{
-    let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
-    sym=normalizeSymbolInput(sym,q);
-    if(!VALID_SET.has(sym) && (EXINFO.symbols||[]).length){
-      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,'');
-      const guess=findAnyMarketSymbolLike(base);
-      if(guess){ const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess); if(info){ els.quote.value=info.quoteAsset; populatePairs(); } sym=guess; }
-    }
-    els.symbol.value=sym;
-    setStatus(`Preparing ${months}M • ${sym} • ${tf}`); closeWS();
-
-    const nowMs=Date.now(); const approxMonth=30*24*60*60*1000;
-    let end=nowMs; const earliest=nowMs-months*approxMonth;
-    let out=[];
-    while(end>earliest && out.length<200000){
-      const batch=await fetchKlines(sym,tf,1000,end);
-      if(!batch.length) break;
-      out=batch.concat(out); end=batch[0].tms-1;
-      if(out[0].tms<=earliest) break;
-    }
-    DATA=out; OLDEST_MS=out[0]?.tms??null;
-    sCandle.setData(out.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close})));
-    if(els.haToggle.checked){ ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
-    Active.forEach(it=>it.update(DATA));
-    anchorLatestSlightRight(cMain.timeScale());
-    snapAlignAll();
-    rewireSync();
-    draw_resize(); draw_repaint();
-
-    openWS(sym,tf);
-    setStatus(`Live: ${sym} • ${tf} • ${months}M`);
-    saveLayout();
-  }catch(err){ console.warn(err); setStatus(`${months}M load error`); }
-}
-
-/* ========= Indicators (same core) ========= */
-const Active=[]; let idSeq=1;
-function updateAllMarkers(){}
-
-/* Edge mode */
-function countActivePanes(){ return new Set(Active.filter(x=>x.kind==='osc').map(x=>x.pane)).size; }
-
-/* === Split ratio logic (Main vs first Osc) === */
-let splitRatio = (()=>{ const v=localStorage.getItem(KEYS.SPLIT); const n=parseFloat(v); return isFinite(n)?Math.max(0.2,Math.min(0.85,n)):0.65; })();
-
-function refreshEdgeMode(){ document.body.classList.toggle('edge', countActivePanes()===0); }
-
-/* Build grid rows */
-function refreshOscLayout(){
-  const used=new Set(Active.filter(x=>x.kind==='osc').map(x=>x.pane));
-  oscSlots.forEach((o,idx)=>{ o.slot.style.display = used.has(idx+1)?'block':'none'; });
-  const has1 = used.has(1);
-  els.hSizer1.style.display = has1 ? 'block' : 'none';
-
-  const rows=[];
-  if(has1){
-    const mainFr = splitRatio;
-    const osc1Fr = Math.max(0.1, 1 - splitRatio);
-    rows.push(`minmax(260px, ${mainFr}fr)`);
-    rows.push(`minmax(120px, ${osc1Fr}fr)`);
-  }else{
-    rows.push('minmax(260px, 1fr)');
-    rows.push('0px');
-  }
-  for(let i=2;i<=5;i++){
-    rows.push( used.has(i) ? 'minmax(120px, .45fr)' : '0px' );
-  }
-  els.grid.style.gridTemplateRows = rows.join(' ');
-  refreshEdgeMode();
-
-  setTimeout(()=>{ snapAlignAll(); rewireSync(); draw_resize(); draw_repaint(); }, 0);
-}
-
-/* Drag events for the h-sizer */
-(function setupSizer(){
-  let dragging=false, startY=0, gridBox=null;
-  function onDown(e){
-    dragging=true;
-    startY=(e.touches?e.touches[0].clientY:e.clientY);
-    gridBox=els.grid.getBoundingClientRect();
-    document.body.style.userSelect='none';
-  }
-  function onMove(e){
-    if(!dragging||!gridBox) return;
-    const y=(e.touches?e.touches[0].clientY:e.clientY);
-    const rel = (y - gridBox.top) / gridBox.height;
-    splitRatio = Math.max(0.2, Math.min(0.85, rel));
-    localStorage.setItem(KEYS.SPLIT, splitRatio.toFixed(4));
-    refreshOscLayout();
-  }
-  function onUp(){ dragging=false; gridBox=null; document.body.style.userSelect=''; }
-
-  els.hSizer1.addEventListener('mousedown', onDown);
-  els.hSizer1.addEventListener('touchstart', onDown, {passive:true});
-  window.addEventListener('mousemove', onMove, {passive:false});
-  window.addEventListener('touchmove', onMove, {passive:false});
-  window.addEventListener('mouseup', onUp);
-  window.addEventListener('touchend', onUp);
+  bar.querySelector('#pcExport').addEventListener('click', exportJSON);
 })();
 
-/* Series helpers & math (unchanged)… */
-const lineOn=(chart,opts={})=> chart.addLineSeries({lineWidth:2,...opts});
-const histOn=(chart,opts={})=> chart.addHistogramSeries({...opts});
-const bandOn=(chart)=>{ const upper=lineOn(chart), middle=lineOn(chart,{lineWidth:1}), lower=lineOn(chart); return {upper,middle,lower}; };
-const pack=(series,updater,kind,chart,pane)=>({series:Array.isArray(series)?series:[series],update:updater,kind,chart,pane});
-const setLine=(series,y)=> series.setData(DATA.map((d,i)=>({time:d.time,value:(y[i]==null)?NaN:y[i]})));
-const setConstLine=(series,val)=> series.setData(DATA.map(d=>({time:d.time,value:val})));
-
-/* === Indicators math (same as before) === */
-const val=o=>o.close;
-function SMA(arr,p,acc=val){const out=Array(arr.length).fill(null); let s=0; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); s+=x; if(i>=p) s-=acc(arr[i-p],i-p); if(i>=p-1) out[i]=s/p;} return out;}
-function EMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const k=2/(p+1); let prev=null; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); if(prev==null){ if(i>=p-1){ prev=SMA(arr.slice(0,i+1),p,acc)[i]; out[i]=prev;} } else { prev=x*k+prev*(1-k); out[i]=prev; } } return out;}
-function WMA(arr,p,acc=val){const out=Array(arr.length).fill(null); const denom=p*(p+1)/2; for(let i=0;i<arr.length;i++){ if(i<p-1) continue; let s=0; for(let j=0;j<p;j++){ s += acc(arr[i],i-j)*(p-j);} out[i]=s/denom; } return out;}
-function HMA(arr,p,acc=val){const w1=WMA(arr,Math.floor(p/2),acc), w2=WMA(arr,p,acc); const diff=arr.map((_,i)=>({close:(w1[i]??0)*2-(w2[i]??0)})); return WMA(diff,Math.round(Math.sqrt(p)),x=>x.close);}
-function DEMA(arr,p,acc=val){const e=EMA(arr,p,acc); const e2=EMA(arr,p,(_,i)=>e[i]??acc(arr[i],i)); return e.map((v,i)=> v!=null && e2[i]!=null ? 2*v - e2[i] : null);}
-function TEMA(arr,p,acc=val){const e=EMA(arr,p,acc); const e2=EMA(arr,p,(_,i)=>e[i]??acc(arr[i],i)); const e3=EMA(arr,p,(_,i)=>e2[i]??acc(arr[i],i)); return e.map((v,i)=> (v!=null&&e2[i]!=null&&e3[i]!=null)? 3*(v - e2[i]) + e3[i] : null);}
-function VWMA(arr,p){ const num=EMA(arr,p,(o)=>o.close*(o.volume||0)); const den=EMA(arr,p,(o)=>o.volume||0); return num.map((v,i)=> (den[i]? v/den[i] : null)); }
-function ATR(arr,p=14){const out=Array(arr.length).fill(null); let prevC=null,trEMA=null; const k=2/(p+1); for(let i=0;i<arr.length;i++){const h=arr[i].high,l=arr[i].low,c=arr[i].close; const tr=prevC==null?(h-l):Math.max(h-l,Math.abs(h-prevC),Math.abs(l-prevC)); trEMA = trEMA==null? tr : (trEMA*(1-k)+tr*k); out[i]=trEMA; prevC=c;} return out;}
-function RSI(arr,p=14){const out=Array(arr.length).fill(null); let g=0,l=0; for(let i=1;i<arr.length;i++){const ch=arr[i].close-arr[i-1].close; const up=Math.max(ch,0),dn=Math.max(-ch,0); if(i<=p){ g+=up; l+=dn; if(i===p){ const rs=(g/p)/((l/p)||1e-12); out[i]=100-100/(1+rs);} } else { g=(g*(p-1)+up)/p; l=(l*(p-1)+dn)/p; const rs=g/(l||1e-12); out[i]=100-100/(1+rs);} } return out;}
-function HeikinAshi(arr){const out=[]; let prevO=(arr[0].open+arr[0].close)/2, prevC=(arr[0].open+arr[0].high+arr[0].low+arr[0].close)/4;
-  for(let i=0;i<arr.length;i++){const c=(arr[i].open+arr[i].high+arr[i].low+arr[i].close)/4; const o=(prevO+prevC)/2; const h=Math.max(arr[i].high,o,c), l=Math.min(arr[i].low,o,c);
-    out.push({time:arr[i].time,open:o,high:h,low:l,close:c,volume:arr[i].volume}); prevO=o; prevC=c;} return out; }
-function STD(arr,p,acc=val){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p-1) continue; const slice=arr.slice(i-p+1,i+1).map((x,j)=>acc(x,i-p+1+j)); const m=slice.reduce((a,b)=>a+b,0)/p; const v=slice.reduce((a,b)=>a+(b-m)**2,0)/p; out[i]=Math.sqrt(v);} return out;}
-function highest(arr,p,acc=val){const out=Array(arr.length).fill(null); let dq=[]; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); while(dq.length && dq[dq.length-1].v<=x) dq.pop(); dq.push({i,v:x}); while(dq[0] && dq[0].i<=i-p) dq.shift(); if(i>=p-1) out[i]=dq[0].v;} return out;}
-function lowest(arr,p,acc=val){const out=Array(arr.length).fill(null); let dq=[]; for(let i=0;i<arr.length;i++){const x=acc(arr[i],i); while(dq.length && dq[dq.length-1].v>=x) dq.pop(); dq.push({i,v:x}); while(dq[0] && dq[0].i<=i-p) dq.shift(); if(i>=p-1) out[i]=dq[0].v;} return out;}
-function ROC(arr,p){const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p) continue; const prev=arr[i-p].close; out[i]=(arr[i].close-prev)/prev*100;} return out;}
-function CCI(arr,p=20){const out=Array(arr.length).fill(null); const tp=arr.map(o=>(o.high+o.low+o.close)/3); const sma=SMA(arr,p,(_,i)=>tp[i]); const dev=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ if(i<p-1) continue; let s=0; for(let j=i-p+1;j<=i;j++){ s += Math.abs(tp[j]-sma[i]); } dev[i]=s/p; out[i]=(tp[i]-sma[i])/(0.015*(dev[i]||1)); } return out;}
-function Stochastic(arr,kp=14,dp=3){const hh=highest(arr,kp,o=>o.high), ll=lowest(arr,kp,o=>o.low); const k=arr.map((o,i)=> hh[i]==null?null:((o.close-ll[i])/(hh[i]-ll[i]||1))*100 ); const d=SMA(arr,dp,(_,i)=>k[i]??0); return {k,d};}
-function StochRSI(arr,p=14,smK=3,smD=3){const r=RSI(arr,p); const hh=highest(r.map((v,i)=>({close:v??-Infinity})),p,o=>o.close); const ll=lowest(r.map((v,i)=>({close:v??Infinity})),p,o=>o.close);
-  const raw=r.map((v,i)=> (v==null||hh[i]==null)?null: ((v-ll[i])/(hh[i]-ll[i]||1))*100 ); const k=SMA(arr,smK,(_,i)=>raw[i]??0); const d=SMA(arr,smD,(_,i)=>k[i]??0); return {k,d};}
-function MACD(arr,fast=12,slow=26,signal=9){const e1=EMA(arr,fast), e2=EMA(arr,slow); const macd=arr.map((_,i)=> (e1[i]==null||e2[i]==null)?null:(e1[i]-e2[i])); const sig=EMA(arr,signal,(_,i)=>macd[i]??0); const hist=arr.map((_,i)=> (macd[i]==null||sig[i]==null)?null:(macd[i]-sig[i])); return {macd,sig,hist};}
-function PPO(arr,fast=12,slow=26,signal=9){const e1=EMA(arr,fast), e2=EMA(arr,slow); const ppo=arr.map((_,i)=> (e1[i]==null||e2[i]==null||!e2[i])?null:((e1[i]-e2[i])/e2[i])*100); const sig=EMA(arr,signal,(_,i)=>ppo[i]??0); const hist=arr.map((_,i)=> (ppo[i]==null||sig[i]==null)?null:(ppo[i]-sig[i])); return {ppo,sig,hist};}
-function TRIX(arr,p=15){const e1=EMA(arr,p), e2=EMA(arr,p,(_,i)=>e1[i]??val(_)), e3=EMA(arr,p,(_,i)=>e2[i]??val(_)); const out=Array(arr.length).fill(null); for(let i=1;i<arr.length;i++){ if(e3[i-1]!=null&&e3[i]!=null&&e3[i-1]!==0) out[i]=( (e3[i]-e3[i-1]) / e3[i-1] )*100; } return out;}
-function TSI(arr,short=25,long=13){const m=[]; for(let i=1;i<arr.length;i++){ m[i]=arr[i].close-arr[i-1].close; } const abs=m.map(x=>Math.abs(x||0)); const ema1=EMA(m.map((x,i)=>({close:x??0})),short,x=>x.close), ema2=EMA(ema1.map((x)=>({close:x??0})),long,x=>x.close); const a1=EMA(abs.map((x)=>({close:x??0})),short,x=>x.close), a2=EMA(a1.map((x)=>({close:x??0})),long,x=>x.close); return ema2.map((v,i)=> (a2[i]? (v/a2[i])*100 : null));}
-function WilliamsR(arr,p=14){const hh=highest(arr,p,o=>o.high), ll=lowest(arr,p,o=>o.low); return arr.map((o,i)=> hh[i]==null?null: ((hh[i]-o.close)/(hh[i]-ll[i]||1))*-100 );}
-function Aroon(arr,p=14){const outUp=[], outDown=[]; for(let i=0;i<arr.length;i++){ if(i<p-1){outUp[i]=null; outDown[i]=null; continue;} let imax=i, imin=i; for(let j=i-p+1;j<=i;j++){ if(arr[j].high>arr[imax].high) imax=j; if(arr[j].low<arr[imin].low) imin=j; } outUp[i]=((p-(i-imax))/p)*100; outDown[i]=((p-(i-imin))/p)*100; } return {up:outUp,down:outDown};}
-function DM(arr){ const plusDM=[], minusDM=[], tr=[]; for(let i=1;i<arr.length;i++){ const up=arr[i].high-arr[i-1].high; const dn=arr[i-1].low-arr[i].low; plusDM[i]=(up>dn&&up>0)?up:0; minusDM[i]=(dn>up&&dn>0)?dn:0; const high=arr[i].high, low=arr[i].low, prevClose=arr[i-1].close; tr[i]=Math.max(high-low,Math.abs(high-prevClose),Math.abs(low-prevClose)); } return {plusDM,minusDM,tr}; }
-function ADX(arr,p=14){const {plusDM,minusDM,tr}=DM(arr); const atr=EMA(tr.map(x=>({close:x||0})),p,x=>x.close); const plusDI=plusDM.map((v,i)=> atr[i]? (v/atr[i])*100 : null); const minusDI=minusDM.map((v,i)=> atr[i]? (v/atr[i])*100 : null); const dx=plusDI.map((v,i)=> (v==null||minusDI[i]==null||(v+minusDI[i])===0)?null:(Math.abs(v-minusDI[i])/(v+minusDI[i]))*100 ); const adx=EMA(dx.map(x=>({close:x??0})),p,x=>x.close); return {plusDI,minusDI,adx};}
-function Awesome(arr,fast=5,slow=34){ const m=arr.map(o=>(o.high+o.low)/2); const fastS=SMA(arr,fast,(_,i)=>m[i]); const slowS=SMA(arr,slow,(_,i)=>m[i]); return m.map((_,i)=> (fastS[i]==null||slowS[i]==null)?null:(fastS[i]-slowS[i])); }
-function PSAR(arr, step=0.02, max=0.2){ const out=Array(arr.length).fill(null); let trend=1,af=step,ep=arr[0].high,sar=arr[0].low;
-  for(let i=1;i<arr.length;i++){ sar=sar+af*(ep-sar); if(trend===1){ if(arr[i].low<sar){trend=-1;sar=ep;ep=arr[i].low;af=step;} else{ if(arr[i].high>ep){ep=arr[i].high;af=Math.min(max,af+step);} } if(i>=2) sar=Math.min(sar,arr[i-1].low,arr[i-2].low);
-  }else{ if(arr[i].high>sar){trend=1;sar=ep;ep=arr[i].high;af=step;} else{ if(arr[i].low<ep){ep=arr[i].low;af*Math.min;af=Math.min(max,af+step);} } if(i>=2) sar=Math.max(sar,arr[i-1].high,arr[i-2].high);} out[i]=sar;} return out; }
-function Supertrend(arr, period=10, mult=3){
-  const tr=ATR(arr,period); const hl2=arr.map(o=>(o.high+o.low)/2);
-  const upper=tr.map((v,i)=> v==null?null:(hl2[i]+mult*v)); const lower=tr.map((v,i)=> v==null?null:(hl2[i]-mult*v));
-  const finalUpper=[null], finalLower=[null]; for(let i=1;i<arr.length;i++){
-    finalUpper[i] = (upper[i]< (finalUpper[i-1]??Infinity) || arr[i-1].close > (finalUpper[i-1]??Infinity)) ? upper[i] : finalUpper[i-1];
-    finalLower[i] = (lower[i]>(finalLower[i-1]??-Infinity) || arr[i-1].close < (finalLower[i-1]??-Infinity)) ? lower[i] : finalLower[i-1];
-  }
-  const trend=Array(arr.length).fill(null); const st=Array(arr.length).fill(null);
-  for(let i=1;i<arr.length;i++){
-    if(st[i-1]==null){ st[i]=hl2[i]>hl2[i-1]?finalLower[i]:finalUpper[i]; trend[i]=hl2[i]>hl2[i-1]?1:-1; continue; }
-    if(st[i-1]===finalUpper[i-1]){ st[i]=(arr[i].close>finalUpper[i])?finalLower[i]:finalUpper[i]; }
-    else{ st[i]=(arr[i].close<finalLower[i])?finalUpper[i]:finalLower[i]; }
-    trend[i]=(st[i]===finalLower[i])?1:-1;
-  }
-  return {st,trend};
-}
-function Donchian(arr,p=20){ return {hi:highest(arr,p,o=>o.high), lo:lowest(arr,p,o=>o.low), mid:SMA(arr,p,o=>(o.high+o.low)/2)}; }
-function Keltner(arr,p=20,mult=2){ const ema=EMA(arr,p); const atr=ATR(arr,p); return {upper:atr.map((v,i)=> (ema[i]==null||v==null)?null: ema[i]+mult*v), middle:ema, lower:atr.map((v,i)=> (ema[i]==null||v==null)?null: ema[i]-mult*v)};}
-function BB(arr,p=20,stdMult=2){ const basis=SMA(arr,p); const dev=STD(arr,p); return {upper:dev.map((v,i)=> (basis[i]==null||v==null)?null:basis[i]+stdMult*v), middle:basis, lower:dev.map((v,i)=> (basis[i]==null||v==null)?null:basis[i]-stdMult*v)}; }
-function VWAPcalc(arr){ let cumPV=0,cumV=0; const out=Array(arr.length).fill(null); for(let i=0;i<arr.length;i++){ const tp=(arr[i].high+arr[i].low+arr[i].close)/3; const v=arr[i].volume||0; cumPV += tp*v; cumV += v; out[i] = cumV? (cumPV/cumV) : null; } return out; }
-function OBVcalc(arr){ const out=Array(arr.length).fill(0); for(let i=1;i<arr.length;i++){ if(arr[i].close>arr[i-1].close) out[i]=out[i-1]+(arr[i].volume||0); else if(arr[i].close<arr[i-1].close) out[i]=out[i-1]-(arr[i].volume||0); else out[i]=arr[i-1]; } return out; }
-function MFIcalc(arr,p=14){ const tp=arr.map(o=>(o.high+o.low+o.close)/3); const mf=arr.map((o,i)=> tp[i]*(o.volume||0)); const out=Array(arr.length).fill(null); for(let i=p;i<arr.length;i++){ let pos=0,neg=0; for(let j=i-p+1;j<=i;j++){ if(tp[j]>tp[j-1]) pos+=mf[j]; else if(tp[j]<tp[j-1]) neg+=mf[j]; } const mr = neg? pos/neg : 0; out[i]=100-(100/(1+mr)); } return out; }
-function CMFcalc(arr,p=20){ const out=Array(arr.length).fill(null); for(let i=p-1;i<arr.length;i++){ let sumMF=0,sumV=0; for(let j=i-p+1;j<=i;j++){ const mfm = ((arr[j].close - arr[j].low) - (arr[j].high - arr[j].close)) / ((arr[j].high - arr[j].low)||1); const mfv = mfm * (arr[j].volume||0); sumMF+=mfv; sumV+=(arr[j].volume||0); } out[i] = sumV? (sumMF/sumV) : 0; } return out; }
-function ADLcalc(arr){ const out=Array(arr.length).fill(0); for(let i=0;i<arr.length;i++){ const mfm = ((arr[i].close - arr[i].low) - (arr[i].high - arr[i].close)) / ((arr[i].high - arr[i].low)||1); const mfv = mfm * (arr[i].volume||0); out[i] = (out[i-1]||0) + mfv; } return out; }
-
-/* ===== Registry ===== */
-const Registry={
-  /* NEW: Simple MA (SMA) */
-  MA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],
-    add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)),'overlay',cMain,0);}
-  },
-
-  SMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,SMA(A,p.period)),'overlay',cMain,0);}},
-  EMA:{kind:'overlay',params:[{k:'period',v:50,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,EMA(A,p.period)),'overlay',cMain,0);}},
-  WMA:{kind:'overlay',params:[{k:'period',v:30,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WMA(A,p.period)),'overlay',cMain,0);}},
-  HMA:{kind:'overlay',params:[{k:'period',v:55,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,HMA(A,p.period)),'overlay',cMain,0);}},
-  DEMA:{kind:'overlay',params:[{k:'period',v:21,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,DEMA(A,p.period)),'overlay',cMain,0);}},
-  TEMA:{kind:'overlay',params:[{k:'period',v:34,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TEMA(A,p.period)),'overlay',cMain,0);}},
-  VWMA:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:defaultColor}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWMA(A,p.period)),'overlay',cMain,0);}},
-
-  BB:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'std',v:2,step:0.1},{k:'_color',v:'#60a5fa'}],
-    add(p){const {upper,middle,lower}=bandOn(cMain); setSeriesColor(upper,p._color); setSeriesColor(middle,hexToRGBA(p._color,0.7)); setSeriesColor(lower,p._color);
-      return pack([upper,middle,lower],A=>{ const b=BB(A,p.period,p.std); setLine(upper,b.upper); setLine(middle,b.middle); setLine(lower,b.lower); },'overlay',cMain,0);
-    }},
-  Keltner:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'mult',v:2,step:0.1},{k:'_color',v:'#34d399'}],
-    add(p){const {upper,middle,lower}=bandOn(cMain); setSeriesColor(upper,p._color); setSeriesColor(middle,hexToRGBA(p._color,0.7)); setSeriesColor(lower,p._color);
-      return pack([upper,middle,lower],A=>{ const k=Keltner(A,p.period,p.mult); setLine(upper,k.upper); setLine(middle,k.middle); setLine(lower,k.lower); },'overlay',cMain,0);
-    }},
-  Donchian:{kind:'overlay',params:[{k:'period',v:20,min:1},{k:'_color',v:'#f472b6'}],
-    add(p){const {upper,middle,lower}=bandOn(cMain); setSeriesColor(upper,p._color); setSeriesColor(middle,hexToRGBA(p._color,0.7)); setSeriesColor(lower,p._color);
-      return pack([upper,middle,lower],A=>{ const d=Donchian(A,p.period); setLine(upper,d.hi); setLine(lower,d.lo); setLine(middle,d.mid); },'overlay',cMain,0);
-    }},
-  ATR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fcd535'}],add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,ATR(A,p.period)),'osc',chart,chart.__paneIdx);}},
-
-  Supertrend:{kind:'overlay',params:[{k:'period',v:10,min:1},{k:'mult',v:3,step:0.1},{k:'_color',v:'#22c55e'}],
-    add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>{ const st=Supertrend(A,p.period,p.mult); setLine(s,st.st); },'overlay',cMain,0);}},
-
-  PSAR:{kind:'overlay',params:[{k:'step',v:0.02,step:0.01},{k:'max',v:0.2,step:0.01},{k:'_color',v:'#eab308'}],
-    add(p){const s=lineOn(cMain,{lineWidth:1}); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,PSAR(A,p.step,p.max)),'overlay',cMain,0);}},
-
-  VWAP:{kind:'overlay',params:[{k:'_color',v:'#a78bfa'}],add(p){const s=lineOn(cMain); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,VWAPcalc(A)),'overlay',cMain,0);}},
-
-  HeikinAshi:{kind:'overlay',params:[],add(){ensureHeikinSeries(); return pack(haSeries,(A)=>haSeries.setData(HeikinAshi(A)),'overlay',cMain,0);}},
-  Ichimoku:{kind:'overlay',params:[{k:'conv',v:9,min:1},{k:'base',v:26,min:1},{k:'spanB',v:52,min:1},{k:'_color',v:'#38bdf8'}],
-    add(p){const conv=lineOn(cMain), base=lineOn(cMain), spanA=lineOn(cMain,{lineWidth:1}), spanB=lineOn(cMain,{lineWidth:1});
-      setSeriesColor(conv,p._color); setSeriesColor(base,hexToRGBA(p._color,0.7)); setSeriesColor(spanA,hexToRGBA(p._color,0.6)); setSeriesColor(spanB,hexToRGBA(p._color,0.6));
-      const up=A=>{ const convLine=A.map((_,i)=>{ const hi=highest(A,p.conv,o=>o.high)[i], lo=lowest(A,p.conv,o=>o.low)[i]; return (hi==null||lo==null)?null:(hi+lo)/2; });
-        const baseLine=A.map((_,i)=>{ const hi=highest(A,p.base,o=>o.high)[i], lo=lowest(A,p.base,o=>o.low)[i]; return (hi==null||lo==null)?null:(hi+lo)/2; });
-        const spanALine=convLine.map((v,i)=> (v==null||baseLine[i]==null)?null: (v+baseLine[i])/2 );
-        const spanBLine=A.map((_,i)=>{ const hi=highest(A,p.spanB,o=>o.high)[i], lo=lowest(A,p.spanB,o=>o.low)[i]; return (hi==null||lo==null)?null:(hi+lo)/2; });
-        setLine(conv,convLine); setLine(base,baseLine); setLine(spanA,spanALine); setLine(spanB,spanBLine);
-      }; return pack([conv,base,spanA,spanB],up,'overlay',cMain,0);
-    }},
-  PivotClassic:{kind:'overlay',params:[{k:'_color',v:'#f59e0b'}],add(p){const r=lineOn(cMain,{lineWidth:1}); setSeriesColor(r,p._color); return pack(r,A=>{ const piv=A.map(o=> (o.high+o.low+o.close)/3 ); setLine(r,piv); },'overlay',cMain,0);}},
-
-  RSI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#ef4444'},{k:'overBought',v:70},{k:'obSize',v:1},{k:'overSold',v:30},{k:'osSize',v:1}],
-    add(p,chart){chart=chart||oscPickChart(); const rsiLine=lineOn(chart,{lineWidth:2}); setSeriesColor(rsiLine,p._color||'#ef4444'); const guideOB=lineOn(chart,{lineWidth:p.obSize||1}); const guideOS=lineOn(chart,{lineWidth:p.osSize||1}); guideOB.applyOptions({color:'#ef4444'}); guideOS.applyOptions({color:'#ef4444'});
-      const updater=A=>{ const r=RSI(A,p.period); setLine(rsiLine,r); guideOB.applyOptions({lineWidth:p.obSize||1}); guideOS.applyOptions({lineWidth:p.osSize||1}); setConstLine(guideOB,p.overBought??70); setConstLine(guideOS,p.overSold??30); };
-      return pack([rsiLine,guideOB,guideOS],updater,'osc',chart,chart.__paneIdx);
-    }},
-
-  MACD:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#60a5fa'}],
-    add(p,chart){chart=chart||oscPickChart(); const l=lineOn(chart), s=lineOn(chart,{lineWidth:1}); const h=histOn(chart,{priceFormat:{type:'price',precision:4},base:0}); setSeriesColor(l,p._color); setSeriesColor(s,hexToRGBA(p._color,0.7));
-      return pack([l,s,h],A=>{ const m=MACD(A,p.fast,p.slow,p.signal); setLine(l,m.macd); setLine(s,m.sig); h.setData(A.map((d,i)=>({time:d.time,value:m.hist[i]==null?NaN:m.hist[i]}))); },'osc',chart,chart.__paneIdx);
-    }},
-
-  Stochastic:{kind:'osc',params:[{k:'k',v:14,min:1},{k:'d',v:3,min:1},{k:'_color',v:'#34d399'}],
-    add(p,chart){chart=chart||oscPickChart(); const kL=lineOn(chart), dL=lineOn(chart,{lineWidth:1}); setSeriesColor(kL,p._color); setSeriesColor(dL,hexToRGBA(p._color,0.7)); return pack([kL,dL],A=>{ const {k,d}=Stochastic(A,p.k,p.d); setLine(kL,k); setLine(dL,d); },'osc',chart,chart.__paneIdx);}},
-
-  StochRSI:{kind:'osc',params:[{k:'period',v:14},{k:'smK',v:3},{k:'smD',v:3},{k:'_color',v:'#a78bfa'}],
-    add(p,chart){chart=chart||oscPickChart(); const kL=lineOn(chart), dL=lineOn(chart,{lineWidth:1}); setSeriesColor(kL,p._color); setSeriesColor(dL,hexToRGBA(p._color,0.7)); return pack([kL,dL],A=>{ const r=StochRSI(A,p.period,p.smK,p.smD); setLine(kL,r.k); setLine(dL,r.d); },'osc',chart,chart.__paneIdx);}},
-
-  CCI:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#f472b6'}],
-    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,CCI(A,p.period)),'osc',chart,chart.__paneIdx);}},
-
-  PPO:{kind:'osc',params:[{k:'fast',v:12},{k:'slow',v:26},{k:'signal',v:9},{k:'_color',v:'#f59e0b'}],
-    add(p,chart){chart=chart||oscPickChart(); const l=lineOn(chart), s=lineOn(chart,{lineWidth:1}); const h=histOn(chart,{base:0}); setSeriesColor(l,p._color); setSeriesColor(s,hexToRGBA(p._color,0.7));
-      return pack([l,s,h],A=>{ const m=PPO(A,p.fast,p.slow,p.signal); setLine(l,m.ppo); setLine(s,m.sig); h.setData(A.map((d,i)=>({time:d.time,value:m.hist[i]==null?NaN:m.hist[i]}))); },'osc',chart,chart.__paneIdx);
-    }},
-
-  TRIX:{kind:'osc',params:[{k:'period',v:15},{k:'_color',v:'#22c55e'}],
-    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TRIX(A,p.period)),'osc',chart,chart.__paneIdx);}},
-
-  TSI:{kind:'osc',params:[{k:'short',v:25},{k:'long',v:13},{k:'_color',v:'#fb7185'}],
-    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,TSI(A,p.short,p.long)),'osc',chart,chart.__paneIdx);}},
-
-  WilliamsR:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#94a3b8'}],
-    add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=>setLine(s,WilliamsR(A,p.period)),'osc',chart,chart.__paneIdx);}},
-
-  Aroon:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#38bdf8'}],
-    add(p,chart){chart=chart||oscPickChart(); const up=lineOn(chart), down=lineOn(chart,{lineWidth:1}); setSeriesColor(up,p._color); setSeriesColor(down,hexToRGBA(p._color,0.7)); return pack([up,down],A=>{ const a=Aroon(A,p.period); setLine(up,a.up); setLine(down,a.down); },'osc',chart,chart.__paneIdx);}},
-
-  /* DMI (+DI / −DI only) */
-  DMI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#22c55e'}],
-    add(p,chart){chart=chart||oscPickChart();
-      const plus=lineOn(chart,{lineWidth:2}); const minus=lineOn(chart,{lineWidth:2});
-      setSeriesColor(plus,p._color); setSeriesColor(minus,'#ef4444');
-      return pack([plus,minus],A=>{ const a=ADX(A,p.period); setLine(plus,a.plusDI); setLine(minus,a.minusDI); },'osc',chart,chart.__paneIdx);
-    }},
-
-  ADX:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#fbbf24'}],
-    add(p,chart){chart=chart||oscPickChart(); const adxL=lineOn(chart), plus=lineOn(chart,{lineWidth:1}), minus=lineOn(chart,{lineWidth:1});
-      setSeriesColor(adxL,p._color); setSeriesColor(plus,hexToRGBA('#22c55e',0.9)); setSeriesColor(minus,hexToRGBA('#ef4444',0.9));
-      return pack([adxL,plus,minus],A=>{ const a=ADX(A,p.period); setLine(adxL,a.adx); setLine(plus,a.plusDI); setLine(minus,a.minusDI); },'osc',chart,chart.__paneIdx);
-    }},
-
-  Awesome:{kind:'osc',params:[{k:'fast',v:5},{k:'slow',v:34},{k:'_color',v:'#67e8f9'}],
-    add(p,chart){chart=chart||oscPickChart(); const s=histOn(chart,{base:0}); return pack(s,A=> s.setData(A.map((d,i)=>({time:d.time,value:Awesome(A,p.fast,p.slow)[i]??NaN}))) ,'osc',chart,chart.__paneIdx);}},
-
-  ElderRay:{kind:'osc',params:[{k:'ema',v:13},{k:'_color',v:'#fca5a5'}],
-    add(p,chart){chart=chart||oscPickChart(); const bull=histOn(chart,{base:0}), bear=histOn(chart,{base:0});
-      return pack([bull,bear],A=>{ const e=EMA(A,p.ema); bull.setData(A.map((d,i)=>({time:d.time,value:e[i]==null?NaN:(d.high-e[i])})));
-        bear.setData(A.map((d,i)=>({time:d.time,value:e[i]==null?NaN:(d.low-e[i])})));
-      },'osc',chart,chart.__paneIdx);
-    }},
-
-  Volume:{kind:'overlay',params:[{k:'_color',v:'#64748b'}], add(p){const v=histOn(cMain,{priceFormat:{type:'volume'},priceScaleId:'left'}); return pack(v,A=> v.setData(A.map(d=>({time:d.time,value:d.volume??0}))) ,'overlay',cMain,0);}},
-  OBV:{kind:'osc',params:[{k:'_color',v:'#c084fc'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,OBVcalc(A)) ,'osc',chart,chart.__paneIdx);}},
-  MFI:{kind:'osc',params:[{k:'period',v:14},{k:'_color',v:'#10b981'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,MFIcalc(A,p.period)) ,'osc',chart,chart.__paneIdx);}},
-  CMF:{kind:'osc',params:[{k:'period',v:20},{k:'_color',v:'#93c5fd'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,CMFcalc(A,p.period)) ,'osc',chart,chart.__paneIdx);}},
-  ADL:{kind:'osc',params:[{k:'_color',v:'#e879f9'}], add(p,chart){chart=chart||oscPickChart(); const s=lineOn(chart); setSeriesColor(s,p._color); return pack(s,A=> setLine(s,ADLcalc(A)) ,'osc',chart,chart.__paneIdx);}},
-};
-
-/* Pane picker */
-let paneCursor=0;
-function oscPickChart(){
-  const counts=[1,2,3,4,5].map(p=> Active.filter(x=>x.kind==='osc'&&x.pane===p).length);
-  let min=Math.min(...counts); let idx=counts.indexOf(min); if(min===0){ idx=paneCursor%5; paneCursor++; }
-  const slot=oscSlots[idx]; slot.slot.style.display='block'; slot.chart.__paneIdx=idx+1;
-  refreshOscLayout();
-  return slot.chart;
+function dateYMD(d){ return new Date(d).toISOString().slice(0,10); }
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function clampDom(){
+  const bub = CHAT.querySelectorAll('.bub');
+  const excess = Math.max(0, bub.length - DOM_CAP);
+  for(let i=0;i<excess;i++) bub[i].remove();
 }
 
-/* Badges & remove */
-function badgeLabel(it){const p=Object.entries(it.params).filter(([k])=>k!=='_color').map(([k,v])=>`${k}:${v}`).join(','); return `${it.key}${p?`(${p})`:''}`;}
-function renderBadges(){
-  els.badges.innerHTML='';
-  Active.forEach(it=>{
-    const s=document.createElement('span'); s.className='badge'; s.textContent=badgeLabel(it)+' ';
-    s.title='Click to edit settings';
-    s.onclick=()=>openSheet(it.id);
-    const b=document.createElement('button'); b.textContent='×'; b.onclick=(e)=>{e.stopPropagation(); removeIndicator(it.id); saveLayout();};
-    s.appendChild(b); els.badges.appendChild(s);
+/* Price cache */
+const klinesCache = new Map();
+async function ensurePing(){ try{ await fetch(API.ping, {cache:'no-store'}); }catch(e){} }
+async function loadDailyKlines(symbol, startDate, endDate){
+  const key = symbol + ':' + dateYMD(startDate) + ':' + dateYMD(endDate);
+  if (klinesCache.has(key)) return klinesCache.get(key);
+  const params = new URLSearchParams({
+    symbol, interval:'1d',
+    startTime: startDate.getTime(),
+    endTime: endDate.getTime()
   });
-  refreshOscLayout();
-  rewireSync();
+  const res = await fetch(`${API.futuresKlines}?${params.toString()}`);
+  if(!res.ok) throw new Error('Klines fetch failed for '+symbol);
+  const data = await res.json();
+  const slim = data.map(k => [k[0], parseFloat(k[1]), parseFloat(k[4])]); // [openTime, open, close]
+  klinesCache.set(key, slim);
+  return slim;
 }
-function removeIndicator(id){
-  const idx=Active.findIndex(x=>x.id===id);
-  if(idx>=0){
-    Active[idx].series.forEach(s=>{try{(Active[idx].kind==='osc'?Active[idx].chart:cMain).removeSeries(s);}catch{}});
-    Active.splice(idx,1); renderBadges();
+function priceOnDate(slimKlines, jsDate){
+  const want = dateYMD(jsDate);
+  const row = slimKlines.find(k=> dateYMD(k[0]) === want);
+  if(!row) return null;
+  return { open: row[1], close: row[2] };
+}
+
+/* Helpers */
+function fmt2(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtPrice(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:3, maximumFractionDigits:5}); }
+function roiBasePct({entry, last, side}){ const dir = (side==='LONG'? +1 : -1); return ((last - entry) / entry) * 100 * dir; }
+function pickLeverageForRange(pctBase, min, max){
+  if (pctBase <= 0) return null;
+  let Lmin = Math.ceil(min / pctBase);
+  let Lmax = Math.floor(max / pctBase);
+  Lmin = Math.max(1, Lmin);
+  Lmax = Math.min(125, Lmax);
+  if (Lmin > Lmax) return null;
+  return Math.floor(Math.random()*(Lmax - Lmin + 1)) + Lmin;
+}
+function randomSide(mode){ if (mode==='long') return 'LONG'; if (mode==='short') return 'SHORT'; return Math.random()<0.5?'LONG':'SHORT'; }
+
+/* Ledger for export */
+const ledger = [];
+
+/* OLD card builder (unchanged) */
+function makeProfitCardOld({side, leverage, symbol, entry, last, pct, ref}){
+  const wrap = document.createElement('div');
+  wrap.className = 'pcard';
+  wrap.innerHTML = `
+    <div class="inner">
+      <div class="header">
+        <img class="binance-logo" src="https://iili.io/KKRCyss.th.png" alt="Binance Logo" />
+        <div class="text-block">
+          <div class="binance-text">BINANCE</div>
+          <div class="futures-text">FUTURES</div>
+        </div>
+      </div>
+      <div class="trade-info">
+        <span class="${side==='LONG'?'long':'short'}">${side==='LONG'?'Long':'Short'}</span>
+        <span>|</span>
+        <span>${leverage}x</span>
+        <span>|</span>
+        <span>${symbol} Perpetual</span>
+      </div>
+      <div class="percentage ${pct>=0?'green':'red'}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
+      <div class="price-section">
+        <div class="price-line"><span class="price-label">Entry Price</span><span class="price-value">${fmt2(entry)}</span></div>
+        <div class="price-line"><span class="price-label">Last Price</span><span class="price-value">${fmt2(last)}</span></div>
+      </div>
+      <div class="referral-section">
+        <img class="qr" src="https://iili.io/K1dUMml.jpg" alt="QR Code"/>
+        <div>
+          <div class="ref-text">Referral Code</div>
+          <div class="referral-code">${ref}</div>
+          <div class="app-text">Get the Binance App</div>
+        </div>
+      </div>
+    </div>
+  `;
+  return wrap;
+}
+
+/* NEW card builder (>= 2025-07-25) — RANDOM bg + RANDOM ROI/USDT display */
+function makeProfitCardNew({side, leverage, symbol, entry, last, roiPct, pnlUSDT, member, whenISO, ref}){
+  const wrap = document.createElement('div');
+  wrap.className = 'nx-card';
+  wrap.style.background = `#111 url("${pickNewBg()}") center/cover no-repeat`;
+
+  const showMode = pickDisplayMode(); // 'ROI' or 'USDT'
+  const positive = (roiPct >= 0);
+  const pnlLine = (showMode==='ROI')
+    ? `<div class="nx-roi ${positive?'posG':'posR'}">${positive?'+':''}${roiPct.toFixed(2)}%</div><div class="nx-percent"></div>`
+    : `<div class="nx-usd ${positive?'posG':'posR'}">${positive?'+':''}${fmt2(pnlUSDT)}</div><div class="nx-u">USDT</div>`;
+
+  wrap.innerHTML = `
+    <div class="nx-header">
+      <div class="nx-av"><img src="https://iili.io/K10FPQ1.th.jpg" alt="${member.name}"></div>
+      <div class="nx-user">
+        <span class="nx-name">${member.name}</span>
+        <span class="nx-time">${new Date(whenISO).toISOString().slice(0,19).replace('T',' ')}</span>
+      </div>
+    </div>
+
+    <div class="nx-body">
+      <div class="nx-title">${symbol} PERPETUAL</div>
+      <div class="nx-pos">
+        <span class="${side==='LONG'?'nx-long':'nx-short'}">${side==='LONG'?'Long':'Short'}</span>
+        <span class="nx-div" aria-hidden="true"></span>
+        <span class="nx-lev">${leverage}x</span>
+      </div>
+
+      <div class="nx-pnl">
+        ${pnlLine}
+      </div>
+
+      <div class="nx-prices">
+        <div class="nx-entry">
+          <div class="nx-label">Entry Price</div>
+          <div class="nx-value">${fmtPrice(entry)}</div>
+        </div>
+        <div class="nx-last">
+          <div class="nx-label">Last Price</div>
+          <div class="nx-value">${fmtPrice(last)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nx-foot">
+      <span class="nx-line"></span>
+      <div class="nx-footc">
+        <div class="nx-id">
+          <span class="nx-logo"><img src="https://iili.io/KBDmWsn.th.png" alt="Binance logo"></span>
+          <span class="nx-brand">BINANCE</span>
+          <span class="nx-futures">FUTURES</span>
+          <span class="nx-ref">Referral Code ${ref}</span>
+        </div>
+        <span class="nx-qr">
+          <img src="https://iili.io/K1dUMml.jpg" alt="QR Code">
+        </span>
+      </div>
+    </div>
+  `;
+  return wrap;
+}
+
+/* Add a card bubble to chat */
+function addAdminBubble(node, caption){
+  const b = document.createElement('div'); b.className='bub admin';
+  b.appendChild(node);
+  if (caption){
+    const p = document.createElement('div'); p.style.marginTop='8px'; p.textContent = caption;
+    b.appendChild(p);
   }
+  const m = document.createElement('div'); m.className='meta'; m.textContent = `Admin • ${new Date().toLocaleString()}`;
+  b.appendChild(m);
+  CHAT.appendChild(b);
+  CHAT.scrollTop = CHAT.scrollHeight;
+  clampDom();
 }
 
-/* Params UI */
-function renderParams(){
-  const key=els.indSel.value, def=Registry[key];
-  els.paramRow.innerHTML='';
-  (def?.params||[]).forEach(p=>{
-    const w=document.createElement('div'); w.className='kvs';
-    const lab=document.createElement('label'); lab.className='hint'; lab.textContent=p.k==='_color'?'COLOR':p.k.toUpperCase();
-    let inp; if(p.type==='bool'){ inp=document.createElement('input'); inp.type='checkbox'; inp.checked=!!p.v; }
-    else{ inp=document.createElement('input'); inp.type=(p.k==+'_color')?'color':'number'; if(p.k==='_color') inp.type='color'; else inp.type='number';
-      inp.value=p.v; if(p.k!=='_color'){ if(p.min!=null) inp.min=p.min; if(p.step!=null) inp.step=p.step; } }
-    inp.dataset.key=p.k; w.appendChild(lab); w.appendChild(inp); els.paramRow.appendChild(w);
-  });
-
-  /* Auto-add for requested indicators (MA, ADX, DMI) */
-  const autokeys=new Set(['MA','ADX','DMI']);
-  if(autokeys.has(key)){ addIndicator(); }
+/* Generators */
+async function preloadRange(range){
+  await Promise.all(SYMBOLS.map(s=>loadDailyKlines(s, range.start, range.end)));
 }
-function collectParams(){
-  const ps={}; [...els.paramRow.querySelectorAll('input')].forEach(i=>{
-    const k=i.dataset.key;
-    if(i.type==='color') ps[k]=i.value;
-    else if(i.type==='checkbox') ps[k]=i.checked;
-    else{ const step=i.getAttribute('step')||''; const num = step.includes('.') ? parseFloat(i.value) : parseInt(i.value,10); ps[k]=isNaN(num)?parseFloat(i.value):num; }
-  }); return ps;
-}
-els.indSel.addEventListener('change', ()=>{ renderParams(); renderPresetDropdown(); });
-renderParams();
+async function generateCardsRandom(count, leverageHint, sideMix, range){
+  await preloadRange(range);
+  let made = 0, guard = 0;
+  while (made < count && guard < count*300){
+    guard++;
+    const sym = pick(SYMBOLS);
+    const day = new Date(range.start.getTime() + Math.random()*(range.end - range.start));
+    day.setHours(0,0,0,0);
 
-/* Add indicator */
-function addIndicator(){
-  const key=els.indSel.value, def=Registry[key]; if(!def){ setStatus('Indicator not implemented'); return; }
-  const params=collectParams(); if(params._color==null) params._color=defaultColor;
-  let targetChart=cMain, pane=0; if(def.kind==='osc'){ targetChart=oscPickChart(); pane=targetChart.__paneIdx; }
-  const pk=def.add(params,targetChart); setPackColor(pk,params._color);
-  const item={id:idSeq++,key,kind:def.kind||'overlay',params,series:pk.series,update:pk.update,visible:true,chart:targetChart,pane};
-  Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout();
+    const klKey = [...klinesCache.keys()].find(k=>k.startsWith(sym+':'));
+    const kl = klinesCache.get(klKey);
+    const px = priceOnDate(kl, day);
+    if(!px) continue;
 
-  snapAlignAll();
-  rewireSync();
-}
-els.addInd.addEventListener('click', addIndicator);
+    let side = (function(){ if (sideMix==='long') return 'LONG'; if (sideMix==='short') return 'SHORT'; return Math.random()<0.5?'LONG':'SHORT'; })();
 
-/* Heikin-Ashi toggle */
-els.haToggle.addEventListener('change', ()=>{
-  if(!DATA.length) return;
-  if(els.haToggle.checked){ ensureCandleSeries(); ensureHeikinSeries(); haSeries.setData(HeikinAshi(DATA)); sCandle.setData([]); }
-  else{ ensureCandleSeries(); sCandle.setData(DATA.map(d=>({time:d.time,open:d.open,high:d.high,low:d.low,close:d.close}))); if(haSeries){ try{cMain.removeSeries(haSeries)}catch{} haSeries=null; } }
-  saveLayout(); if(!userInteracting) anchorLatestSlightRight(cMain.timeScale());
-  snapAlignAll(); rewireSync(); draw_repaint();
-});
-function ensureCandleSeries(){ if(!sCandle){ sCandle=cMain.addCandlestickSeries({upColor:'#16a34a',downColor:'#ef4444',borderUpColor:'#16a34a',borderDownColor:'#ef4444',wickUpColor:'#16a34a',wickDownColor:'#ef4444'}); } }
-function ensureHeikinSeries(){ if(haSeries){ try{ cMain.removeSeries(haSeries);}catch{} } haSeries=cMain.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e',wickDownColor:'#ef4444',priceScaleId:'ha'}); cMain.priceScale('ha').applyOptions({scaleMargins:{top:0.12,bottom:0.12}}); }
+    const baseLong = roiBasePct({entry:px.open, last:px.close, side:'LONG'});
+    const baseShort = roiBasePct({entry:px.open, last:px.close, side:'SHORT'});
+    if (side==='LONG' && baseLong<=0 && baseShort>0) side='SHORT';
+    if (side==='SHORT' && baseShort<=0 && baseLong>0) side='LONG';
+    const pctBase = side==='LONG'? baseLong : baseShort;
+    if (pctBase<=0) continue;
 
-/* Settings modal (unchanged UI for indicators) */
-const sheetWrap=$('sheetWrap'), sheetParams=$('sheetParams'), sheetTitle=$('sheetTitle'), sheetSub=$('sheetSub');
-$('sheetClose').onclick=()=>sheetWrap.style.display='none';
-function openSheet(id){
-  const it=Active.find(x=>x.id===id); if(!it) return;
-  sheetTitle.textContent=`${it.key} — Settings`; sheetSub.textContent=`ID ${id} • ${it.kind==='osc'?'Oscillator pane '+it.pane:'Overlay'}`; sheetParams.innerHTML='';
-  const def=Registry[it.key];
-  (def.params||[]).forEach(p=>{
-    const val=it.params[p.k]??p.v; const row=document.createElement('div'); row.className='kvs';
-    const type=p.type==='bool'?'checkbox':(p.k==='_color'?'color':'number');
-    row.innerHTML=`<label class="hint" style="width:160px">${p.k==='_color'?'COLOR':p.k.toUpperCase()}</label><input type="${type}" data-k="${p.k}" ${type==='checkbox'?(val?'checked':''):`value="${val}" ${p.min!=null?`min="${p.min}"`:''} ${p.step!=null?`step="${p.step}"`:''}`}/>`;
-    sheetParams.appendChild(row);
-  });
-  $('sheetApply').onclick=()=>{
-    const upd={}; [...sheetParams.querySelectorAll('input')].forEach(i=>{ const k=i.dataset.k; if(i.type==='color') upd[k]=i.value; else if(i.type==='checkbox') upd[k]=i.checked; else{ const step=i.getAttribute('step')||''; const num= step.includes('.')?parseFloat(i.value):parseInt(i.value,10); upd[k]=isNaN(num)?parseFloat(i.value):num; } });
-    const idx=Active.findIndex(x=>x.id===id); const keepKind=Active[idx].kind; const key=Active[idx].key; const pane=Active[idx].pane; const chart=Active[idx].chart;
-    removeIndicator(id); const pk=Registry[key].add(upd,chart); setPackColor(pk,upd._color);
-    const newItem={id:idSeq++,key,kind:keepKind,params:upd,series:pk.series,update:pk.update,visible:true,chart,pane}; Active.splice(idx,0,newItem); renderBadges(); if(DATA.length) newItem.update(DATA); sheetWrap.style.display='none'; saveLayout();
-    snapAlignAll(); rewireSync(); draw_repaint();
-  };
-  $('sheetRemove').onclick=()=>{ removeIndicator(id); sheetWrap.style.display='none'; saveLayout(); snapAlignAll(); rewireSync(); draw_repaint(); };
-  $('sheetDuplicate').onclick=()=>{ const p=JSON.parse(JSON.stringify(Active.find(x=>x.id===id).params)); const chart=oscPickChart(); const pk=Registry[it.key].add(p, it.kind==='osc'?chart:cMain); setPackColor(pk,p._color); const item={id:idSeq++,key:it.key,kind:it.kind,params:p,series:pk.series,update:pk.update,visible:true,chart,pane: it.kind==='osc'? chart.__paneIdx:0}; Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout(); snapAlignAll(); rewireSync(); draw_repaint(); };
-  $('sheetMoveUp').onclick=()=>{ movePane(id,-1); snapAlignAll(); rewireSync(); draw_repaint(); };
-  $('sheetMoveDown').onclick=()=>{ movePane(id,1); snapAlignAll(); rewireSync(); draw_repaint(); };
-  sheetWrap.style.display='flex';
-}
-function movePane(id,dir){
-  const it=Active.find(x=>x.id===id); if(!it||it.kind!=='osc') return;
-  let next=it.pane+dir; if(next<1) next=1; if(next>5) next=5; if(next===it.pane) return;
-  const params={...it.params}; removeIndicator(id);
-  const slot=oscSlots[next-1]; const chart=slot.chart; chart.__paneIdx=next; slot.slot.style.display='block';
-  const pk=Registry[it.key].add(params,chart); setPackColor(pk,params._color);
-  const item={id:idSeq++,key:it.key,kind:'osc',params,series:pk.series,update:pk.update,visible:true,chart,pane:next}; Active.push(item); renderBadges(); if(DATA.length) item.update(DATA); saveLayout();
-}
+    const lev = (function(pctBase,min,max){
+      if (pctBase <= 0) return null;
+      let Lmin = Math.ceil(min / pctBase);
+      let Lmax = Math.floor(max / pctBase);
+      Lmin = Math.max(1, Lmin);
+      Lmax = Math.min(125, Lmax);
+      if (Lmin > Lmax) return null;
+      return Math.floor(Math.random()*(Lmax - Lmin + 1)) + Lmin;
+    })(pctBase, ROI_RANGE.min, ROI_RANGE.max);
+    if (!lev) continue;
 
-/* Presets */
-function loadPresets(){ try{ return JSON.parse(localStorage.getItem(KEYS.PRESETS)||'{}'); }catch{ return {}; } }
-function savePresetsStore(obj){ localStorage.setItem(KEYS.PRESETS, JSON.stringify(obj)); }
-function renderPresetDropdown(){ const type=els.indSel.value, all=loadPresets(), list=Object.keys(all[type]||{}); els.presetSel.innerHTML='<option value=\"\">— none —</option>'+list.map(n=>`<option>${n}</option>`).join(''); }
-$('savePreset').onclick=()=>{ const key=els.indSel.value; const name=prompt('Preset name?'); if(!name) return; const all=loadPresets(); (all[key] ||= {})[name]=collectParams(); savePresetsStore(all); renderPresetDropdown(); setStatus('Preset saved'); };
-$('applyPreset').onclick=()=>{ const key=els.indSel.value; const name=els.presetSel.value; if(!name) return; const all=loadPresets(); const p=all[key]?.[name]; if(!p) return; (els.paramRow.querySelectorAll('input')).forEach(inp=>{ const k=inp.dataset.key; if(k in p){ if(inp.type==='color') inp.value=p[k]; else if(inp.type==='checkbox') inp.checked=!!p[k]; else inp.value=p[k]; } }); setStatus('Preset applied'); };
-$('delPreset').onclick=()=>{ const key=els.indSel.value; const name=els.presetSel.value; if(!name) return; const all=loadPresets(); delete (all[key]||{})[name]; savePresetsStore(all); renderPresetDropdown(); setStatus('Preset deleted'); };
+    const entry = px.open, last = px.close;
+    const roiPct = pctBase * lev;                 // leveraged ROI %
+    const ref = String(Math.floor(100000000 + Math.random()*900000000));
+    const member = members[(Math.random()*members.length)|0];
+    const notional = 100 + Math.random()*900;     // 100..1000 USDT
+    const pnlUSDT = notional * (roiPct/100);      // USDT PnL derived from ROI%
 
-/* Layout */
-function saveLayout(){ const layout={market:els.market.value,quote:els.quote.value,symbol:els.symbol.value,tf:els.tf.value,ha:els.haToggle.checked,indicators:Active.map(x=>({key:x.key,kind:x.kind,params:x.params,pane:x.pane||0}))}; localStorage.setItem(KEYS.LAYOUT, JSON.stringify(layout)); }
-function restoreLayout(){
-  try{
-    const raw=localStorage.getItem(KEYS.LAYOUT); if(!raw) return; const L=JSON.parse(raw);
-    if(L.market){ els.market.value=L.market; } if(L.quote){ els.quote.value=L.quote; } populatePairs();
-    if(L.symbol){ els.symbol.value=L.symbol; } if(L.tf){ els.tf.value=L.tf; } if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
-    (L.indicators||[]).forEach(it=>{
-      const add=Registry[it.key]; if(!add) return;
-      let chart=(it.kind==='osc')? oscSlots[(Math.min(5,Math.max(1,it.pane||1)))-1].chart : cMain;
-      if(it.kind==='osc'){ chart.__paneIdx=(it.pane||1); const slot=oscSlots[(chart.__paneIdx-1)]; slot.slot.style.display='block'; }
-      const pk=add.add(it.params||{},chart); setPackColor(pk,(it.params||{})._color);
-      const item={id:idSeq++,key:it.key,kind:(add.kind||'overlay'),params:(it.params||{}),series:pk.series,update:pk.update,visible:true,chart,pane:(chart.__paneIdx||0)};
-      Active.push(item);
+    const isNew = (day >= CUTOFF_NEW);
+    const cardNode = isNew
+      ? makeProfitCardNew({side, leverage:lev, symbol:sym, entry, last, roiPct, pnlUSDT, member, whenISO:day.toISOString(), ref})
+      : makeProfitCardOld({side, leverage:lev, symbol:sym, entry, last, pct:roiPct, ref});
+
+    const caption = `${member.name} • ${sym} • ${side} • ${lev}x • ${dateYMD(day)} ${isNew?'• NEW':'• OLD'}`;
+    addAdminBubble(cardNode, caption);
+
+    ledger.push({
+      date: dateYMD(day), member:member.name,
+      symbol:sym, side, leverage:lev, entry, last,
+      roi_pct:roiPct, pnl_usdt:pnlUSDT, referral:ref, template:isNew?'new':'old'
     });
-    renderBadges(); if(DATA.length){ Active.forEach(i=>i.update(DATA)); }
-    snapAlignAll();
-    rewireSync();
-    draw_repaint();
-  }catch{}
-}
-
-/* ========= Drawing Layer (NEW) ========= */
-const draw = {
-  tool:'off', color:'#fcd535', width:2,
-  shapes:[], // {id,type:'trend'|'hline'|'fib', a:{t, p}, b:{t, p}, color, width}
-  sel:null, // {id, hit:'line'|'a'|'b'}
-  placing:null // {type, a?}
-};
-function draw_load(){ try{ const raw=localStorage.getItem(KEYS.DRAW); if(raw){ const obj=JSON.parse(raw); draw.shapes = Array.isArray(obj)?obj:[]; } }catch{} }
-function draw_save(){ try{ localStorage.setItem(KEYS.DRAW, JSON.stringify(draw.shapes)); }catch{} }
-
-function pxp(){ // helpers for coord conversion
-  const series = (haSeries||sCandle);
-  return {
-    t2x:(t)=> cMain.timeScale().timeToCoordinate?.(t),
-    x2t:(x)=> cMain.timeScale().coordinateToTime?.(x),
-    p2y:(p)=> series?.priceToCoordinate?.(p),
-    y2p:(y)=> series?.coordinateToPrice?.(y)
-  };
-}
-function draw_resize(){
-  const host=els.cMainHost.getBoundingClientRect();
-  const dpr=window.devicePixelRatio||1;
-  const c=els.drawCanvas;
-  c.style.pointerEvents = (draw.tool!=='off') ? 'auto' : 'none';
-  c.width = Math.max(1,Math.floor((host.width)*dpr));
-  c.height= Math.max(1,Math.floor((host.height)*dpr));
-  c.style.width = host.width+'px';
-  c.style.height= host.height+'px';
-}
-new ResizeObserver(()=>{ draw_resize(); draw_repaint(); }).observe(els.cMainHost);
-
-function draw_clearSelection(){ draw.sel=null; }
-function draw_hitTest(mx,my){
-  // return nearest handle/line within tolerance
-  const dpr=window.devicePixelRatio||1, tol=8*dpr;
-  const {t2x,p2y}=pxp(); if(!t2x||!p2y) return null;
-  const nearHandle=(x,y)=> ((mx-x)**2 + (my-y)**2) <= (tol*tol);
-  const distToSeg=(x1,y1,x2,y2,x0,y0)=>{
-    const dx=x2-x1, dy=y2-y1; const len2=dx*dx+dy*dy||1;
-    const u=Math.max(0,Math.min(1, ((x0-x1)*dx+(y0-y1)*dy)/len2 ));
-    const px=x1+u*dx, py=y1+u*dy;
-    return Math.hypot(px-x0,py-y0);
-  };
-  for(let i=draw.shapes.length-1;i>=0;i--){
-    const s=draw.shapes[i];
-    const x1=t2x(s.a.t), y1=p2y(s.a.p);
-    let x2,y2;
-    if(s.type==='hline'){ x2 = t2x(DATA[DATA.length-1]?.time||s.a.t+60)||x1+1000; y2 = p2y(s.a.p); }
-    else if(s.type==='trend'){ x2=t2x(s.b.t); y2=p2y(s.b.p); }
-    else if(s.type==='fib'){
-      // test handles first
-      if(nearHandle(x1,y1)) return {id:s.id, hit:'a'};
-      const xb=t2x(s.b.t), yb=p2y(s.b.p);
-      if(nearHandle(xb,yb)) return {id:s.id, hit:'b'};
-      // test against any fib level line
-      const minX=Math.min(x1,xb), maxX=Math.max(x1,xb);
-      const levels=[0,0.236,0.382,0.5,0.618,0.786,1,1.618];
-      for(const L of levels){
-        const y = yb + (y1 - yb)*L;
-        const d=distToSeg(minX,y,maxX,y,mx,my);
-        if(d<=tol) return {id:s.id, hit:'line'};
-      }
-      continue;
-    }
-    if(x1==null||y1==null) continue;
-    if(nearHandle(x1,y1)) return {id:s.id, hit:'a'};
-    if(s.type==='trend'){
-      if(x2==null||y2==null) continue;
-      if(nearHandle(x2,y2)) return {id:s.id, hit:'b'};
-      const d=distToSeg(x1,y1,x2,y2,mx,my);
-      if(d<=tol) return {id:s.id, hit:'line'};
-    }else if(s.type==='hline'){
-      if(x2==null||y2==null) continue;
-      const d=distToSeg(x1,y1,x2,y2,mx,my);
-      if(d<=tol) return {id:s.id, hit:'line'};
-    }
-  }
-  return null;
-}
-
-function drawFib(ctx, s, preview=false){
-  const {t2x,p2y}=pxp(); if(!t2x||!p2y) return;
-  const x1=t2x(s.a.t), y1=p2y(s.a.p);
-  const x2=t2x(s.b.t), y2=p2y(s.b.p);
-  if([x1,y1,x2,y2].some(v=>v==null)) return;
-  const minX=Math.min(x1,x2), maxX=Math.max(x1,x2);
-  const levels=[0,0.236,0.382,0.5,0.618,0.786,1,1.618];
-  ctx.lineWidth = s.width||2;
-  ctx.strokeStyle = s.color||'#fcd535';
-  ctx.fillStyle = '#0b1320';
-
-  levels.forEach(L=>{
-    const y = y2 + (y1 - y2)*L;
-    ctx.beginPath();
-    ctx.moveTo(minX,y);
-    ctx.lineTo(maxX,y);
-    ctx.stroke();
-
-    // label
-    ctx.save();
-    ctx.font='12px system-ui, -apple-system, Segoe UI, Roboto';
-    ctx.textAlign='right';
-    ctx.textBaseline='middle';
-    ctx.fillStyle='rgba(255,255,255,.75)';
-    const price = pxp().y2p(y);
-    const txt = `${(L*100).toFixed(1)}%  ${price!=null?Number(price).toFixed(4):''}`;
-    ctx.fillText(txt, maxX-4, y);
-    ctx.restore();
-  });
-
-  // handles (only when not preview)
-  if(!preview){
-    ctx.fillStyle = '#0b1320';
-    ctx.strokeStyle = s.color||'#fcd535';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(x1,y1,4,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x2,y2,4,0,Math.PI*2); ctx.fill(); ctx.stroke();
-
-    if(draw.sel?.id===s.id){
-      ctx.setLineDash([6,4]); ctx.lineWidth=(s.width||2)+1;
-      ctx.strokeStyle='rgba(255,255,255,.35)';
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      ctx.setLineDash([]);
-    }
+    made++;
+    if (made % 10 === 0) await sleep(30);
   }
 }
 
-function draw_repaint(){
-  const ctx=els.drawCanvas.getContext('2d'); if(!ctx) return;
-  const dpr=window.devicePixelRatio||1; ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,els.drawCanvas.width,els.drawCanvas.height);
-  const {t2x,p2y}=pxp(); if(!t2x||!p2y) return;
+async function backfillRange(perDay, leverageHint, sideMix, range){
+  await preloadRange(range);
+  for (let t = range.start.getTime(); t <= range.end.getTime(); t += 86400000){
+    const day = new Date(t);
+    let made = 0, tries = 0;
+    while (made < perDay && tries < perDay*100){
+      tries++;
+      const sym = SYMBOLS[tries % SYMBOLS.length];
+      const klKey = [...klinesCache.keys()].find(k=>k.startsWith(sym+':'));
+      const kl = klinesCache.get(klKey);
+      const px = priceOnDate(kl, day);
+      if(!px) continue;
 
-  const latestT = DATA[DATA.length-1]?.time;
+      let side = (function(){ if (sideMix==='long') return 'LONG'; if (sideMix==='short') return 'SHORT'; return Math.random()<0.5?'LONG':'SHORT'; })();
 
-  for(const s of draw.shapes){
-    if(s.type==='fib'){ drawFib(ctx, s); continue; }
+      const baseLong = roiBasePct({entry:px.open, last:px.close, side:'LONG'});
+      const baseShort = roiBasePct({entry:px.open, last:px.close, side:'SHORT'});
+      if (side==='LONG' && baseLong<=0 && baseShort>0) side='SHORT';
+      if (side==='SHORT' && baseShort<=0 && baseLong>0) side='LONG';
+      const pctBase = side==='LONG'? baseLong : baseShort;
+      if (pctBase<=0) continue;
 
-    const x1=t2x(s.a.t), y1=p2y(s.a.p);
-    let x2,y2;
-    if(s.type==='hline'){ x2 = t2x(latestT??s.a.t)+1000; y2 = p2y(s.a.p); }
-    else { x2=t2x(s.b.t); y2=p2y(s.b.p); }
-    if([x1,y1,x2,y2].some(v=>v==null)) continue;
+      const lev = (function(pctBase,min,max){
+        if (pctBase <= 0) return null;
+        let Lmin = Math.ceil(min / pctBase);
+        let Lmax = Math.floor(max / pctBase);
+        Lmin = Math.max(1, Lmin);
+        Lmax = Math.min(125, Lmax);
+        if (Lmin > Lmax) return null;
+        return Math.floor(Math.random()*(Lmax - Lmin + 1)) + Lmin;
+      })(pctBase, ROI_RANGE.min, ROI_RANGE.max);
+      if (!lev) continue;
 
-    ctx.lineWidth = s.width||2;
-    ctx.strokeStyle = s.color||'#fcd535';
-    ctx.beginPath();
-    ctx.moveTo(x1,y1);
-    ctx.lineTo(x2,y2);
-    ctx.stroke();
+      const entry = px.open, last = px.close;
+      const roiPct = pctBase * lev;
+      const ref = String(Math.floor(100000000 + Math.random()*900000000));
+      const member = members[(Math.random()*members.length)|0];
+      const notional = 100 + Math.random()*900;
+      const pnlUSDT = notional * (roiPct/100);
 
-    // handles
-    ctx.fillStyle = '#0b1320';
-    ctx.strokeStyle = s.color||'#fcd535';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(x1,y1,4,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    if(s.type==='trend'){ ctx.beginPath(); ctx.arc(x2,y2,4,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
+      const isNew = (day >= CUTOFF_NEW);
+      const cardNode = isNew
+        ? makeProfitCardNew({side, leverage:lev, symbol:sym, entry, last, roiPct, pnlUSDT, member, whenISO:day.toISOString(), ref})
+        : makeProfitCardOld({side, leverage:lev, symbol:sym, entry, last, pct:roiPct, ref});
 
-    // selection highlight
-    if(draw.sel?.id===s.id){
-      ctx.setLineDash([6,4]); ctx.lineWidth=(s.width||2)+1;
-      ctx.strokeStyle=hexToRGBA('#ffffff',0.35);
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      ctx.setLineDash([]);
+      const caption = `${member.name} • ${sym} • ${side} • ${lev}x • ${dateYMD(day)} ${isNew?'• NEW':'• OLD'}`;
+      addAdminBubble(cardNode, caption);
+
+      ledger.push({
+        date: dateYMD(day), member:member.name,
+        symbol:sym, side, leverage:lev, entry, last,
+        roi_pct:roiPct, pnl_usdt:pnlUSDT, referral:ref, template:isNew?'new':'old'
+      });
+      made++;
+      if (made % 20 === 0) await sleep(50);
     }
-  }
-
-  // preview while placing
-  if(draw.placing){
-    const a=draw.placing.a; if(!a) return;
-    const x1=t2x(a.t), y1=p2y(a.p); if(x1==null||y1==null) return;
-    const mx = lastMouse.x, my = lastMouse.y;
-    const tt = pxp().x2t(mx), pp = pxp().y2p(my);
-    const x2 = tt!=null? t2x(tt) : mx;
-    const y2 = pp!=null? p2y(pp) : my;
-
-    if(draw.placing.type==='hline'){
-      ctx.lineWidth = parseInt(els.drawWidth.value)||2;
-      ctx.strokeStyle = els.drawColor.value;
-      ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+1200,y1); ctx.stroke();
-      ctx.setLineDash([]);
-    }else if(draw.placing.type==='trend'){
-      ctx.lineWidth = parseInt(els.drawWidth.value)||2;
-      ctx.strokeStyle = els.drawColor.value;
-      ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      ctx.setLineDash([]);
-    }else if(draw.placing.type==='fib'){
-      const s={a:{t:tt??a.t, p:pp??a.p}, b:{t:a.t, p:a.p}, color:els.drawColor.value, width:parseInt(els.drawWidth.value)||2};
-      // preview with current mouse as 2nd point
-      drawFib(ctx, {a:{t:a.t,p:a.p}, b:{t:tt??a.t,p:pp??a.p}, color:s.color, width:s.width}, true);
-    }
+    await sleep(120);
   }
 }
 
-/* Mouse handlers */
-let isDragging=false, dragTarget=null;
-let lastMouse={x:0,y:0};
-
-function canvasPos(e){
-  const rect=els.drawCanvas.getBoundingClientRect();
-  const x=(e.clientX??(e.touches?.[0]?.clientX||0))-rect.left;
-  const y=(e.clientY??(e.touches?.[0]?.clientY||0))-rect.top;
-  const dpr=window.devicePixelRatio||1;
-  return { x:x*(dpr), y:y*(dpr), xCSS:x, yCSS:y };
+/* Export */
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(ledger,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `profit-cards-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
 }
-
-els.drawCanvas.addEventListener('mousemove', (e)=>{
-  const {xCSS,yCSS}=canvasPos(e);
-  lastMouse.x=xCSS; lastMouse.y=yCSS;
-  if(isDragging && draw.sel && dragTarget){
-    const {y2p,x2t} = pxp(); if(!y2p || !x2t) return;
-    const s = draw.shapes.find(z=>z.id===draw.sel.id); if(!s) return;
-    const t=x2t(xCSS); const p=y2p(yCSS);
-    if(t==null || p==null) return;
-    if(dragTarget==='a'){ s.a.t=t; s.a.p=p; }
-    else if(dragTarget==='b' && (s.type==='trend'||s.type==='fib')){ s.b.t=t; s.b.p=p; }
-    else if(dragTarget==='line'){
-      if(s.type==='hline'){ s.a.p=p; }
-      else if(s.type==='trend'){
-        const t0 = s.a.t, t1 = s.b.t, dt = (t1 - t0);
-        const midT = (t0 + t1)/2;
-        const dT = t - midT;
-        const dP = p - (s.a.p + s.b.p)/2;
-        s.a.t += dT; s.b.t += dT; s.a.p += dP; s.b.p += dP;
-      }else if(s.type==='fib'){
-        const t0 = s.a.t, t1=s.b.t, dt = t - ((t0+t1)/2);
-        const dP = p - ((s.a.p+s.b.p)/2);
-        s.a.t += dt; s.b.t += dt; s.a.p += dP; s.b.p += dP;
-      }
-    }
-    draw_repaint(); draw_save();
-  }else{
-    const hit = draw_hitTest(xCSS,yCSS);
-    els.drawCanvas.style.cursor = hit ? (hit.hit==='line'?'grab':'pointer') : (draw.tool==='off'?'default':'crosshair');
-  }
-});
-
-els.drawCanvas.addEventListener('mousedown', (e)=>{
-  if(e.button===0){ // left
-    const {xCSS,yCSS}=canvasPos(e);
-    const hit = draw_hitTest(xCSS,yCSS);
-    if(hit){
-      draw.sel=hit; isDragging=true; dragTarget=hit.hit;
-      els.drawCanvas.style.cursor = (hit.hit==='line')?'grabbing':'grabbing';
-      e.preventDefault();
-    }else{
-      draw_clearSelection();
-    }
-    draw_repaint();
-  }
-});
-
-window.addEventListener('mouseup', ()=>{ if(isDragging){ isDragging=false; dragTarget=null; draw_save(); draw_repaint(); } });
-
-els.drawCanvas.addEventListener('contextmenu', (e)=>{
-  if(draw.tool==='off') return;
-  e.preventDefault();
-  const {xCSS,yCSS}=canvasPos(e);
-  const {x2t,y2p}=pxp(); const t=x2t(xCSS), p=y2p(yCSS);
-  if(t==null||p==null) return;
-
-  if(!draw.placing){
-    draw.placing = { type: els.drawTool.value, a:{t,p} };
-  }else{
-    if(draw.placing.type==='trend'){
-      const shape={ id:crypto.randomUUID?.()||('id_'+Date.now()+Math.random()), type:'trend', a:{...draw.placing.a}, b:{t,p}, color:els.drawColor.value, width:parseInt(els.drawWidth.value)||2 };
-      draw.shapes.push(shape); draw.sel={id:shape.id, hit:'line'};
-    }else if(draw.placing.type==='hline'){
-      const shape={ id:crypto.randomUUID?.()||('id_'+Date.now()+Math.random()), type:'hline', a:{...draw.placing.a}, b:{t,p}, color:els.drawColor.value, width:parseInt(els.drawWidth.value)||2 };
-      draw.shapes.push(shape); draw.sel={id:shape.id, hit:'line'};
-    }else if(draw.placing.type==='fib'){
-      const shape={ id:crypto.randomUUID?.()||('id_'+Date.now()+Math.random()), type:'fib', a:{...draw.placing.a}, b:{t,p}, color:els.drawColor.value, width:parseInt(els.drawWidth.value)||2 };
-      draw.shapes.push(shape); draw.sel={id:shape.id, hit:'line'};
-    }
-    draw.placing=null; draw_save();
-  }
-  draw_repaint();
-});
-
-window.addEventListener('keydown', (e)=>{
-  if(e.key==='Delete' || e.key==='Backspace'){
-    if(draw.sel){
-      const i=draw.shapes.findIndex(s=>s.id===draw.sel.id);
-      if(i>=0){ draw.shapes.splice(i,1); draw.sel=null; draw_save(); draw_repaint(); }
-    }
-  }
-});
-
-/* Hook toolbar */
-els.drawTool.addEventListener('change', ()=>{
-  draw.tool = els.drawTool.value;
-  draw.placing=null;
-  draw_resize(); draw_repaint();
-});
-els.drawColor.addEventListener('input', ()=>{ if(draw.sel){ const s=draw.shapes.find(z=>z.id===draw.sel.id); if(s){ s.color=els.drawColor.value; draw_save(); draw_repaint(); } }});
-els.drawWidth.addEventListener('change', ()=>{ if(draw.sel){ const s=draw.shapes.find(z=>z.id===draw.sel.id); if(s){ s.width=parseInt(els.drawWidth.value)||2; draw_save(); draw_repaint(); } }});
-els.drawClear.addEventListener('click', ()=>{ if(confirm('Clear all drawings?')){ draw.shapes=[]; draw.sel=null; draw.placing=null; draw_save(); draw_repaint(); }});
-
-/* ========= Load flow ========= */
-async function loadAll(){
-  try{
-    applyMarketEndpoints();
-    let sym=els.symbol.value.trim().toUpperCase(), tf=els.tf.value, q=els.quote.value;
-    sym=normalizeSymbolInput(sym,q);
-
-    if(VALID_SET.size && !VALID_SET.has(sym)){
-      const base=sym.replace(/(USDT|FDUSD|USDC|BTC|ETH|BNB|TRY)$/,''); const guess=findAnyMarketSymbolLike(base);
-      if(guess){ const info=(EXINFO.symbols||[]).find(x=>x.symbol===guess); if(info){ els.quote.value=info.quoteAsset; populatePairs(); } sym=guess; }
-      else{ setStatus('Symbol not found, trying anyway'); }
-    }
-    if(!sym) sym='BTCUSDT';
-    els.symbol.value=sym;
-
-    setStatus(`Loading ${sym} • ${tf} …`);
-    closeWS();
-    await loadInitial(sym, tf);
-    openWS(sym, tf);
-    saveLayout();
-    snapAlignAll();
-    rewireSync();
-    draw_resize(); draw_repaint();
-  }catch(err){ console.warn(err); setStatus('Load error'); }
-}
-
-/* ========= Events ========= */
-$('reload').addEventListener('click', ()=>{ Active.slice().forEach(it=>removeIndicator(it.id)); loadAll(); });
-els.tf.addEventListener('change', loadAll);
-els.symbol.addEventListener('keydown', e=>{ if(e.key==='Enter') loadAll(); });
-els.symbol.addEventListener('change', ()=>{ const v=els.symbol.value.toUpperCase(); if(!VALID_SET.size || VALID_SET.has(v)) loadAll(); });
-els.quote.addEventListener('change', ()=>{ populatePairs(); loadAll(); });
-els.market.addEventListener('change', async ()=>{ try{ await loadExchangeInfo(); populatePairs(); loadAll(); }catch(e){ console.warn(e); setStatus('Failed to switch market'); } });
-els.range12.addEventListener('click', ()=> loadMonths(12));
-els.range36.addEventListener('click', ()=> loadMonths(36));
-
-/* ========= Boot ========= */
-(async function(){
-  window.addEventListener('unhandledrejection', e=>{ e.preventDefault?.(); console.warn('silenced rejection', e.reason); });
-  window.addEventListener('error', e=>{ /* console only */ });
-
-  setHeaderHeightVar();
-
-  await loadExchangeInfo(); populatePairs();
-
-  try{
-    const raw=localStorage.getItem(KEYS.LAYOUT);
-    if(raw){
-      const L=JSON.parse(raw);
-      if(L.market){ els.market.value=L.market; applyMarketEndpoints(); }
-      if(L.quote){ els.quote.value=L.quote; }
-      populatePairs();
-      if(L.symbol){ els.symbol.value=L.symbol; }
-      if(L.tf){ els.tf.value=L.tf; }
-      if(typeof L.ha==='boolean'){ els.haToggle.checked=L.ha; }
-    }
-  }catch{}
-
-  if(!els.symbol.value){ const q=els.quote.value; const def=(BY_QUOTE[q]||[]).find(s=>s.startsWith('BTC')) || (BY_QUOTE[q]||[])[0] || 'BTCUSDT'; els.symbol.value=def; }
-
-  await loadAll();
-  restoreLayout();
-  refreshOscLayout();
-
-  draw_load();
-  draw_resize(); draw_repaint();
-
-  // keep drawings aligned on any chart range change
-  cMain.timeScale().subscribeVisibleLogicalRangeChange(()=> draw_repaint());
-  window.addEventListener('resize', ()=>{ setHeaderHeightVar(); snapAlignAll(); rewireSync(); draw_resize(); draw_repaint(); });
-})();
 </script>
 </body>
 </html>
