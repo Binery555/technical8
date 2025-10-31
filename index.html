@@ -1,705 +1,1395 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Binance Signal Group — Admin-Only Chat + Members (100 Countries) + Profit Cards (Real Prices)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed, Frame Removed, +20 trades, random small-loss duo) — Margin Persistent</title>
 
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <!-- Binance PLEX for better '1' glyph -->
+  <link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
 
-<style>
-  :root{
-    --bg:#0b0f14; --panel:#0f1621; --panel2:#0b1320; --ink:#e6eef7; --muted:#9eb1c7;
-    --line:#1a2736; --accent:#fcd535; --up:#16a34a; --down:#ef4444;
-    --online:#10b981; --offline:#6b7280;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0; background:var(--bg); color:var(--ink); font-family:Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
-  .wrap{display:grid; grid-template-rows:auto 1fr auto; height:100vh;}
-  header{display:flex; align-items:center; gap:16px; padding:14px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg,#111827, #0b0f14 70%);} 
-  .logo{width:36px; height:36px; border-radius:10px; background:radial-gradient(circle at 30% 30%, #ffd84d, #b99000); display:grid; place-items:center; font-weight:800; color:#111;}
-  header h1{margin:0; font-size:18px; font-weight:700; letter-spacing:0.2px}
-  header .sub{color:var(--muted); font-size:12px}
-  .stats{margin-left:auto; display:flex; align-items:center; gap:22px}
-  .stat{display:flex; flex-direction:column; align-items:flex-end}
-  .stat .v{font-size:18px; font-weight:700}
-  .segments{display:flex; gap:4px; align-items:center}
-  .seg{width:22px; height:8px; border-radius:3px; background:#263446; outline:1px solid #1e2a39}
-  .seg.fill{background:var(--accent)}
-  .seg.half{background:linear-gradient(90deg, var(--accent) 50%, #263446 50%)}
-  main{display:grid; grid-template-columns:1fr 330px; gap:0; min-height:0;}
-  .chat{display:flex; flex-direction:column; min-height:0;}
-  .chat-head{display:flex; gap:10px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--panel2)}
-  .pill{font-size:12px; padding:4px 8px; border-radius:999px; background:#152235; color:var(--muted); border:1px solid #1f3047}
-  .chat-scroll{flex:1; overflow:auto; padding:16px; background:radial-gradient(1200px 400px at 20% -10%, rgba(252,213,53,0.06), transparent 50%), linear-gradient(180deg, #0c1118, #0b0f14)}
-  .bub{max-width:70%; margin:10px 0; padding:12px 14px; border-radius:14px; line-height:1.35; font-size:14px; border:1px solid #213149}
-  .bub.admin{margin-left:auto; background:#0f1b2c}
-  .bub .meta{font-size:11px; color:var(--muted); margin-top:6px}
-  .bub img{max-width:100%; border-radius:10px; margin-top:8px; display:block}
-  .composer{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; padding:10px; background:var(--panel); border-top:1px solid var(--line)}
-  .composer input[type="text"]{width:100%; background:#0d1522; border:1px solid #1f2a39; color:var(--ink); border-radius:10px; padding:12px 12px; outline:none}
-  .composer input[type="file"]{display:none}
-  .btn{background:var(--accent); color:#111; border:0; padding:10px 14px; font-weight:700; border-radius:10px; cursor:pointer}
-  .btn:disabled{opacity:.4; cursor:not-allowed}
-  .attach{background:#162236; color:#e6eef7; border:1px dashed #2a3a52; padding:8px 12px; border-radius:10px; cursor:pointer}
-  .attach small{color:var(--muted)}
-  .role{margin-left:8px;}
-  .role label{font-size:12px; color:var(--muted)}
+  <!-- html2canvas for saving only the PNL card -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 
-  /* Right members panel */
-  aside{border-left:1px solid var(--line); background:linear-gradient(180deg, #0d1421, #0b0f14); display:flex; flex-direction:column; min-height:0}
-  .aside-head{padding:12px; border-bottom:1px solid var(--line); display:grid; gap:10px}
-  .search{display:flex; gap:8px}
-  .search input{flex:1; background:#0d1522; border:1px solid #1f2a39; color:#e6eef7; border-radius:10px; padding:10px}
-  .members{overflow:auto; padding:8px 8px 14px}
-  .row{
-    display:grid; grid-template-columns:36px 1fr auto; gap:10px; align-items:center;
-    padding:8px; border-radius:12px; border:1px solid #1b2740; background:#0d1626; margin-bottom:8px
-  }
-  .av{
-    width:36px; height:36px; border-radius:10px; display:grid; place-items:center; font-weight:800;
-    background:linear-gradient(135deg,#1f2a40,#0e1726); color:#e6eef7; border:1px solid #213149; letter-spacing:.3px;
-  }
-  .name{font-weight:600; font-size:13px}
-  .status{
-    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:4px 8px; border-radius:999px;
-    border:1px solid #1e2a39; background:#0b1320; color:#cfd8e3;
-  }
-  .dot{width:8px; height:8px; border-radius:999px; display:inline-block}
-  .online .dot{background:var(--online)}
-  .offline .dot{background:var(--offline)}
-  .loadmore{margin:8px;}
+  <style>
+    :root{
+      --app-w: 375px;
+      --bg-base:#1E2128;
+      --panel-bg:#1e2127;
+      --secondary-bg:#32383e;
+      --text-secondary:#7c828a;
+      --text-green:#3acf87;
+      --text-red:#e04b4a;
+      --btn-bg:#2f3339;
+      --highlight:#f0b90b;
 
-  @media (max-width: 980px){
-    main{grid-template-columns:1fr}
-    aside{order:-1}
-  }
+      --seg-w: 170px;
+      --seg-h: 24px;
+      --seg-pad: 2px;
+      --seg-gap: 2px;
+      --seg-r: 10px;
+      --seg-thumb-r: 6px;
+      --seg-font: 12px;
 
-  /* --- OLD Profit Card (unchanged) --- */
-  .pcard{
-    max-width:300px; width:min(90vw,300px);
-    background:url('https://iili.io/KKAe9kv.md.gif') center/cover no-repeat;
-    color:#fff; border-radius:10px; padding:0.5cm 14px; position:relative; overflow:hidden;
-    box-shadow:0 8px 40px rgba(0,0,0,.45);
-    font-family:"Binance PLEX","Segoe UI",Arial,sans-serif;
-    font-variant-numeric:tabular-nums;
-  }
-  .pcard .inner{ transform:translateX(0.55cm); }
-  .pcard .header{ display:flex; align-items:flex-start; gap:4px; margin-bottom:0.35cm; transform:translateX(-0.5cm); }
-  .pcard .binance-logo{ width:11px; height:11px; margin-top:-1px; }
-  .pcard .text-block{ display:flex; flex-direction:column; margin-top:-1px; }
-  .pcard .binance-text{ font-weight:800; font-size:.45rem; color:#f0b90b; letter-spacing:.25px; }
-  .pcard .futures-text{ font-size:.5rem; color:#fff; font-weight:700; line-height:1; }
-  .pcard .trade-info{ margin:4px 0; font-size:.45rem; font-weight:600; display:flex; gap:0.25cm; }
-  .pcard .short{ color:#ff4d6b; } .pcard .long{ color:#00c292; }
-  .pcard .percentage{ font-size:1.2rem; font-weight:900; margin:5px 0; }
-  .pcard .percentage.green{ color:#00c292; font-size:1.35rem; }
-  .pcard .percentage.red{ color:#ff4d6b; }
-  .pcard .price-section{ margin:5px 0 6px; }
-  .pcard .price-line{ display:flex; justify-content:flex-start; gap:5px; margin-bottom:2px; }
-  .pcard .price-label{ color:#ccc; font-size:.45rem; width:65px; font-weight:700; }
-  .pcard .price-value{ color:#f0b90b; font-weight:800; font-size:.55rem; margin-left:12px; }
-  .pcard .referral-section{ display:flex; align-items:center; gap:6px; margin-top:0.25cm; }
-  .pcard .qr{ width:24px; height:24px; border-radius:4px; border:1px solid rgba(255,255,255,.18); object-fit:cover; }
-  .pcard .ref-text{ font-size:.42rem; color:#ddd; font-weight:600; }
-  .pcard .referral-code{ font-weight:800; font-size:.55rem; letter-spacing:.2px; }
-  .pcard .app-text{ font-size:.42rem; color:#f0b90b; margin-top:0; font-weight:700; }
+      --frame-gutter-x: 8px;
+      --card-inset: 2px;
 
-  /* --- NEW Profit Card (>= 2025-07-25) --- */
-  .nx-card{
-    width:320px;
-    border-radius:16px; overflow:hidden;
-    background:#111 url("https://iili.io/KBlgIse.th.png") center/cover no-repeat;
-    border:2px solid #2e2e2e; box-shadow:0 8px 24px rgba(0,0,0,.45);
-    color:#fff; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  }
-  .nx-header{ padding:16px; display:flex; align-items:center; gap:12px; margin-bottom:calc(16px + 1cm); }
-  .nx-av{
-    width:40px; height:40px; aspect-ratio:1/1;
-    border-radius:50%; overflow:hidden; flex:0 0 40px;
-    box-shadow:0 0 0 2px rgba(255,255,255,.08);
-    display:grid; place-items:center; background:#000;
-    --av-shift:-6px;
-  }
-  .nx-av img{ width:100%; height:100%; display:block; object-fit:cover; object-position:center; border-radius:50%; transform:translateY(var(--av-shift)); }
-  .nx-user{ display:flex; flex-direction:column; line-height:1.1; }
-  .nx-user .nx-name{ font-weight:600; font-size:15px; }
-  .nx-user .nx-time{ font-size:11px; opacity:.9; }
-  .nx-body{ padding:0 16px calc(20px + 1cm); }
-  .nx-title{ font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:.2px; }
-  .nx-pos{ margin:6px 0 10px; display:inline-flex; align-items:center; gap:10px; font-size:13px; font-weight:600; }
-  .nx-pos .nx-short{ color:#ff6b6b; } .nx-pos .nx-long{ color:#0ecb81; }
-  .nx-div{ width:1px; height:12px; background:#6a6a6a; display:inline-block; }
-  .nx-lev{ color:#cfcfcf; }
+      --slot-top: 16px;
+      --slot-bottom: 14px;
 
-  /* value line: will show EITHER USDT PnL or ROI% in big font */
-  .nx-pnl{ display:flex; align-items:baseline; gap:8px; margin:6px 0 8px; }
-  .nx-usd, .nx-roi{ font-size:32px; font-weight:800; letter-spacing:-.4px; }
-  .nx-u, .nx-percent{ font-size:16px; font-weight:700; }
-  .posG{ color:#0ecb81; } .posR{ color:#ff6b6b; }
+      --bottom-nav-h: 64px;
 
-  .nx-prices{ position:relative; display:flex; justify-content:space-between; gap:16px; font-size:12px; }
-  .nx-label{ color:#9a9a9a; font-size:11px; }
-  .nx-value{ color:#fff; }
-  .nx-last{ position:relative; left:-2.6cm; }
-  .nx-foot{ background:#000; }
-  .nx-line{ display:block; height:1px; width:100%; background:#444; }
-  .nx-footc{ padding:14px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .nx-id{ display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto auto; column-gap:8px; row-gap:2px; align-items:center; margin-left:-6px; }
-  .nx-logo{ grid-column:1/2; grid-row:1/2; width:16px; height:16px; display:block; position:relative; left:6px; top:-0.2cm; }
-  .nx-logo img{ width:100%; height:100%; object-fit:contain; display:block; }
-  .nx-brand{ grid-column:2/3; grid-row:1/2; font-family:"Binance PLEX", Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:#fcd535; font-weight:900; font-size:11px; line-height:1; letter-spacing:.2px; text-transform:uppercase; }
-  .nx-futures{ grid-column:2/3; grid-row:2/3; font-size:14px; line-height:1; font-weight:800; text-transform:uppercase; color:#eaeaea; }
-  .nx-ref{ grid-column:2/3; grid-row:3/4; font-size:11px; line-height:1.1; color:#ffffff; letter-spacing:.1px; }
-  .nx-qr{
-    width:62px; height:62px; background:#fff; border-radius:6px; overflow:hidden; display:block;
-    box-shadow:inset 0 0 0 1px #e5e5e5; position:relative;
-    --qr-shift:-8px;
-  }
-  .nx-qr img{ width:100%; height:100%; object-fit:cover; transform:translateY(var(--qr-shift)); display:block; }
+      --scene-offset-x: -0.5cm;
+      --scene-offset-y: 1.1cm;
 
-  .admintools{display:flex; gap:8px; align-items:center; padding:8px; border-top:1px dashed #263446; background:#0f1621}
-  .admintools input, .admintools select{background:#0d1522; border:1px solid #1f2a39; color:#e6eef7; border-radius:8px; padding:8px}
-  .admintools .btn{padding:8px 12px}
-  .muted{color:#9eb1c7; font-size:12px}
-</style>
+      /* ✅ Footer badge alignment helpers */
+      --badge-icon: 16px;
+      --badge-gap: 8px;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      background:var(--bg-base);
+      display:flex;justify-content:center;align-items:flex-start;
+      padding:0;min-height:100vh;color:#E1E3E8
+    }
+    .app{
+      width:var(--app-w);max-width:100%;
+      background:var(--bg-base);color:#E1E3E8;
+      border:none;border-radius:0;overflow:visible;position:relative;
+      padding:12px var(--frame-gutter-x) 80px;
+      font-family:Inter, "Segoe UI", Roboto, sans-serif
+    }
+    .amount,.value,.rate{font-family:Inter, "Segoe UI", Roboto, sans-serif!important}
+    button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
+
+    .top-stack{
+      position:sticky; top:0; z-index:30;
+      background:var(--bg-base);
+      border-bottom:none !important;
+      padding-bottom:8px; margin-bottom:8px;
+    }
+
+    .top-toggle{
+      position:relative;width:var(--seg-w);
+      margin:2px auto 6px;padding:var(--seg-pad);
+      background:#20242c;border:1px solid #343a40;border-radius:var(--seg-r);
+      display:grid;grid-template-columns:1fr 1fr;gap:var(--seg-gap);
+    }
+    .top-toggle .seg-thumb{
+      position:absolute;top:var(--seg-pad);bottom:var(--seg-pad);left:var(--seg-pad);
+      width:calc(50% - var(--seg-gap));
+      background:#2b303a;border:1px solid #3f4652;border-radius:var(--seg-thumb-r);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02),0 2px 8px rgba(0,0,0,.35);
+      transition:transform .25s ease;transform:translateX(0%);
+    }
+    .top-toggle .toggle-btn{
+      position:relative;z-index:1;height:var(--seg-h);line-height:var(--seg-h);
+      padding:0 8px;font-size:var(--seg-font);font-weight:700;color:#9ba3af;border-radius:var(--seg-thumb-r);
+      letter-spacing:.2px;
+    }
+    .top-toggle .toggle-btn.active{ color:#fff; }
+
+    .main-nav{display:flex;justify-content:flex-start;gap:10px;margin:2px 0 6px 0}
+    .main-nav button{padding:8px 6px;font-size:13px;color:#A1A6B0}
+    .main-nav button.active{color:#FFF;border-bottom:2px solid #FFF}
+    .main-nav button:first-child{ margin-left:-6px; }
+
+    .sub-toggle{display:flex;gap:6px;margin:8px 0 0 0;border-bottom:none !important;box-shadow:none !important;}
+    .sub-toggle .toggle-btn{padding:4px 8px;font-size:11px;color:#A1A6B0;border-radius:6px;background:transparent;}
+    .sub-toggle .toggle-btn.active{background:#323742;color:#FFF}
+
+    .balance-panel{margin:12px 0}
+    .balance-header{display:flex;justify-content:space-between;align-items:center;color:#A1A6B0;font-size:12px}
+    .balance-header span{display:flex;align-items:center;gap:10px}
+    .balance-amount{display:flex;align-items:flex-end;margin:8px 0}
+    .amount{font-size:28px;font-weight:600}
+    .currency{margin-left:8px;color:#A1A6B0;font-size:12px}
+    .realized-pnl{color:#A1A6B0;font-size:12px}
+    .realized-pnl .gain{color:var(--text-green);font-weight:700}
+
+    .small-balances{display:flex;margin-top:12px;justify-content:space-between}
+    .small-item{display:flex;flex-direction:column}
+    .small-item .label{color:#A1A6B0;font-size:12px}
+    .small-item .value{font-size:14px;font-weight:600;margin-top:4px}
+
+    .actions{display:flex;margin:14px 0}
+    .btn{flex:1;padding:8px 0;font-size:13px;margin:0 4px;border-radius:6px;background:#323742;color:#A1A6B0}
+    .btn.primary,.btn.active{background:#F3BA2F;color:#1E2128}
+
+    .sub-nav-2{
+      position:sticky; top:12px; z-index:20;
+      display:flex;align-items:flex-end;gap:16px;margin:0 0 8px 0;
+      background:linear-gradient(var(--bg-base), var(--bg-base));
+      padding-top:6px;
+    }
+    .sub-nav-2 button{position:relative;padding:0 6px 8px;font-size:14px;font-weight:700;letter-spacing:.1px;color:var(--text-secondary);line-height:1}
+    .sub-nav-2 button.active{color:#fff}
+
+    .feed{
+      overflow-y:auto; overscroll-behavior-y: contain;
+      padding:12px 0 20px; background:var(--bg-base);
+      scrollbar-width:none; border-top:none !important;
+    }
+    .feed::-webkit-scrollbar{display:none}
+
+    .empty-state{margin:0 0;background:var(--panel-bg);border-radius:10px;padding:20px;text-align:center;border:1px solid #2b2f36}
+    .empty-state i{font-size:28px;opacity:.9;margin-bottom:10px;display:inline-block}
+    .empty-state h4{font-size:14px;margin-bottom:6px}
+    .empty-state p{font-size:12px;color:#A1A6B0;margin-bottom:12px}
+    .empty-state .cta{background:#F3BA2F;color:#1E2128;font-size:12px;padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px}
+
+    .trade-panel { background: var(--panel-bg); padding: 12px; border-radius: 8px; border: none; box-shadow: none;
+      margin-left:calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
+      margin-right:calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
+    }
+    .trade-panel + .trade-panel{margin-top:8px}
+    .trade-panel .header { display: flex; align-items: center; margin-bottom: 8px; }
+    .icon-buy, .icon-sell { color: #fff; width: 20px; height: 20px; display:flex;align-items:center;justify-content:center;
+      font-size: 12px; font-weight: 700; margin-right: 8px; border-radius: 2px; }
+    .icon-buy { background: var(--text-green); }
+    .icon-sell { background: var(--text-red); }
+    .symbol { font-size: 14px; font-weight: 600; margin-right: 6px; color:#fff; }
+    .tag { background: var(--secondary-bg); color: var(--text-secondary); font-size: 10px; padding: 1px 4px; margin-right: 4px; text-transform: uppercase; border-radius: 3px; }
+    .exclamations { display: flex; margin-left: 6px; }
+    .exclamations span { position: relative; width: 2px; height: 10px; background: var(--secondary-bg); margin: 0 1px; border-radius: 1px; transition: background 0.3s ease; }
+    .exclamations span::after { content: ''; position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: inherit; border-radius: 50%; }
+    .exclamations span.green, .exclamations span.green::after { background: var(--text-green); }
+    .share { margin-left: auto; color: var(--text-secondary); font-size: 16px; cursor: pointer; }
+
+    .content-columns { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; gap: 8px; }
+    .column { display: flex; flex-direction: column; }
+    .column.right { text-align: right; }
+    .stat { margin-bottom: 8px; }
+    .label { font-size: 12px; color: var(--text-secondary); border-bottom: 1px dotted var(--text-secondary); padding-bottom: 2px; display: inline-block; }
+    .label.no-line { border-bottom: none; }
+    .value { font-size: 14px; font-weight: 400; color: #fff; transition: all 0.2s ease; }
+    .value.green, .value.percent.green { color: var(--text-green); font-size: 18px; font-weight: 700; }
+    .value.red, .value.percent.red { color: var(--text-red); font-size: 18px; font-weight: 700; }
+    .margin-ratio-value { font-size: 12px !important; }
+
+    .tp-actions{display:flex;justify-content:space-between;gap:8px;margin-top:2px}
+    .tp-btn{flex:1;background:var(--btn-bg);color:#fff;border:none;border-radius:6px;padding:6px 0;font-size:12px;cursor:pointer;transition:background .3s}
+    .tp-btn:hover{background:var(--secondary-bg)}
+
+    .bottom-nav{
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+      width:var(--app-w);background:#2A2F3A;display:flex;padding:8px 0;
+      border-top:1px solid #3a3f49; z-index:40;
+    }
+    .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:10px;color:#A1A6B0}
+    .bottom-nav button.active{color:#FFF}
+
+    .photo-slot{
+      width:var(--slot-top); height:var(--slot-top);
+      display:inline-block; position:relative; overflow:hidden; border:none; outline:none;
+      background:transparent; border-radius:4px;
+    }
+    .photo-slot--bottom{ width:var(--slot-bottom); height:var(--slot-bottom); border-radius:3px; }
+    .photo-slot input[type="file"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .photo-slot img{ width:88%; height:88%; margin:6%; object-fit:cover; display:block; border:none; outline:none; background:transparent; image-rendering:auto; }
+    .photo-slot--bottom img{ width:90%; height:90%; margin:5%; object-fit:cover; display:block; }
+    .photo-empty::after{ content:''; position:absolute; inset:0; background:transparent; }
+
+    .pnl-modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.6);
+      display:none; align-items:flex-end; justify-content:center; z-index:1000;
+      padding:0 12px calc(var(--bottom-nav-h) + 10px);
+    }
+    .pnl-modal-backdrop.open{ display:flex; }
+    .pnl-modal{ position:relative; max-width:520px; width:100%; outline:0; border:0; background:transparent; }
+    .pnl-close{ display:none !important; }
+
+    .pnl-scene{
+      background:#2f343d;
+      border:1px solid #3a3f49;
+      border-radius:18px;
+      padding:12px 12px 16px;
+      margin:0 auto;
+      width:calc(350px + 1.2cm);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      box-shadow:0 8px 20px rgba(0,0,0,.35) inset;
+      transform: translate(var(--scene-offset-x), var(--scene-offset-y));
+      overflow:hidden;
+    }
+
+    /* Inner swipeable carousel */
+    .pnl-carousel{ width:calc(350px - 1cm); overflow:hidden; touch-action:pan-y; cursor:grab; }
+    .pnl-carousel.grabbing{ cursor:grabbing; }
+    .pnl-track{ display:flex; width:300%; will-change:transform; transition:transform .25s ease; }
+    .pnl-slide{ width:calc(350px - 1cm); flex:0 0 calc(350px - 1cm); padding:0; }
+
+    .pnl-card {
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif !important;
+      font-feature-settings:"tnum"1,"lnum"1;
+      letter-spacing:.15px;
+      color:#fff;
+      border-radius:16px;
+      width:100%;
+      overflow:hidden;
+      box-shadow:0 0 10px rgba(0,0,0,.6);
+      border:2px solid #2e2e2e;
+      position:relative;
+      margin:0 auto;
+      background:#000 center/cover no-repeat; /* default, overridden per slide */
+    }
+    /* 🔰 Backgrounds per slide */
+    .pnl-card.bg1{ background-image:url('https://iili.io/Kr9UiVR.gif'); }
+    .pnl-card.bg2{ background-image:url('https://iili.io/Kgp9GJj.gif'); }
+    .pnl-card.bg3{ background-image:url('https://iili.io/KiPqNbp.gif'); }
+
+    .pnl-card .card-header { padding:16px; display:flex; align-items:center; gap:12px; margin-bottom:1cm; }
+
+    /* 🔻 Smaller avatar next to the name (reduced from 40px → 32px) */
+    .pnl-card .avatar { width:32px; height:32px; border-radius:50%; overflow:hidden; flex:0 0 32px; }
+    .pnl-card .avatar img { width:100%; height:100%; object-fit:cover; }
+
+    .pnl-card .username { display:flex; flex-direction:column; }
+    .pnl-card .username span:first-child { font-weight:600; font-size:13px; }
+    .pnl-card .username span:last-child { font-size:11px; opacity:.9; }
+
+    .pnl-card .card-body { padding:0 16px 20px 16px; margin-bottom:1cm; }
+    .pnl-card .title { font-size:16px; font-weight:700; text-transform:uppercase; }
+    .pnl-card .position { margin:6px 0 8px; display:inline-flex; align-items:center; gap:10px; font-size:13px; font-weight:600; }
+    .pnl-card .position .side { color:#ff6b6b; }
+    .pnl-card .position .divider { width:1px; height:12px; background:#6a6a6a; display:inline-block; transform:translateY(1px); }
+    .pnl-card .position .lev { color:#b3b3b3; }
+    .pnl-card .pnl { color:#0ecb81; font-size:32px; font-weight:700; margin:8px 0; letter-spacing:-.5px; }
+    .pnl-card .usdt { font-size:16px; margin-left:4px; font-weight:600; color:#fff; }
+    .pnl-card .prices { display:flex; justify-content:space-between; font-size:12px; margin-top:8px; }
+    .pnl-card .prices .label { color:#ddd; font-size:11px; }
+
+    .pnl-card .card-footer { background:#000; padding:0; display:block; position:relative; }
+    .pnl-card .footer-line { display:block; width:100%; height:1px; background:#444; margin:0; }
+    .pnl-card .footer-content { padding:16px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+
+    /* ✅ Footer content base */
+    .pnl-card .footer-left{
+      font-size:12px; display:flex; align-items:center; gap:8px; line-height:1.1;
+      transform: translateX(-0.35cm);
+    }
+    .pnl-card .footer-left .binance-badge{
+      display:inline-flex; align-items:center; gap:var(--badge-gap);
+      margin-bottom:2px;
+    }
+    .pnl-card .footer-left .binance-badge img{ width:var(--badge-icon); height:var(--badge-icon); }
+    .pnl-card .footer-left .binance-badge .brand{
+      color:#fcd535; font-weight:800; letter-spacing:0;
+      margin-left:0;
+    }
+    .pnl-card .footer-left .futures-ref{
+      color:#fff;
+      padding-left: calc(var(--badge-icon) + var(--badge-gap));
+      text-indent: 0;
+      display:block;
+    }
+
+    /* Minor footer tweaks kept from previous */
+    .pnl-card .footer-left .binance-badge img{ transform: translateX(0.12cm); }
+    .pnl-card .footer-left .futures-ref:last-child{ margin-top: 0.10cm; transform: translateY(0); }
+
+    .pnl-card .qr { width:60px; height:60px; background:#fff; border-radius:6px; overflow:hidden; }
+    .pnl-card .qr img { width:100%; height:100%; object-fit:cover; }
+
+    .pnl-underbar{
+      margin:14px auto 0; width:calc(350px - 1cm);
+      display:flex; flex-direction:column; align-items:flex-start;
+      font-size:13px;
+    }
+    .pnl-underbar .selector { margin:6px 0 10px; display:flex; justify-content:flex-start; gap:20px; font-size:13px; transform:translateX(calc(-2cm + 1.5cm)); }
+    .pnl-underbar .selector label { display:flex; align-items:center; gap:5px; cursor:pointer; }
+    .pnl-underbar .selector input[type="radio"] { accent-color:white; }
+    .pnl-underbar .bottom-bar { display:flex; justify-content:center; gap:10px; margin-top:8px; transform:translateX(-1.2cm); align-self:center; }
+    .pnl-underbar .action {
+      width:45px; height:45px; background:#1b1c22; border:1px solid #2e2f37; border-radius:12px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+      cursor:pointer; transition:transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .pnl-underbar .action:hover { transform:translateY(-2px); background:#242632; border-color:#3a3b47; }
+    .pnl-underbar .action img { width:18px; height:18px; display:block; }
+    .pnl-underbar .action span { font-size:10px; color:#cfd3dc; }
+
+    /* Force digit 1 to Binance PLEX when needed */
+    .pnl-card .one-glyph{
+      font-family: "Binance PLEX", Inter, "Segoe UI", system-ui, -apple-system, sans-serif !important;
+      font-weight: 700;
+      display:inline-block;
+      letter-spacing: 0;
+      transform: translateY(0.2px);
+    }
+    .no-one-stylize .one-glyph{ font-family: inherit !important; font-weight: inherit !important; }
+
+    .pnl-card .month-one{
+      font-size: .80em;
+      line-height: 1;
+      display:inline-block;
+      transform: translateY(.2px);
+    }
+
+    /* === Requested tweaks already present from earlier steps === */
+    /* Move ONLY the Profit card "Last Price" block 2.3cm to the LEFT */
+    .pnl-card .prices .last{
+      transform: translateX(-2.3cm);
+    }
+    /* Set ONLY the Profit card "Entry Price" & "Last Price" labels to #939393 */
+    .pnl-card .prices .entry .label,
+    .pnl-card .prices .last  .label{
+      color:#939393 !important;
+    }
+
+    /* ========================= NEW REQUESTS ========================= */
+    /* 1) Remove “spiky”/framed corner look on the profit card */
+    .pnl-card{
+      border:none !important;
+      box-shadow:none !important;
+    }
+
+    /* 2) Make the FUTURES word under BINANCE really big (exactly 15px) using the real DOM structure */
+    .pnl-card .card-footer .footer-left .binance-badge + .futures-ref{
+      font-size:16px !important;
+      font-weight:600 !important;
+      line-height:1.1 !important;
+      letter-spacing:0.2px !important;
+    }
+
+    /* keep referral line normal weight right after FUTURES */
+    .pnl-card .card-footer .footer-left .binance-badge + .futures-ref + .futures-ref{
+      font-size:12px !important;
+      font-weight:400 !important;
+    }
+
+    /* (OLD reset removed/overridden) Make sure Referral Code uses the SAME '1' font as prices */
+    .pnl-card .card-footer .futures-ref .one-glyph{
+      font-family: "Binance PLEX", Inter, "Segoe UI", system-ui, -apple-system, sans-serif !important;
+      font-weight:700 !important;
+    }
+
+    /* 4) Lower Entry Price & Last Price a bit (without breaking left-shift) */
+    .pnl-card .prices{
+      margin-top:14px !important; /* push whole price row slightly down */
+    }
+    .pnl-card .prices .entry,
+    .pnl-card .prices .last{
+      margin-top:6px !important;  /* local nudge down; uses margin to avoid overriding transform */
+    }
+
+    /* ==== FUTURES alignment tweak: move up & closer to BINANCE (no overlap) ==== */
+    .pnl-card .footer-left .binance-badge + .futures-ref{
+      margin-top:-4px !important;
+      transform:translateY(-2px) !important;
+    }
+    /* =============================================================== */
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo">B</div>
-    <div>
-      <h1>Binance Signal Group</h1>
-      <div class="sub">Admin-only chat • Valid-countries member directory (≈100 countries)</div>
-    </div>
-    <div class="stats">
-      <div class="stat">
-        <div class="v" id="totalMembers">—</div>
-        <small class="sub">Total Members (800K – 850K)</small>
-      </div>
-      <div class="stat">
-        <div class="segments" id="segments"></div>
-        <small class="sub">Laksha breakdown (8.x)</small>
-      </div>
-    </div>
-  </header>
+  <div class="app">
+    <div class="top-stack" id="topStack">
+      <header class="top-toggle" aria-label="Exchange or Wallet">
+        <span class="seg-thumb" aria-hidden="true"></span>
+        <button class="toggle-btn active" type="button">Exchange</button>
+        <button class="toggle-btn" type="button">Wallet</button>
+      </header>
 
-  <main>
-    <!-- Chat Area -->
-    <section class="chat">
-      <div class="chat-head">
-        <span class="pill">Admin Chat</span>
-        <span class="pill">Only admin can send</span>
-        <div class="role">
-          <label><input type="checkbox" id="viewAsMember"> View as member (disable sending)</label>
-        </div>
+      <nav class="main-nav" aria-label="Main sections">
+        <button>Overview</button>
+        <button class="active">Futures</button>
+        <button>Spot</button>
+        <button>Funding</button>
+      </nav>
+
+      <div class="sub-toggle" role="tablist" aria-label="Futures type">
+        <button class="toggle-btn active" role="tab" aria-selected="true">USDⓢ-M</button>
+        <button class="toggle-btn" role="tab" aria-selected="false">COIN-M</button>
       </div>
-      <div class="chat-scroll" id="chatScroll">
-        <div class="bub">
-          👋 Welcome to the Binance Signal Group. Admin posts official updates here.
-          <div class="meta">System • just now</div>
-        </div>
+    </div>
+
+    <section class="balance-panel" aria-label="Balances">
+      <div class="balance-header">
+        <span>Margin Balance <i id="eyeToggle" class="fas fa-eye" aria-hidden="true"></i></span>
+        <span class="icon-group" aria-label="Actions">
+          <label class="photo-slot photo-empty" data-slot="top-reward">
+            <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment">
+            <img alt="">
+          </label>
+          <label class="photo-slot photo-empty" data-slot="top-convert">
+            <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment">
+            <img alt="">
+          </label>
+          <label class="photo-slot photo-empty" data-slot="top-statement">
+            <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment">
+            <img alt="">
+          </label>
+        </span>
       </div>
-      <div class="composer">
-        <label class="attach" for="fileInput">📷 Attach photo <small>(optional)</small></label>
-        <input id="msg" type="text" placeholder="Type admin message…"/>
-        <button class="btn" id="sendBtn">Send</button>
-        <input id="fileInput" type="file" accept="image/*"/>
+
+      <div class="balance-amount">
+        <span id="amount" class="amount">Loading…</span>
+        <span class="currency">USD <i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+      </div>
+
+      <div class="realized-pnl" id="pnl">
+        Today’s Realized PNL
+        <span id="realizedSpan" class="gain">Loading…</span>
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+      </div>
+
+      <div class="small-balances">
+        <div class="small-item">
+          <div class="label">Wallet Balance (USD)</div>
+          <div class="value" id="walletValue">Loading…</div>
+        </div>
+        <div class="small-item">
+          <div class="label">Unrealized PNL (USD)</div>
+          <div class="value" id="unrealizedValue">Loading…</div>
+        </div>
       </div>
     </section>
 
-    <!-- Members Panel -->
-    <aside>
-      <div class="aside-head">
-        <div class="search">
-          <input id="search" placeholder="Search member by name…"/>
-        </div>
-        <small class="sub">Right panel: all members listed one by one. Use search to jump.</small>
-      </div>
-      <div class="members" id="members"></div>
-      <button class="btn loadmore" id="loadMore">Load more</button>
-    </aside>
-  </main>
-</div>
+    <section class="actions" aria-label="Quick actions">
+      <button class="btn primary active">Trade</button>
+      <button class="btn">Swap</button>
+      <button class="btn">Transfer</button>
+    </section>
 
-<script>
-/* ============================================================
-   MEMBERS + HEADER STATS (unchanged)
-============================================================ */
-function numberWithCommas(x){return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
-function initialsFromName(full){
-  const parts = full.trim().split(/\s+/);
-  const f = parts[0]?.[0] || '';
-  const l = parts[1]?.[0] || '';
-  return (f + l).toUpperCase();
-}
+    <section class="positions" aria-label="Positions">
+      <nav class="sub-nav-2" id="stickyBar">
+        <button class="active">Positions</button>
+        <button>Assets</button>
+      </nav>
 
-const members = [];
-const seedCount = 1200;
-const firsts = ['Alex','Mia','Omar','Yuki','Ishan','Sara','Leo','Noah','Ava','Ethan','Layla','Nina','Ivan','Luis','Aria','Kai','Hana','Zara','Milan','Nora'];
-const lasts  = ['Chen','Silva','Khan','Perera','Singh','Kumar','Gomez','Ivanov','Lee','Nguyen','Hassan','Yilmaz','Costa','Santos','Hansen','Novak','Almeida','Park','Sato','Smith'];
-for (let i=0;i<seedCount;i++){
-  const name = `${pick(firsts)} ${pick(lasts)}`;
-  const status = Math.random()<0.55 ? 'online' : 'offline';
-  members.push({id:i+1, name, status});
-}
-const min = 800000, max = 850000;
-const total = Math.floor(Math.random()*(max-min+1))+min;
-document.getElementById('totalMembers').textContent = numberWithCommas(total);
-const segmentsEl = document.getElementById('segments');
-for(let i=0;i<8;i++){ const d = document.createElement('div'); d.className='seg fill'; segmentsEl.appendChild(d); }
-const remainder = total - 800000;
-if (remainder>0){
-  const d = document.createElement('div');
-  d.className = remainder>=50000? 'seg half':'seg';
-  segmentsEl.appendChild(d);
-}
-const membersEl = document.getElementById('members');
-const searchEl  = document.getElementById('search');
-const loadMoreBtn = document.getElementById('loadMore');
-let viewSlice = 0; const PAGE=60;
-function renderMembers(){
-  const q = searchEl.value.toLowerCase().trim();
-  const filtered = members.filter(m => q ? m.name.toLowerCase().includes(q) : true);
-  const toShow = filtered.slice(0, viewSlice);
-  membersEl.innerHTML='';
-  toShow.forEach(m=>{
-    const row = document.createElement('div'); row.className='row';
-    const init = initialsFromName(m.name);
-    const badgeCls = m.status === 'online' ? 'online' : 'offline';
-    row.innerHTML = `
-      <div class="av" aria-hidden="true">${init}</div>
-      <div><div class="name">${m.name}</div></div>
-      <div class="status ${badgeCls}" title="${m.status === 'online' ? 'Online' : 'Offline'}">
-        <span class="dot"></span>${m.status === 'online' ? 'Online' : 'Offline'}
-      </div>`;
-    membersEl.appendChild(row);
-  });
-  loadMoreBtn.style.display = (filtered.length>viewSlice)?'block':'none';
-}
-function resetAndRender(){ viewSlice = PAGE; renderMembers(); }
-searchEl.addEventListener('input', resetAndRender);
-loadMoreBtn.addEventListener('click', ()=>{ viewSlice += PAGE; renderMembers(); });
-resetAndRender();
-
-/* ============================================================
-   ADMIN CHAT BASICS (unchanged)
-============================================================ */
-const chatScroll = document.getElementById('chatScroll');
-const fileInput  = document.getElementById('fileInput');
-const msgInput   = document.getElementById('msg');
-const sendBtn    = document.getElementById('sendBtn');
-const viewAsMember = document.getElementById('viewAsMember');
-function setRoleUI(){ const memberMode = viewAsMember.checked; msgInput.disabled = memberMode; sendBtn.disabled = memberMode; }
-setRoleUI(); viewAsMember.addEventListener('change', setRoleUI);
-let attachedDataUrl = null;
-fileInput.addEventListener('change', ()=>{
-  const f = fileInput.files[0];
-  if(!f){attachedDataUrl=null; return}
-  const r = new FileReader();
-  r.onload = ()=>{attachedDataUrl = r.result;};
-  r.readAsDataURL(f);
-});
-function addAdminMessage(text, img){
-  const b = document.createElement('div'); b.className='bub admin';
-  b.innerHTML = `${text ? text.replace(/</g,'&lt;') : ''}${img? `<img src="${img}" alt="attachment">`:''}<div class="meta">Admin • ${new Date().toLocaleString()}</div>`;
-  chatScroll.appendChild(b); chatScroll.scrollTop = chatScroll.scrollHeight;
-}
-addAdminMessage('Today\'s BTC/USDT scalp plan: watch 1m/5m confluence near VWAP. SL tight, TP 2R.');
-addAdminMessage('Upload proof or chart here if needed — admin can attach images to announcements.');
-sendBtn.addEventListener('click', ()=>{
-  if (viewAsMember.checked) return;
-  const t = msgInput.value.trim(); if(!t && !attachedDataUrl) return;
-  addAdminMessage(t, attachedDataUrl);
-  msgInput.value=''; attachedDataUrl=null; fileInput.value='';
-});
-</script>
-
-<script>
-/* ============================================================
-   PROFIT CARDS (REAL BINANCE FUTURES PRICES)
-   - NEW: For dates >= 2025-07-25, “here & there” show ROI% (photo style)
-     instead of USDT amount — while keeping all calculations correct.
-============================================================ */
-const API = {
-  futuresKlines: 'https://fapi.binance.com/fapi/v1/klines',
-  ping: 'https://fapi.binance.com/fapi/v1/ping'
-};
-const SYMBOLS = [
-  'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','ADAUSDT',
-  'TONUSDT','AVAXUSDT','LINKUSDT','NEARUSDT','MATICUSDT','OPUSDT','ARBUSDT','ATOMUSDT'
-];
-const DOM_CAP = 500;
-const ROI_RANGE = {min:300, max:3500}; // % inclusive
-const CUTOFF_NEW = new Date('2025-07-25T00:00:00Z');
-
-const BG_BASE = 'https://iili.io/KBlgIse.th.png';
-const BG_ALT  = 'https://iili.io/KWFNXj4.th.png'; // your PNG
-function pickNewBg(){ const bag = [BG_BASE, BG_BASE, BG_BASE, BG_ALT]; return bag[(Math.random()*bag.length)|0]; }
-
-/* 60% ROI view, 40% USDT view */
-function pickDisplayMode(){ return Math.random()<0.6 ? 'ROI' : 'USDT'; }
-
-const CHAT = document.getElementById('chatScroll');
-
-(function injectAdminTools(){
-  const composer = document.querySelector('.composer');
-  const bar = document.createElement('div');
-  bar.className = 'admintools';
-  bar.innerHTML = `
-    <span class="muted">Profit Cards:</span>
-    <label class="muted">Per day
-      <input id="pcPerDay" type="number" min="1" max="200" value="100" style="width:70px">
-    </label>
-    <label class="muted">Leverage
-      <select id="pcLev">
-        <option>5</option><option>10</option><option selected>20</option><option>50</option><option>100</option>
-      </select>x
-    </label>
-    <label class="muted">Side Mix
-      <select id="pcSideMix">
-        <option value="mixed" selected>Mixed</option>
-        <option value="long">Long only</option>
-        <option value="short">Short only</option>
-      </select>
-    </label>
-    <label class="muted">Start
-      <input id="pcStart" type="date">
-    </label>
-    <label class="muted">End
-      <input id="pcEnd" type="date">
-    </label>
-    <button class="btn" id="pcGen20">Generate Sample (20)</button>
-    <button class="btn" id="pcBackfill">Backfill 2 Years (Batched)</button>
-    <button class="btn" id="pcExport">Export JSON</button>
-  `;
-  composer.parentNode.insertBefore(bar, composer);
-
-  const today = new Date(); 
-  const start = new Date(today); start.setDate(start.getDate()-730);
-  bar.querySelector('#pcStart').value = start.toISOString().slice(0,10);
-  bar.querySelector('#pcEnd').value = today.toISOString().slice(0,10);
-
-  const getRange = ()=>({ start: new Date(bar.querySelector('#pcStart').value+'T00:00:00Z'), end: new Date(bar.querySelector('#pcEnd').value+'T00:00:00Z') });
-
-  bar.querySelector('#pcGen20').addEventListener('click', async ()=>{
-    await ensurePing();
-    await generateCardsRandom(20, parseInt(bar.querySelector('#pcLev').value,10), bar.querySelector('#pcSideMix').value, getRange());
-  });
-
-  bar.querySelector('#pcBackfill').addEventListener('click', async ()=>{
-    await ensurePing();
-    await backfillRange(parseInt(bar.querySelector('#pcPerDay').value,10), parseInt(bar.querySelector('#pcLev').value,10), bar.querySelector('#pcSideMix').value, getRange());
-  });
-
-  bar.querySelector('#pcExport').addEventListener('click', exportJSON);
-})();
-
-function dateYMD(d){ return new Date(d).toISOString().slice(0,10); }
-function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
-function clampDom(){
-  const bub = CHAT.querySelectorAll('.bub');
-  const excess = Math.max(0, bub.length - DOM_CAP);
-  for(let i=0;i<excess;i++) bub[i].remove();
-}
-
-/* Price cache */
-const klinesCache = new Map();
-async function ensurePing(){ try{ await fetch(API.ping, {cache:'no-store'}); }catch(e){} }
-async function loadDailyKlines(symbol, startDate, endDate){
-  const key = symbol + ':' + dateYMD(startDate) + ':' + dateYMD(endDate);
-  if (klinesCache.has(key)) return klinesCache.get(key);
-  const params = new URLSearchParams({
-    symbol, interval:'1d',
-    startTime: startDate.getTime(),
-    endTime: endDate.getTime()
-  });
-  const res = await fetch(`${API.futuresKlines}?${params.toString()}`);
-  if(!res.ok) throw new Error('Klines fetch failed for '+symbol);
-  const data = await res.json();
-  const slim = data.map(k => [k[0], parseFloat(k[1]), parseFloat(k[4])]); // [openTime, open, close]
-  klinesCache.set(key, slim);
-  return slim;
-}
-function priceOnDate(slimKlines, jsDate){
-  const want = dateYMD(jsDate);
-  const row = slimKlines.find(k=> dateYMD(k[0]) === want);
-  if(!row) return null;
-  return { open: row[1], close: row[2] };
-}
-
-/* Helpers */
-function fmt2(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
-function fmtPrice(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:3, maximumFractionDigits:5}); }
-function roiBasePct({entry, last, side}){ const dir = (side==='LONG'? +1 : -1); return ((last - entry) / entry) * 100 * dir; }
-function pickLeverageForRange(pctBase, min, max){
-  if (pctBase <= 0) return null;
-  let Lmin = Math.ceil(min / pctBase);
-  let Lmax = Math.floor(max / pctBase);
-  Lmin = Math.max(1, Lmin);
-  Lmax = Math.min(125, Lmax);
-  if (Lmin > Lmax) return null;
-  return Math.floor(Math.random()*(Lmax - Lmin + 1)) + Lmin;
-}
-function randomSide(mode){ if (mode==='long') return 'LONG'; if (mode==='short') return 'SHORT'; return Math.random()<0.5?'LONG':'SHORT'; }
-
-/* Ledger for export */
-const ledger = [];
-
-/* OLD card builder (unchanged) */
-function makeProfitCardOld({side, leverage, symbol, entry, last, pct, ref}){
-  const wrap = document.createElement('div');
-  wrap.className = 'pcard';
-  wrap.innerHTML = `
-    <div class="inner">
-      <div class="header">
-        <img class="binance-logo" src="https://iili.io/KKRCyss.th.png" alt="Binance Logo" />
-        <div class="text-block">
-          <div class="binance-text">BINANCE</div>
-          <div class="futures-text">FUTURES</div>
+      <div class="feed" id="feed">
+        <div class="empty-state" id="emptyState">
+          <i class="fa-solid fa-briefcase"></i>
+          <h4>You have no open positions</h4>
+          <p>Start a trade to see it listed here in real-time.</p>
+          <button class="cta"><i class="fa-solid fa-plus"></i> Open a Trade</button>
         </div>
       </div>
-      <div class="trade-info">
-        <span class="${side==='LONG'?'long':'short'}">${side==='LONG'?'Long':'Short'}</span>
-        <span>|</span>
-        <span>${leverage}x</span>
-        <span>|</span>
-        <span>${symbol} Perpetual</span>
-      </div>
-      <div class="percentage ${pct>=0?'green':'red'}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
-      <div class="price-section">
-        <div class="price-line"><span class="price-label">Entry Price</span><span class="price-value">${fmt2(entry)}</span></div>
-        <div class="price-line"><span class="price-label">Last Price</span><span class="price-value">${fmt2(last)}</span></div>
-      </div>
-      <div class="referral-section">
-        <img class="qr" src="https://iili.io/K1dUMml.jpg" alt="QR Code"/>
-        <div>
-          <div class="ref-text">Referral Code</div>
-          <div class="referral-code">${ref}</div>
-          <div class="app-text">Get the Binance App</div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation" id="bottomNav">
+      <button>
+        <label class="photo-slot photo-slot--bottom photo-empty" data-slot="nav-home">
+          <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment"><img alt="">
+        </label>
+        <span>Home</span>
+      </button>
+      <button>
+        <label class="photo-slot photo-slot--bottom photo-empty" data-slot="nav-markets">
+          <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment"><img alt="">
+        </label>
+        <span>Markets</span>
+      </button>
+      <button>
+        <label class="photo-slot photo-slot--bottom photo-empty" data-slot="nav-trade">
+          <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment"><img alt="">
+        </label>
+        <span>Trade</span>
+      </button>
+      <button>
+        <label class="photo-slot photo-slot--bottom photo-empty" data-slot="nav-futures">
+          <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment"><img alt="">
+        </label>
+        <span>Futures</span>
+      </button>
+      <button class="active">
+        <label class="photo-slot photo-slot--bottom photo-empty" data-slot="nav-assets">
+          <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment"><img alt="">
+        </label>
+        <span>Assets</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== SHARE MODAL ===================== -->
+  <div class="pnl-modal-backdrop" id="pnlBackdrop" aria-hidden="true">
+    <div class="pnl-modal" role="dialog" aria-modal="true" aria-labelledby="pnlTitle">
+      <div class="pnl-scene">
+
+        <!-- 3-slide carousel -->
+        <div class="pnl-carousel" id="pnlCarousel">
+          <div class="pnl-track" id="pnlTrack">
+
+            <!-- Slide 1 (Primary / with IDs) -->
+            <div class="pnl-slide">
+              <div class="pnl-card bg1" id="pnlCard">
+                <div class="card-header">
+                  <div class="avatar">
+                    <!-- 🔁 Replaced header PNG with provided link -->
+                    <img src="https://iili.io/KithIm7.jpg" alt="User Avatar">
+                  </div>
+                  <div class="username">
+                    <span id="pnlUser">Prasadnuwankumara</span>
+                    <span id="pnlTime">—</span>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <div class="title" id="pnlTitle">—</div>
+                  <div class="position">
+                    <span class="side" id="pnlSide">—</span>
+                    <span class="divider" aria-hidden="true"></span>
+                    <span class="lev" id="pnlLev">—</span>
+                  </div>
+                  <div class="pnl"><span id="pnlValue">0.00</span> <span class="usdt">USDT</span></div>
+                  <div class="prices">
+                    <div class="entry">
+                      <div class="label">Entry Price</div>
+                      <div id="pnlEntry">—</div>
+                    </div>
+                    <div class="last">
+                      <div class="label">Last Price</div>
+                      <div id="pnlLast">—</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  <span class="footer-line"></span>
+                  <div class="footer-content">
+                    <div class="footer-left">
+                      <div>
+                        <div class="binance-badge">
+                          <img src="https://iili.io/KBDmWsn.th.png" alt="Binance logo">
+                          <span class="brand">BINANCE</span>
+                        </div>
+                        <div class="futures-ref">FUTURES</div>
+                        <div class="futures-ref">Referral Code 475308515</div>
+                      </div>
+                    </div>
+                    <div class="qr">
+                      <img src="https://iili.io/KiDjqxt.png" alt="QR Code">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 2 (Clone, auto-synced) -->
+            <div class="pnl-slide">
+              <div class="pnl-card bg2">
+                <div class="card-header">
+                  <div class="avatar"><img src="https://iili.io/KithIm7.jpg" alt=""></div>
+                  <div class="username"><span class="js-user">—</span><span class="js-time">—</span></div>
+                </div>
+                <div class="card-body">
+                  <div class="title js-title">—</div>
+                  <div class="position"><span class="side js-side">—</span><span class="divider"></span><span class="lev js-lev">—</span></div>
+                  <div class="pnl"><span class="js-pnl">0.00</span> <span class="usdt">USDT</span></div>
+                  <div class="prices">
+                    <div class="entry"><div class="label">Entry Price</div><div class="js-entry">—</div></div>
+                    <div class="last"><div class="label">Last Price</div><div class="js-last">—</div></div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <span class="footer-line"></span>
+                  <div class="footer-content">
+                    <div class="footer-left">
+                      <div>
+                        <div class="binance-badge"><img src="https://iili.io/KBDmWsn.th.png" alt=""><span class="brand">BINANCE</span></div>
+                        <div class="futures-ref">FUTURES</div>
+                        <div class="futures-ref">Referral Code 475308515</div>
+                      </div>
+                    </div>
+                    <div class="qr"><img src="https://iili.io/KiDjqxt.png" alt=""></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3 (Clone, auto-synced) -->
+            <div class="pnl-slide">
+              <div class="pnl-card bg3">
+                <div class="card-header">
+                  <div class="avatar"><img src="https://iili.io/KithIm7.jpg" alt=""></div>
+                  <div class="username"><span class="js-user">—</span><span class="js-time">—</span></div>
+                </div>
+                <div class="card-body">
+                  <div class="title js-title">—</div>
+                  <div class="position"><span class="side js-side">—</span><span class="divider"></span><span class="lev js-lev">—</span></div>
+                  <div class="pnl"><span class="js-pnl">0.00</span> <span class="usdt">USDT</span></div>
+                  <div class="prices">
+                    <div class="entry"><div class="label">Entry Price</div><div class="js-entry">—</div></div>
+                    <div class="last"><div class="label">Last Price</div><div class="js-last">—</div></div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <span class="footer-line"></span>
+                  <div class="footer-content">
+                    <div class="footer-left">
+                      <div>
+                        <div class="binance-badge"><img src="https://iili.io/KBDmWsn.th.png" alt=""><span class="brand">BINANCE</span></div>
+                        <div class="futures-ref">FUTURES</div>
+                        <div class="futures-ref">Referral Code 475308515</div>
+                      </div>
+                    </div>
+                    <div class="qr"><img src="https://iili.io/KiDjqxt.png" alt=""></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /pnl-track -->
+        </div><!-- /pnl-carousel -->
+
+        <div class="pnl-underbar">
+          <div class="selector">
+            <label><input type="radio" name="infoMode" value="PNL" checked> PNL</label>
+            <label><input type="radio" name="infoMode" value="ROI"> ROI</label>
+            <label><input type="radio" name="infoMode" value="BOTH"> PNL & ROI</label>
+          </div>
+
+          <div class="bottom-bar" id="pnlActions">
+            <div class="action" title="Save"><img src="https://img.icons8.com/ios-glyphs/60/download--v1.png" alt="Save"><span>Save</span></div>
+            <div class="action" title="Copy"><img src="https://img.icons8.com/ios-glyphs/60/link--v1.png" alt="Copy"><span>Copy</span></div>
+            <div class="action" title="Telegram"><img src="https://img.icons8.com/color/60/telegram-app--v1.png" alt="Telegram"><span>Telegram</span></div>
+            <div class="action" title="Instagram"><img src="https://img.icons8.com/color/60/instagram-new--v1.png" alt="Instagram"><span>Instagram</span></div>
+            <div class="action" title="More"><img src="https://img.icons8.com/ios-glyphs/60/more.png" alt="More"><span>More</span></div>
+          </div>
         </div>
-      </div>
+      </div><!-- /pnl-scene -->
     </div>
-  `;
-  return wrap;
-}
+  </div>
+  <!-- =================== / SHARE MODAL =================== -->
 
-/* NEW card builder (>= 2025-07-25) — RANDOM bg + RANDOM ROI/USDT display */
-function makeProfitCardNew({side, leverage, symbol, entry, last, roiPct, pnlUSDT, member, whenISO, ref}){
-  const wrap = document.createElement('div');
-  wrap.className = 'nx-card';
-  wrap.style.background = `#111 url("${pickNewBg()}") center/cover no-repeat`;
+  <script>
+    /* ===== Segmented control ===== */
+    (function(){
+      const wrap = document.querySelector('.app .top-toggle');
+      const btns  = [...wrap.querySelectorAll('.toggle-btn')];
+      const thumb = wrap.querySelector('.seg-thumb');
+      const setActive = (i) => { btns.forEach((b,idx)=> b.classList.toggle('active', idx===i)); thumb.style.transform = `translateX(${i*100}%)`; };
+      setActive(0); btns.forEach((b,i)=> b.addEventListener('click',()=>setActive(i)));
+    })();
 
-  const showMode = pickDisplayMode(); // 'ROI' or 'USDT'
-  const positive = (roiPct >= 0);
-  const pnlLine = (showMode==='ROI')
-    ? `<div class="nx-roi ${positive?'posG':'posR'}">${positive?'+':''}${roiPct.toFixed(2)}%</div><div class="nx-percent"></div>`
-    : `<div class="nx-usd ${positive?'posG':'posR'}">${positive?'+':''}${fmt2(pnlUSDT)}</div><div class="nx-u">USDT</div>`;
-
-  wrap.innerHTML = `
-    <div class="nx-header">
-      <div class="nx-av"><img src="https://iili.io/K10FPQ1.th.jpg" alt="${member.name}"></div>
-      <div class="nx-user">
-        <span class="nx-name">${member.name}</span>
-        <span class="nx-time">${new Date(whenISO).toISOString().slice(0,19).replace('T',' ')}</span>
-      </div>
-    </div>
-
-    <div class="nx-body">
-      <div class="nx-title">${symbol} PERPETUAL</div>
-      <div class="nx-pos">
-        <span class="${side==='LONG'?'nx-long':'nx-short'}">${side==='LONG'?'Long':'Short'}</span>
-        <span class="nx-div" aria-hidden="true"></span>
-        <span class="nx-lev">${leverage}x</span>
-      </div>
-
-      <div class="nx-pnl">
-        ${pnlLine}
-      </div>
-
-      <div class="nx-prices">
-        <div class="nx-entry">
-          <div class="nx-label">Entry Price</div>
-          <div class="nx-value">${fmtPrice(entry)}</div>
-        </div>
-        <div class="nx-last">
-          <div class="nx-label">Last Price</div>
-          <div class="nx-value">${fmtPrice(last)}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="nx-foot">
-      <span class="nx-line"></span>
-      <div class="nx-footc">
-        <div class="nx-id">
-          <span class="nx-logo"><img src="https://iili.io/KBDmWsn.th.png" alt="Binance logo"></span>
-          <span class="nx-brand">BINANCE</span>
-          <span class="nx-futures">FUTURES</span>
-          <span class="nx-ref">Referral Code ${ref}</span>
-        </div>
-        <span class="nx-qr">
-          <img src="https://iili.io/K1dUMml.jpg" alt="QR Code">
-        </span>
-      </div>
-    </div>
-  `;
-  return wrap;
-}
-
-/* Add a card bubble to chat */
-function addAdminBubble(node, caption){
-  const b = document.createElement('div'); b.className='bub admin';
-  b.appendChild(node);
-  if (caption){
-    const p = document.createElement('div'); p.style.marginTop='8px'; p.textContent = caption;
-    b.appendChild(p);
-  }
-  const m = document.createElement('div'); m.className='meta'; m.textContent = `Admin • ${new Date().toLocaleString()}`;
-  b.appendChild(m);
-  CHAT.appendChild(b);
-  CHAT.scrollTop = CHAT.scrollHeight;
-  clampDom();
-}
-
-/* Generators */
-async function preloadRange(range){
-  await Promise.all(SYMBOLS.map(s=>loadDailyKlines(s, range.start, range.end)));
-}
-async function generateCardsRandom(count, leverageHint, sideMix, range){
-  await preloadRange(range);
-  let made = 0, guard = 0;
-  while (made < count && guard < count*300){
-    guard++;
-    const sym = pick(SYMBOLS);
-    const day = new Date(range.start.getTime() + Math.random()*(range.end - range.start));
-    day.setHours(0,0,0,0);
-
-    const klKey = [...klinesCache.keys()].find(k=>k.startsWith(sym+':'));
-    const kl = klinesCache.get(klKey);
-    const px = priceOnDate(kl, day);
-    if(!px) continue;
-
-    let side = (function(){ if (sideMix==='long') return 'LONG'; if (sideMix==='short') return 'SHORT'; return Math.random()<0.5?'LONG':'SHORT'; })();
-
-    const baseLong = roiBasePct({entry:px.open, last:px.close, side:'LONG'});
-    const baseShort = roiBasePct({entry:px.open, last:px.close, side:'SHORT'});
-    if (side==='LONG' && baseLong<=0 && baseShort>0) side='SHORT';
-    if (side==='SHORT' && baseShort<=0 && baseLong>0) side='LONG';
-    const pctBase = side==='LONG'? baseLong : baseShort;
-    if (pctBase<=0) continue;
-
-    const lev = (function(pctBase,min,max){
-      if (pctBase <= 0) return null;
-      let Lmin = Math.ceil(min / pctBase);
-      let Lmax = Math.floor(max / pctBase);
-      Lmin = Math.max(1, Lmin);
-      Lmax = Math.min(125, Lmax);
-      if (Lmin > Lmax) return null;
-      return Math.floor(Math.random()*(Lmax - Lmin + 1)) + Lmin;
-    })(pctBase, ROI_RANGE.min, ROI_RANGE.max);
-    if (!lev) continue;
-
-    const entry = px.open, last = px.close;
-    const roiPct = pctBase * lev;                 // leveraged ROI %
-    const ref = String(Math.floor(100000000 + Math.random()*900000000));
-    const member = members[(Math.random()*members.length)|0];
-    const notional = 100 + Math.random()*900;     // 100..1000 USDT
-    const pnlUSDT = notional * (roiPct/100);      // USDT PnL derived from ROI%
-
-    const isNew = (day >= CUTOFF_NEW);
-    const cardNode = isNew
-      ? makeProfitCardNew({side, leverage:lev, symbol:sym, entry, last, roiPct, pnlUSDT, member, whenISO:day.toISOString(), ref})
-      : makeProfitCardOld({side, leverage:lev, symbol:sym, entry, last, pct:roiPct, ref});
-
-    const caption = `${member.name} • ${sym} • ${side} • ${lev}x • ${dateYMD(day)} ${isNew?'• NEW':'• OLD'}`;
-    addAdminBubble(cardNode, caption);
-
-    ledger.push({
-      date: dateYMD(day), member:member.name,
-      symbol:sym, side, leverage:lev, entry, last,
-      roi_pct:roiPct, pnl_usdt:pnlUSDT, referral:ref, template:isNew?'new':'old'
-    });
-    made++;
-    if (made % 10 === 0) await sleep(30);
-  }
-}
-
-async function backfillRange(perDay, leverageHint, sideMix, range){
-  await preloadRange(range);
-  for (let t = range.start.getTime(); t <= range.end.getTime(); t += 86400000){
-    const day = new Date(t);
-    let made = 0, tries = 0;
-    while (made < perDay && tries < perDay*100){
-      tries++;
-      const sym = SYMBOLS[tries % SYMBOLS.length];
-      const klKey = [...klinesCache.keys()].find(k=>k.startsWith(sym+':'));
-      const kl = klinesCache.get(klKey);
-      const px = priceOnDate(kl, day);
-      if(!px) continue;
-
-      let side = (function(){ if (sideMix==='long') return 'LONG'; if (sideMix==='short') return 'SHORT'; return Math.random()<0.5?'LONG':'SHORT'; })();
-
-      const baseLong = roiBasePct({entry:px.open, last:px.close, side:'LONG'});
-      const baseShort = roiBasePct({entry:px.open, last:px.close, side:'SHORT'});
-      if (side==='LONG' && baseLong<=0 && baseShort>0) side='SHORT';
-      if (side==='SHORT' && baseShort<=0 && baseLong>0) side='LONG';
-      const pctBase = side==='LONG'? baseLong : baseShort;
-      if (pctBase<=0) continue;
-
-      const lev = (function(pctBase,min,max){
-        if (pctBase <= 0) return null;
-        let Lmin = Math.ceil(min / pctBase);
-        let Lmax = Math.floor(max / pctBase);
-        Lmin = Math.max(1, Lmin);
-        Lmax = Math.min(125, Lmax);
-        if (Lmin > Lmax) return null;
-        return Math.floor(Math.random()*(Lmax - Lmin + 1)) + Lmin;
-      })(pctBase, ROI_RANGE.min, ROI_RANGE.max);
-      if (!lev) continue;
-
-      const entry = px.open, last = px.close;
-      const roiPct = pctBase * lev;
-      const ref = String(Math.floor(100000000 + Math.random()*900000000));
-      const member = members[(Math.random()*members.length)|0];
-      const notional = 100 + Math.random()*900;
-      const pnlUSDT = notional * (roiPct/100);
-
-      const isNew = (day >= CUTOFF_NEW);
-      const cardNode = isNew
-        ? makeProfitCardNew({side, leverage:lev, symbol:sym, entry, last, roiPct, pnlUSDT, member, whenISO:day.toISOString(), ref})
-        : makeProfitCardOld({side, leverage:lev, symbol:sym, entry, last, pct:roiPct, ref});
-
-      const caption = `${member.name} • ${sym} • ${side} • ${lev}x • ${dateYMD(day)} ${isNew?'• NEW':'• OLD'}`;
-      addAdminBubble(cardNode, caption);
-
-      ledger.push({
-        date: dateYMD(day), member:member.name,
-        symbol:sym, side, leverage:lev, entry, last,
-        roi_pct:roiPct, pnl_usdt:pnlUSDT, referral:ref, template:isNew?'new':'old'
-      });
-      made++;
-      if (made % 20 === 0) await sleep(50);
+    /* ===== Layout sizing ===== */
+    function sizeFeed(){
+      const feed = document.getElementById('feed');
+      const stickyBar = document.getElementById('stickyBar');
+      const bottomNav = document.getElementById('bottomNav');
+      const topStack  = document.getElementById('topStack');
+      if(!feed || !stickyBar || !bottomNav || !topStack) return;
+      const topOffset = Math.ceil(topStack.getBoundingClientRect().height + 8);
+      stickyBar.style.top = topOffset + 'px';
+      const barH = stickyBar.getBoundingClientRect().height || 40;
+      const bottomH = bottomNav.getBoundingClientRect().height || 56;
+      const available = window.innerHeight - (topOffset + barH) - bottomH - 12;
+      feed.style.height = Math.max(120, available) + 'px';
+      feed.style.maxHeight = feed.style.height;
     }
-    await sleep(120);
-  }
-}
+    window.addEventListener('resize', sizeFeed);
+    document.addEventListener('DOMContentLoaded', sizeFeed);
 
-/* Export */
-function exportJSON(){
-  const blob = new Blob([JSON.stringify(ledger,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `profit-cards-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-}
-</script>
+    /* ===== Top panel utils ===== */
+    const fmtMoney = (n) =>
+      "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtPct = (n) => (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
+
+    const amountEl = document.getElementById("amount");
+    const walletEl = document.getElementById("walletValue");
+    const unrealEl = document.getElementById("unrealizedValue");
+    const realizedSpan = document.getElementById("realizedSpan");
+    const eye = document.getElementById("eyeToggle");
+
+    let showTop = true;
+    let realizedTodayUSD = 0;
+    let realizedTodayPct = 0;
+    let walletBalance = 0;
+    let unrealizedSum = 0;
+
+    function refreshTop(){
+      amountEl.textContent   = showTop ? fmtMoney(walletBalance + unrealizedSum) : "•••••••";
+      walletEl.textContent   = showTop ? fmtMoney(walletBalance) : "•••••••";
+      unrealEl.textContent   = showTop ? fmtMoney(unrealizedSum) : "•••••••";
+      realizedSpan.textContent = showTop ? `${fmtMoney(realizedTodayUSD)} (${fmtPct(realizedTodayPct)})` : "•••••••";
+    }
+    eye.addEventListener("click", ()=>{ showTop = !showTop; eye.classList.toggle("fa-eye-slash", !showTop); eye.classList.toggle("fa-eye", showTop); refreshTop(); });
+
+    /* ===== Helper fns ===== */
+    const numberWithCommas = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const toFixedSafe = (n, dp) => { const num = Number(n); if (!Number.isFinite(num)) return (0).toFixed(dp); const m = Math.pow(10, dp); return (Math.round(num * m) / m).toFixed(dp); };
+    const dpFromTick = (tickStr) => { const idx = (tickStr || '').indexOf('.'); if (idx === -1) return 0; return tickStr.length - idx - 1; };
+    const quantizeToTick = (price, tickSize) => { const step = parseFloat(tickSize); if (!isFinite(price) || !isFinite(step) || step <= 0) return price; return Math.round(price / step) * step; };
+    const quantizeDownToStep = (qty, stepSize) => { const step = parseFloat(stepSize); if (!isFinite(qty) || !isFinite(step) || step <= 0) return qty; return Math.floor(qty / step) * step; };
+    function joinIntDec(i, d) { const I = numberWithCommas(i); return d !== undefined ? I + '.' + d : I; }
+    function shuffle(arr){ for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    function formatProfit(_sym, x) {
+      const s = toFixedSafe(x, 2);
+      const [i, d] = s.split('.');
+      return joinIntDec(i, d);
+    }
+    function formatSignedProfit(sym, x){
+      const abs = Math.abs(Number(x) || 0);
+      return (x >= 0 ? '+' : '-') + formatProfit(sym, abs);
+    }
+    function formatTwoDP(x) { const s = toFixedSafe(x, 2); const [i, d] = s.split('.'); return joinIntDec(i, d); }
+
+    /* ====== photo-slot logic ====== */
+    const SLOT_KEY_PREFIX = 'photo_slot_';
+    const DEFAULT_URLS = {
+      'top-reward':   'https://iili.io/KngDpJn.th.jpg',
+      'top-convert':  'https://iili.io/KnrIabj.th.jpg',
+      'top-statement':'https://iili.io/KnrTeyu.th.jpg',
+      'nav-home':    'https://iili.io/Knrf9eV.th.jpg',
+      'nav-markets': 'https://iili.io/KnrA1s4.th.jpg',
+      'nav-trade':   'https://iili.io/KnragO7.th.jpg',
+      'nav-futures': 'https://iili.io/Knrla3v.th.jpg',
+      'nav-assets':  'https://iili.io/Knr1Jse.th.jpg'
+    };
+    function loadSlot(id){ try { return localStorage.getItem(SLOT_KEY_PREFIX + id) || ''; } catch { return ''; } }
+    function saveSlot(id, dataURL){ try { localStorage.setItem(SLOT_KEY_PREFIX + id, dataURL); } catch {} }
+    function initPhotoSlots(){
+      document.querySelectorAll('.photo-slot').forEach(slot=>{
+        const key = slot.dataset.slot;
+        const img = slot.querySelector('img');
+        const input = slot.querySelector('input[type="file"]');
+        const saved = loadSlot(key);
+        if (saved) {
+          img.src = saved;
+          slot.classList.remove('photo-empty');
+        } else if (DEFAULT_URLS[key]) {
+          img.src = DEFAULT_URLS[key];
+          slot.classList.remove('photo-empty');
+        }
+        input.addEventListener('change', (e)=>{
+          const file = e.target.files && e.target.files[0];
+          if(!file) return;
+          const ok = /jpe?g$/i.test(file.name) || file.type === 'image/jpeg';
+          if(!ok){ alert('Please upload a JPG (.jpg or .jpeg)'); e.target.value=''; return; }
+          const reader = new FileReader();
+          reader.onload = () => {
+            img.src = reader.result;
+            slot.classList.remove('photo-empty');
+            saveSlot(key, reader.result);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+    }
+
+    /* ===== Exchange / calculations / WS / panels ===== */
+    const round2 = (x) => Math.round((Number(x)||0) * 100) / 100;
+
+    /*** 🔧 ACCOUNT TARGETS (kept simple) ***/
+    const TRADE_MIN = 25, TRADE_MAX = 30;                   // keep trades within 25–30
+    const TARGET_WALLET_BALANCE = randInt(25000, 30000);    // 25k–30k
+
+    /*** PERSISTENCE KEYS — v3 enables restore to FIX entry & margin across refresh ***/
+    const STORAGE_TRADES_KEY = 'fa_trades_v3';
+
+    function saveTrades(){
+      const data = trades.map(t => ({
+        sym: t.sym,
+        leverage: t.leverage,
+        entry: t.entry,              // ✅ persist fixed entry
+        usedMargin: t.usedMargin,    // ✅ persist fixed used margin
+        effMargin: t.effMargin,
+        mmr: t.mmr,
+        qty: t.qty,
+        side: t.side,
+        marginMode: t.marginMode
+      }));
+      try { localStorage.setItem(STORAGE_TRADES_KEY, JSON.stringify(data)); } catch {}
+    }
+    function loadTrades(){
+      try{
+        const raw = localStorage.getItem(STORAGE_TRADES_KEY);
+        if(!raw) return null;
+        const arr = JSON.parse(raw);
+        if(!Array.isArray(arr) || !arr.length) return null;
+        return arr;
+      }catch{ return null; }
+    }
+
+    const marketMeta = Object.create(null);
+    async function loadExchangeMeta() {
+      const url = 'https://fapi.binance.com/fapi/v1/exchangeInfo';
+      try{
+        const res = await fetch(url);
+        const json = await res.json();
+        if (!json || !Array.isArray(json.symbols)) return;
+        for (const s of json.symbols) {
+          const sym = s.symbol;
+          if (allSymbols.indexOf(sym) === -1) continue;
+          let tickSize = '0.01', stepSize = '0.001', minQty = 0;
+          if (Array.isArray(s.filters)) {
+            for (const f of s.filters) {
+              if (f.filterType === 'PRICE_FILTER' && f.tickSize) tickSize = f.tickSize;
+              if ((f.filterType === 'LOT_SIZE' || f.filterType === 'MARKET_LOT_SIZE') && f.stepSize) stepSize = f.stepSize;
+              if ((f.filterType === 'LOT_SIZE' || f.filterType === 'MARKET_LOT_SIZE') && f.minQty) minQty = parseFloat(f.minQty) || 0;
+            }
+          }
+          marketMeta[sym] = { tickSize, stepSize, minQty, priceDp: dpFromTick(tickSize) };
+        }
+      }catch(e){ }
+    }
+    const getMeta = (sym) => marketMeta[sym] || { tickSize: '0.01', stepSize: '0.001', minQty: 0, priceDp: 2 };
+    function formatPrice(sym, x) { const m = getMeta(sym); const q = quantizeToTick(x, m.tickSize); const s = toFixedSafe(q, m.priceDp); const [i, d] = s.split('.'); return joinIntDec(i, d); }
+
+    const primeSymbols = ['BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','TONUSDT','ADAUSDT','AVAXUSDT','TRXUSDT','LINKUSDT','DOTUSDT','NEARUSDT','OPUSDT','ARBUSDT','APTUSDT','INJUSDT','RNDRUSDT','SEIUSDT','TIAUSDT','ONDOUSDT'];
+    const seedSymbols = ['BTCUSDT','ETHUSDT','BNBUSDT','ADAUSDT','SOLUSDT','XRPUSDT','DOTUSDT','LTCUSDT','LINKUSDT','DOGEUSDT','AAVEUSDT','SUSHIUSDT','SHIBUSDT','COMPUSDT','ETCUSDT','ZECUSDT','XMRUSDT','LRCUSDT','QNTUSDT','CRVUSDT','UNIUSDT','BCHUSDT','XLMUSDT','ATOMUSDT','MATICUSDT','AVAXUSDT','TRXUSDT','EOSUSDT','NEARUSDT','FILUSDT','OPUSDT','ARBUSDT','APTUSDT','SUIUSDT','INJUSDT','RNDRUSDT','GALAUSDT','THETAUSDT','SANDUSDT','MANAUSDT','AXSUSDT','CFXUSDT','ICPUSDT','LDOUSDT','PEPEUSDT','FLOKIUSDT','WIFUSDT','ARKUSDT','IOTAUSDT','KASUSDT','PYTHUSDT','STRKUSDT','JUPUSDT','APEUSDT','BLURUSDT','SEIUSDT','TIAUSDT','TONUSDT','ONDOUSDT'];
+    const allSymbols = Array.from(new Set([...primeSymbols, ...seedSymbols]));
+
+    const maintenanceMarginRates = { BTCUSDT:0.004, ETHUSDT:0.005, BNBUSDT:0.005, ADAUSDT:0.010, SOLUSDT:0.008, XRPUSDT:0.010, DOTUSDT:0.010, LTCUSDT:0.010, LINKUSDT:0.010, DOGEUSDT:0.012, AAVEUSDT:0.010, SUSHIUSDT:0.015, SHIBUSDT:0.020, COMPUSDT:0.010, ETCUSDT:0.010, ZECUSDT:0.015, XMRUSDT:0.020, LRCUSDT:0.020, QNTUSDT:0.015, CRVUSDT:0.020, UNIUSDT:0.010, BCHUSDT:0.010, XLMUSDT:0.015, ATOMUSDT:0.010, MATICUSDT:0.010, AVAXUSDT:0.010, TRXUSDT:0.020, EOSUSDT:0.015, NEARUSDT:0.020, FILUSDT:0.015, OPUSDT:0.015, ARBUSDT:0.020, APTUSDT:0.015, SUIUSDT:0.020, INJUSDT:0.015, RNDRUSDT:0.015, GALAUSDT:0.025, THETAUSDT:0.020, SANDUSDT:0.020, MANAUSDT:0.020, AXSUSDT:0.020, CFXUSDT:0.025, ICPUSDT:0.015, LDOUSDT:0.020, PEPEUSDT:0.030, FLOKIUSDT:0.030, WIFUSDT:0.030, ARKUSDT:0.020, IOTAUSDT:0.020, KASUSDT:0.025, PYTHUSDT:0.020, STRKUSDT:0.020, JUPUSDT:0.020, APEUSDT:0.020, BLURUSDT:0.020, SEIUSDT:0.020, TIAUSDT:0.020, TONUSDT:0.015, ONDOUSDT:0.020 };
+    const getMaintRate = (sym) => maintenanceMarginRates[sym] ?? 0.01;
+
+    const qtyFrom = (marginUsed, leverage, entry) => (leverage * marginUsed) / entry;
+    const upnlLong  = (mark, entry, qty) => (mark - entry) * qty;
+    const upnlShort = (mark, entry, qty) => (entry - mark) * qty;
+    const roiPct = (pnl, usedMargin) => (pnl / usedMargin) * 100;
+    const maintenance = (mmr, mark, qty) => mmr * mark * qty;
+    const marginBalanceCalc = (effectiveMargin, uPnL) => effectiveMargin + uPnL;
+
+    function liqPriceLong(entry, leverage, mmr, marginUsed, effectiveMargin) {
+      const Q = (leverage * marginUsed) / entry;
+      const denom = Q * (1 - mmr);
+      const num = Q * entry - effectiveMargin;
+      if (denom <= 0) return null; const P = num / denom;
+      if (!isFinite(P) || P <= 0) return null; return P;
+    }
+    function liqPriceShort(entry, leverage, mmr, marginUsed, effectiveMargin) {
+      const Q = (leverage * marginUsed) / entry;
+      const denom = Q * (1 + mmr);
+      const num = effectiveMargin + Q * entry;
+      if (denom <= 0) return null; const P = num / denom;
+      if (!isFinite(P) || P <= 0) return null; return P;
+    }
+    const marginRatioPct = (maint, mBal) => { const mb = Number(mBal); if (!isFinite(mb) || mb <= 0) return 100; const r = (maint / mb) * 100; return Math.max(0, Math.min(9999, r)); };
+
+    const feedDiv = document.getElementById('feed');
+    function meterBars(){ const totalBars = 4; const greenBars = Math.floor(Math.random() * totalBars) + 1; let html=''; for(let j=0;j<totalBars;j++) html += `<span class="${j<greenBars?'green':''}"></span>`; return html; }
+
+    function createPanel({ sym, leverage, entry, mark, usedMargin, effMargin, mmr, qty, side, marginMode }) {
+      const pnl = side === 'LONG' ? upnlLong(mark, entry, qty) : upnlShort(mark, entry, qty);
+      const roi = roiPct(pnl, usedMargin);
+      const maint = maintenance(mmr, mark, qty);
+      const mBal = marginBalanceCalc(effMargin, pnl);
+      const mRatio = marginRatioPct(maint, mBal);
+      const liq = side === 'LONG' ? liqPriceLong(entry, leverage, mmr, usedMargin, effMargin) : liqPriceShort(entry, leverage, mmr, usedMargin, effMargin);
+      const sideIcon = side === 'LONG' ? '<span class="icon-buy">B</span>' : '<span class="icon-sell">S</span>';
+      const sizeUSDT = mark * qty;
+      const panel = document.createElement('div');
+      panel.className = 'trade-panel';
+      panel.innerHTML = `
+        <div class="header">
+          ${sideIcon}
+          <span class="symbol">${sym}</span>
+          <span class="tag">PERP</span>
+          <span class="tag">${marginMode} ${leverage}×</span>
+          <span class="exclamations">${meterBars()}</span>
+          <i class="fas fa-share-nodes share" title="Share PNL"></i>
+        </div>
+        <div class="content-columns">
+          <div class="column">
+            <div class="stat">
+              <div class="label">PNL (USDT)</div>
+              <div class="value pnl ${pnl < 0 ? 'red' : 'green'}">${formatSignedProfit(sym, pnl)}</div>
+            </div>
+            <div class="stat">
+              <div class="label">Size (USDT)</div>
+              <div class="value size">${formatTwoDP(sizeUSDT)}</div>
+            </div>
+            <div class="stat">
+              <div class="label">Entry Price (USDT)</div>
+              <div class="value entry">${formatPrice(sym, entry)}</div>
+            </div>
+          </div>
+          <div class="column center">
+            <div class="stat">
+              <div class="label no-line">Margin (USDT)</div>
+              <div class="value margin">${formatTwoDP(usedMargin)}</div>
+            </div>
+            <div class="stat">
+              <div class="label no-line">Mark Price (USDT)</div>
+              <div class="value mark">${formatPrice(sym, mark)}</div>
+            </div>
+          </div>
+          <div class="column right">
+            <div class="stat">
+              <div class="label">ROI</div>
+              <div class="value percent roi ${roi < 0 ? 'red' : 'green'}">${(roi >= 0 ? '+' : '') + toFixedSafe(roi, 2)}%</div>
+            </div>
+            <div class="stat margin-ratio">
+              <div class="label">Margin Ratio</div>
+              <div class="value percent margin-ratio-value ${mRatio >= 80 ? 'red' : 'green'}">${toFixedSafe(mRatio, 2)}%</div>
+            </div>
+            <div class="stat">
+              <div class="label no-line">Liq. Price (USDT)</div>
+              <div class="value liq">${liq === null ? '—' : formatPrice(sym, liq)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="tp-actions">
+          <button class="tp-btn">Leverage</button>
+          <button class="tp-btn">TP/SL</button>
+          <button class="tp-btn">Close</button>
+          <button class="tp-btn">Reverse</button>
+        </div>`;
+      const panelState = { node: panel, sym, leverage, mmr, entry, usedMargin, effMargin, qty, mark, side, marginMode, lockLoss:false, isBalancer:false };
+      panel.querySelector('.share').addEventListener('click', ()=> openPNLModal(panelState));
+      return panelState;
+    }
+
+    function renderTrade(t) {
+      const pnl = (t.side === 'LONG') ? upnlLong(t.mark, t.entry, t.qty) : upnlShort(t.mark, t.entry, t.qty);
+      const roi = roiPct(pnl, t.usedMargin);
+      const maintV = maintenance(t.mmr, t.mark, t.qty);
+      const mBal = marginBalanceCalc(t.effMargin, pnl);
+      const mRatio = marginRatioPct(maintV, mBal);
+      const liq = (t.side === 'LONG') ? liqPriceLong(t.entry, t.leverage, t.mmr, t.usedMargin, t.effMargin) : liqPriceShort(t.entry, t.leverage, t.mmr, t.usedMargin, t.effMargin);
+      const pnlEl = t.node.querySelector('.value.pnl'); pnlEl.textContent = formatSignedProfit(t.sym, pnl); pnlEl.classList.toggle('green', pnl >= 0); pnlEl.classList.toggle('red', pnl < 0);
+      t.node.querySelector('.value.mark').textContent = formatPrice(t.sym, t.mark);
+      const sizeEl = t.node.querySelector('.value.size'); sizeEl.textContent = formatTwoDP(t.mark * t.qty);
+      const roiEl = t.node.querySelector('.value.roi'); roiEl.textContent = (roi >= 0 ? '+' : '') + toFixedSafe(roi, 2) + '%'; roiEl.classList.toggle('green', roi >= 0); roiEl.classList.toggle('red', roi < 0);
+      const mrEl = t.node.querySelector('.value.margin-ratio-value'); mrEl.textContent = toFixedSafe(mRatio, 2) + '%'; mrEl.classList.toggle('green', mRatio < 80); mrEl.classList.toggle('red', mRatio >= 80);
+      const liqEl = t.node.querySelector('.value.liq'); liqEl.textContent = (liq === null) ? '—' : formatPrice(t.sym, liq);
+
+      if (currentSharedTrade === t) updatePNLCardFromTrade(t);
+    }
+
+    /* === Two-month entry helpers (instead of 6M) === */
+    function twoMonthsAgoMs(){ const d=new Date(); d.setMonth(d.getMonth()-2); d.setHours(0,0,0,0); return d.getTime(); }
+    async function fetchEntryFromTwoMonths(sym, startMs){
+      // Try markPriceKlines → continuousKlines → klines (like before), but 2 months back
+      try{ const url1=`https://fapi.binance.com/fapi/v1/markPriceKlines?symbol=${sym}&interval=1d&startTime=${startMs-2*24*3600*1000}&limit=2`;
+        const res1=await fetch(url1); if(res1.ok){ const data=await res1.json(); if(Array.isArray(data)&&data.length>0){ const k=data[0]; const close=parseFloat(k[4]); if(isFinite(close)) return close; } } }catch{}
+      try{ const url2=`https://fapi.binance.com/fapi/v1/continuousKlines?pair=${sym}&contractType=PERPETUAL&interval=1d&startTime=${startMs-2*24*3600*1000}&limit=2`;
+        const res2=await fetch(url2); if(res2.ok){ const data=await res2.json(); if(Array.isArray(data)&&data.length>0){ const k=data[0]; const close=parseFloat(k[4]); if(isFinite(close)) return close; } } }catch{}
+      try{ const url3=`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&startTime=${startMs-2*24*3600*1000}&limit=2`;
+        const res3=await fetch(url3); if(res3.ok){ const data=await res3.json(); if(Array.isArray(data)&&data.length>0){ const k=data[0]; const close=parseFloat(k[4]); if(isFinite(close)) return close; } } }catch{}
+      return null;
+    }
+    async function loadTwoMonthEntryMap(symbolList){
+      const start=twoMonthsAgoMs(); const entryMap=Object.create(null); const unique=[...new Set(symbolList)]; const batch=8;
+      for(let i=0;i<unique.length;i+=batch){ const chunk=unique.slice(i,i+batch);
+        await Promise.all(chunk.map(async (sym)=>{ const close=await fetchEntryFromTwoMonths(sym,start); if(isFinite(close)) entryMap[sym]=close; })); }
+      return entryMap;
+    }
+
+    const trades=[]; let symbols=shuffle(allSymbols.slice());
+    const TRADE_COUNT = randInt(TRADE_MIN, TRADE_MAX);
+
+    function shuffleFeed(){ const nodes=Array.from(feedDiv.children); nodes.filter(n=>n.id!=='emptyState').forEach(n=>feedDiv.appendChild(n)); }
+
+    async function seedWithTwoMonthEntries(){
+      const empty=document.getElementById("emptyState"); if(empty) empty.remove();
+      await loadExchangeMeta();
+
+      // Live mark prices
+      const res=await fetch('https://fapi.binance.com/fapi/v1/premiumIndex'); const arr=await res.json();
+      const markMap=Object.create(null); arr.forEach(o=>{ if(o&&o.symbol) markMap[o.symbol]=parseFloat(o.markPrice); });
+
+      symbols = symbols.filter(s=>!!marketMeta[s]);
+      const poolForEntry=Array.from(new Set([...primeSymbols, ...symbols.slice(0, TRADE_COUNT*2)]));
+      const entryMap=await loadTwoMonthEntryMap(poolForEntry);
+
+      const MARGIN_MIN=50, MARGIN_MAX=300;
+      const mainList=primeSymbols.filter(s=>marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s]));
+      const otherList=symbols.filter(s=>!primeSymbols.includes(s)&&marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s]));
+      const planned=[...mainList, ...otherList].slice(0, TRADE_COUNT);
+      const LEV_SET = [10,20,50,100];
+
+      for(let i=0;i<planned.length;i++){
+        const sym=planned[i];
+        const liveMark=markMap[sym]; if(!isFinite(liveMark)) continue;
+        const entryRaw=entryMap[sym]; if(!isFinite(entryRaw)) continue;
+
+        const leverage = LEV_SET[Math.floor(Math.random()*LEV_SET.length)];
+        const entry=quantizeToTick(entryRaw, getMeta(sym).tickSize);
+
+        // ✅ Choose side so that with live mark, the trade is in profit
+        const side=(liveMark >= entry) ? 'LONG' : 'SHORT';
+
+        let usedMargin=(MARGIN_MIN + Math.random()*(MARGIN_MAX - MARGIN_MIN));
+
+        const m=getMeta(sym);
+        let qtyRaw=qtyFrom(usedMargin, leverage, entry);
+        let qty=quantizeDownToStep(qtyRaw, m.stepSize);
+        if(qty < m.minQty) qty = m.minQty;
+
+        const marginMode = Math.random() < 0.5 ? 'Cross' : 'Isolated';
+        let effMargin = (marginMode === 'Isolated') ? usedMargin : usedMargin * (1.5 + Math.random() * 2.5);
+
+        const panelState = createPanel({
+          sym, leverage, entry, mark: liveMark,
+          usedMargin, effMargin, mmr: getMaintRate(sym), qty, side, marginMode
+        });
+
+        trades.push(panelState); feedDiv.appendChild(panelState.node);
+      }
+      shuffleFeed(); sizeFeed();
+    }
+
+    function recalcAccountTopFromTrades(){
+      let sum=0;
+      for(const t of trades){
+        const pnl=(t.side==='LONG') ? upnlLong(t.mark, t.entry, t.qty) : upnlShort(t.mark, t.entry, t.qty);
+        sum += pnl;
+      }
+      unrealizedSum = round2(sum);
+      refreshTop();
+    }
+
+    function connectFuturesMarkWS(){
+      const WS_URL='wss://fstream.binance.com/ws/!markPrice@arr';
+      let ws=new WebSocket(WS_URL);
+      ws.onopen=()=>console.log('[WS] Connected');
+      ws.onmessage=(evt)=>{
+        let data; try{ data=JSON.parse(evt.data);}catch{return;}
+        if(!Array.isArray(data)) return;
+        let touched=false;
+        for(const o of data){
+          const sym=o.s; const priceStr=o.p; if(!sym || priceStr===undefined) continue;
+          const mp=parseFloat(priceStr); if(!isFinite(mp)) continue;
+          for(const t of trades){
+            if(t.sym===sym){
+              t.mark=mp; renderTrade(t); touched=true;
+            }
+          }
+        }
+        if(touched) {
+          recalcAccountTopFromTrades(); // ✅ no artificial rebalancing; live marks drive PNL
+        }
+      };
+      ws.onclose=()=>{ console.warn('[WS] Closed. Reconnecting in 2s…'); setTimeout(connectFuturesMarkWS, 2000); };
+      ws.onerror=(err)=>{ console.error('[WS] Error', err); try{ ws.close(); }catch{} };
+    }
+
+    function setBottomInset(){
+      const nav = document.getElementById('bottomNav');
+      const h = nav ? Math.max(56, Math.ceil(nav.getBoundingClientRect().height)) : 64;
+      document.documentElement.style.setProperty('--bottom-nav-h', h + 'px');
+    }
+    window.addEventListener('resize', setBottomInset);
+    document.addEventListener('DOMContentLoaded', setBottomInset);
+
+    const pnlEls = {
+      backdrop: document.getElementById('pnlBackdrop'),
+      title: document.getElementById('pnlTitle'),
+      side: document.getElementById('pnlSide'),
+      lev: document.getElementById('pnlLev'),
+      pnl: document.getElementById('pnlValue'),
+      entry: document.getElementById('pnlEntry'),
+      last: document.getElementById('pnlLast'),
+      time: document.getElementById('pnlTime'),
+      user: document.getElementById('pnlUser')
+    };
+    let currentSharedTrade = null;
+    const usernameStatic = 'Chiranthamadhushan';
+
+    function nowStamp(){
+      const d=new Date();
+      const pad=(n)=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function formatTimeWithTinyMonthOne(ts){
+      const m = ts.match(/^(\d{4})-(\d{2})-(\d{2}) (.+)$/);
+      if(!m) return ts;
+      const [, Y, MM, DD, rest] = m;
+      const mm = (MM.charAt(0) === '1')
+        ? `<span class="month-one">1</span>${MM.charAt(1)}`
+        : MM;
+      return `${Y}-${mm}-${DD} ${rest}`;
+    }
+
+    /* ==== ROI mode → hide USDT label only there ==== */
+    function applyUSDTVisibility(mode){
+      const showUSDT = mode !== 'ROI'; // hide only for ROI
+      document.querySelectorAll('.pnl-card .usdt').forEach(el=>{
+        el.style.display = showUSDT ? '' : 'none';
+      });
+    }
+
+    function syncCloneSlides(payload){
+      const cards = Array.from(document.querySelectorAll('.pnl-card')).filter(c=>c.id!=='pnlCard');
+      cards.forEach(card=>{
+        const set = (sel, val, html=false) => {
+          const el = card.querySelector(sel);
+          if(!el) return;
+          if(html) el.innerHTML = val; else el.textContent = val;
+        };
+        set('.js-user', payload.user);
+        set('.js-time', payload.timeHTML, true);
+        set('.js-title', payload.title);
+        set('.js-side', payload.sideText);
+        card.querySelector('.js-side').style.color = payload.sideColor;
+        set('.js-lev', payload.lev);
+        set('.js-pnl', payload.pnlText);
+        set('.js-entry', payload.entry);
+        set('.js-last', payload.last);
+        if (window.__wrapOnes) window.__wrapOnes(card);
+      });
+    }
+
+    function openPNLModal(trade){
+      setBottomInset();
+      currentSharedTrade = trade;
+      pnlEls.user.textContent = usernameStatic;
+      const ts = nowStamp();
+      pnlEls.time.innerHTML = formatTimeWithTinyMonthOne(ts);
+      updatePNLCardFromTrade(trade);
+      pnlEls.backdrop.classList.add('open');
+      pnlEls.backdrop.setAttribute('aria-hidden','false');
+      setSlide(0, true);
+    }
+    function closePNLModal(){
+      pnlEls.backdrop.classList.remove('open');
+      pnlEls.backdrop.setAttribute('aria-hidden','true');
+      currentSharedTrade = null;
+    }
+    pnlEls.backdrop.addEventListener('click', (e)=>{ if(e.target === pnlEls.backdrop) closePNLModal(); });
+
+    document.querySelectorAll('input[name="infoMode"]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        const mode = (document.querySelector('input[name="infoMode"]:checked')||{}).value || 'PNL';
+        applyUSDTVisibility(mode);
+        if(currentSharedTrade) updatePNLCardFromTrade(currentSharedTrade);
+      });
+    });
+
+    function updatePNLCardFromTrade(t){
+      if(!t) return;
+      const pnl = (t.side === 'LONG') ? upnlLong(t.mark, t.entry, t.qty) : upnlShort(t.mark, t.entry, t.qty);
+      const roi = roiPct(pnl, t.usedMargin);
+      const sideTxt = (t.side === 'LONG') ? 'Long' : 'Short';
+      pnlEls.title.textContent = `${t.sym} Perpetual`;
+      pnlEls.side.textContent = sideTxt;
+      pnlEls.side.style.color = (t.side === 'LONG') ? '#0ecb81' : '#ff6b6b';
+      pnlEls.lev.textContent = `${t.leverage}x`;
+      const mode = (document.querySelector('input[name="infoMode"]:checked')||{}).value || 'PNL';
+      let pnlText;
+      if(mode === 'PNL') {
+        pnlText = formatSignedProfit(t.sym, pnl);
+      } else if(mode === 'ROI') {
+        pnlText = (roi>=0?'+':'') + toFixedSafe(roi,2) + '%';
+      } else {
+        pnlText = `${formatSignedProfit(t.sym, pnl)}  (${(roi>=0?'+':'')+toFixedSafe(roi,2)}%)`;
+      }
+      pnlEls.pnl.textContent = pnlText;
+      pnlEls.pnl.parentElement.style.color = (pnl >= 0) ? '#0ecb81' : '#e04b4a';
+      pnlEls.entry.textContent = formatPrice(t.sym, t.entry);
+      pnlEls.last.textContent  = formatPrice(t.sym, t.mark);
+
+      applyUSDTVisibility(mode);
+
+      const payload = {
+        user: usernameStatic,
+        timeHTML: pnlEls.time.innerHTML,
+        title: pnlEls.title.textContent,
+        sideText: sideTxt,
+        sideColor: (t.side === 'LONG') ? '#0ecb81' : '#ff6b6b',
+        lev: `${t.leverage}x`,
+        pnlText,
+        entry: pnlEls.entry.textContent,
+        last: pnlEls.last.textContent
+      };
+      syncCloneSlides(payload);
+
+      if (window.__wrapOnes) window.__wrapOnes(document.getElementById('pnlCard'));
+    }
+
+    function setupSaveOnlyCard() {
+      const saveBtn = Array.from(document.querySelectorAll('#pnlActions .action')).find(a => a.getAttribute('title') === 'Save');
+      if(!saveBtn) return;
+      saveBtn.addEventListener('click', async () => {
+        const card = document.getElementById('pnlCard');
+        if(!card){ return; }
+        try{
+          const canvas = await html2canvas(card, {useCORS:true, scale:2, backgroundColor:null});
+          const dataURL = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = dataURL;
+          a.download = `PNL_Card_${nowStamp().replace(/[: ]/g,'_')}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }catch(e){
+          alert('Save failed. Please try again.');
+        }
+      });
+    }
+
+    /* ===== In-card swipe (3 slides) ===== */
+    const track = document.getElementById('pnlTrack');
+    const carousel = document.getElementById('pnlCarousel');
+    let slideIndex = 0;
+    let startX = 0, currentX = 0, isDown = false;
+
+    function setSlide(i, instant=false){
+      slideIndex = Math.max(0, Math.min(2, i));
+      const w = carousel.getBoundingClientRect().width;
+      track.style.transition = instant ? 'none' : 'transform .25s ease';
+      track.style.transform = `translateX(${-slideIndex * w}px)`;
+      if(instant){ requestAnimationFrame(()=> track.style.transition = 'transform .25s ease'); }
+    }
+
+    function onDown(e){
+      isDown = true;
+      carousel.classList.add('grabbing');
+      startX = ('touches' in e) ? e.touches[0].clientX : e.clientX;
+    }
+    function onMove(e){
+      if(!isDown) return;
+      currentX = ('touches' in e) ? e.touches[0].clientX : e.clientX;
+      const dx = currentX - startX;
+      const w = carousel.getBoundingClientRect().width;
+      const base = -slideIndex * w;
+      track.style.transition = 'none';
+      track.style.transform = `translateX(${base + dx}px)`;
+    }
+    function onUp(){
+      if(!isDown) return;
+      isDown = false;
+      carousel.classList.remove('grabbing');
+      const w = carousel.getBoundingClientRect().width;
+      const m = track.style.transform.match(/-?\d+(\.\d+)?px/);
+      const tx = m ? parseFloat(m[0]) : 0;
+      const moved = tx + slideIndex * w;
+      if (Math.abs(moved) > w * 0.2){
+        setSlide(slideIndex + (moved < 0 ? 1 : -1));
+      } else {
+        setSlide(slideIndex);
+      }
+    }
+
+    carousel.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    carousel.addEventListener('touchstart', onDown, {passive:true});
+    carousel.addEventListener('touchmove', onMove, {passive:true});
+    carousel.addEventListener('touchend', onUp);
+
+    (async function init(){
+      sizeFeed();
+      setBottomInset();
+      initPhotoSlots();
+
+      // Restore fixed entries & margins if available; else seed from 2 months ago
+      const saved = loadTrades();
+
+      await loadExchangeMeta();
+      // grab live marks once for initial render
+      let liveMarkMap = {};
+      try{
+        const res=await fetch('https://fapi.binance.com/fapi/v1/premiumIndex');
+        const arr=await res.json();
+        arr.forEach(o=>{ if(o&&o.s&&o.p) liveMarkMap[o.s]=parseFloat(o.p); });
+      }catch{}
+
+      if(saved && saved.length){
+        const empty=document.getElementById("emptyState"); if(empty) empty.remove();
+        for(const it of saved){
+          const m = getMeta(it.sym);
+          const mark = isFinite(liveMarkMap[it.sym]) ? liveMarkMap[it.sym] : it.entry; // fallback to entry
+          const panelState = createPanel({
+            sym: it.sym,
+            leverage: it.leverage,
+            entry: quantizeToTick(it.entry, m.tickSize), // keep persisted entry
+            mark,
+            usedMargin: it.usedMargin,                   // keep persisted margin
+            effMargin: it.effMargin,
+            mmr: it.mmr ?? getMaintRate(it.sym),
+            qty: it.qty,
+            side: it.side,
+            marginMode: it.marginMode || 'Cross'
+          });
+          trades.push(panelState); feedDiv.appendChild(panelState.node);
+        }
+        shuffleFeed(); sizeFeed();
+      } else {
+        await seedWithTwoMonthEntries();
+        saveTrades(); // persist first-time entries & margins
+      }
+
+      // Top numbers
+      walletBalance = TARGET_WALLET_BALANCE;
+      realizedTodayUSD = randInt(2500, 8500);
+      realizedTodayPct = walletBalance > 0 ? (realizedTodayUSD / walletBalance) * 100 : 0;
+      recalcAccountTopFromTrades(); // compute unrealized from current marks
+
+      connectFuturesMarkWS();
+      setupSaveOnlyCard();
+      setSlide(0, true);
+
+      // initial USDT visibility aligned to default mode
+      applyUSDTVisibility((document.querySelector('input[name="infoMode"]:checked')||{}).value || 'PNL');
+    })();
+
+    // placeholders (kept)
+    document.getElementById("amount").textContent = "Loading…";
+    document.getElementById("walletValue").textContent = "Loading…";
+    document.getElementById("unrealizedValue").textContent = "Loading…";
+    document.getElementById("realizedSpan").textContent = "Loading…";
+  </script>
+
+  <!-- ========= ONE-GLYPH PATCH (force digit `1` inside ALL pnl-cards to Binance PLEX) ========= -->
+  <script>
+    (function(){
+      function wrapOnes(root){
+        if (!root) return;
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) => {
+              if (!node.nodeValue || node.nodeValue.indexOf('1') === -1) return NodeFilter.FILTER_REJECT;
+              const p = node.parentNode;
+              if (!p || (p.classList && p.classList.contains('one-glyph'))) return NodeFilter.FILTER_REJECT;
+              if (p.closest && p.closest('.no-one-stylize')) return NodeFilter.FILTER_REJECT;
+              return NodeFilter.FILTER_ACCEPT;
+            }
+          }
+        );
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+
+        nodes.forEach(node => {
+          const txt = node.nodeValue;
+          if (!txt || txt.indexOf('1') === -1) return;
+          const frag = document.createDocumentFragment();
+          for (let i=0;i<txt.length;i++){
+            const ch = txt[i];
+            if (ch === '1'){
+              const span = document.createElement('span');
+              span.className = 'one-glyph';
+              span.textContent = '1';
+              frag.appendChild(span);
+            } else {
+              frag.appendChild(document.createTextNode(ch));
+            }
+          }
+          node.parentNode.replaceChild(frag, node);
+        });
+      }
+
+      // expose globally so other code can call after content sync
+      window.__wrapOnes = wrapOnes;
+
+      // Run for all cards initially (slide 1, 2, 3)
+      document.querySelectorAll('.pnl-card').forEach(card => wrapOnes(card));
+
+      // Observe the whole modal for content changes and re-apply
+      const container = document.getElementById('pnlBackdrop');
+      if (container) {
+        let rafId = null;
+        const mo = new MutationObserver(() => {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(()=> {
+            document.querySelectorAll('.pnl-card').forEach(card => wrapOnes(card));
+          });
+        });
+        mo.observe(container, {subtree:true, childList:true, characterData:true});
+      }
+    })();
+  </script>
 </body>
 </html>
